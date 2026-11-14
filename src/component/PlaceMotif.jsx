@@ -22,17 +22,20 @@ const motifs = {
       <path fill="none" d="M4 42h40" />
     </>
   ),
-  // A snowboarder in a mint beanie, arms up, riding down on a board.
+  // A small snowboarder in a mint beanie riding down a snowy slope.
   ski: (
     <>
-      <path fill="none" strokeWidth="2.2" d="M15.5 23c-4.5-.5-8-3.5-9-9M26 24.5c4.5-.5 8-3 9.5-7.5" />
-      <path fill="none" strokeWidth="2.2" d="M20 35c2.5 1.5 2.8 4.5 2 7.5M23 33.5c4 .5 5.5 4 5 9.5" />
-      <path fill="#c4ece0" d="M14 22.5c0-3 2-4.5 5-4.5h3c3 0 4.5 2 4.2 4.8l-1 9.5c-.3 3-2.4 4.4-5.2 4.2h-1.6c-3-.2-4.6-2.2-4.4-5z" />
-      <path fill="#eaa688" d="M15 13a6 6 0 0 0 12 0z" />
-      <path fill="#8ccbb2" d="M15 13a6 6 0 0 1 12 0z" />
-      <path fill="none" strokeWidth="2.2" d="M15 13h12" />
-      <circle fill="#c4ece0" cx="21" cy="5" r="2.4" />
-      <path fill="none" strokeWidth="2.4" d="M4.5 37.5c-.3 1.6.6 2.3 2.2 2.6l33 6c1.6.3 2.8-.2 3.3-1.4" />
+      <path fill="#eef6fa" d="M3 42 30 20l15 22z" />
+      <g transform="translate(7 5) scale(.7)" strokeWidth="2.6">
+        <path fill="none" strokeWidth="3.1" d="M15.5 23c-4.5-.5-8-3.5-9-9M26 24.5c4.5-.5 8-3 9.5-7.5" />
+        <path fill="none" strokeWidth="3.1" d="M20 35c2.5 1.5 2.8 4.5 2 7.5M23 33.5c4 .5 5.5 4 5 9.5" />
+        <path fill="#c4ece0" d="M14 22.5c0-3 2-4.5 5-4.5h3c3 0 4.5 2 4.2 4.8l-1 9.5c-.3 3-2.4 4.4-5.2 4.2h-1.6c-3-.2-4.6-2.2-4.4-5z" />
+        <path fill="#eaa688" d="M15 13a6 6 0 0 0 12 0z" />
+        <path fill="#8ccbb2" d="M15 13a6 6 0 0 1 12 0z" />
+        <path fill="none" strokeWidth="3.1" d="M15 13h12" />
+        <circle fill="#c4ece0" cx="21" cy="5" r="2.4" />
+        <path fill="none" strokeWidth="3.4" d="M4.5 37.5c-.3 1.6.6 2.3 2.2 2.6l33 6c1.6.3 2.8-.2 3.3-1.4" />
+      </g>
     </>
   ),
   // Helsinki's white cathedral with green domes.
