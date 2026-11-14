@@ -1092,7 +1092,7 @@ function ResortDetail() {
       {isHeroCompact && (
         <section className="compact-resort-hero" aria-label={`${resort} resort heading`}>
           <div>
-            <p className="resort-location">{town.prefecture} 繚 {town.name}</p>
+            <p className="resort-location">{town.prefecture} · {town.name}</p>
             <h1><span className="brush-title">{resort}</span></h1>
           </div>
           <div className="resort-hero-motif" aria-hidden="true"><HandDrawnMotif type={town.motif} /></div>

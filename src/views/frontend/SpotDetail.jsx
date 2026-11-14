@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import PlaceMotif from "../../component/PlaceMotif";
 import { WeatherIcon, forecastDayLabel, weatherKind, weatherLabels } from "../../component/WeatherIcon";
@@ -40,6 +40,20 @@ function SpotDetail() {
   const [forecast, setForecast] = useState(null);
   const [weatherState, setWeatherState] = useState("loading");
   const [info, setInfo] = useState(null);
+  // Once the big heading scrolls away, a compact one stays under the header,
+  // as on a Japan resort page.
+  const heroRef = useRef(null);
+  const [isHeroCompact, setIsHeroCompact] = useState(false);
+
+  useEffect(() => {
+    const updateCompactHero = () => {
+      const heroBottom = heroRef.current?.getBoundingClientRect().bottom ?? Infinity;
+      setIsHeroCompact(heroBottom <= 88);
+    };
+    updateCompactHero();
+    window.addEventListener("scroll", updateCompactHero, { passive: true });
+    return () => window.removeEventListener("scroll", updateCompactHero);
+  }, []);
 
   // The sight's introduction (src/data/spotInfo/<country>.js), loaded with
   // the page so the map does not carry every country's text.
@@ -100,7 +114,7 @@ function SpotDetail() {
 
   return (
     <div className="resort-detail-page spot-detail-page">
-      <section className="resort-detail-hero">
+      <section className="resort-detail-hero" ref={heroRef}>
         <div>
           <Link className="back-to-map" to={`/c/${countryId}`}>← 返回{country.name}地圖</Link>
           <p className="resort-location">{regionName || country.name} · {place.name}</p>
@@ -110,6 +124,17 @@ function SpotDetail() {
           <svg className="spot-hero-motif" viewBox="-24 -24 48 48"><PlaceMotif type={place.motif} /></svg>
         </div>
       </section>
+      {isHeroCompact && (
+        <section className="compact-resort-hero" aria-label={`${spot.name} heading`}>
+          <div>
+            <p className="resort-location">{regionName || country.name} · {place.name}</p>
+            <h1><span className="brush-title">{spot.name}</span></h1>
+          </div>
+          <div className="resort-hero-motif" aria-hidden="true">
+            <svg className="spot-hero-motif" viewBox="-24 -24 48 48"><PlaceMotif type={place.motif} /></svg>
+          </div>
+        </section>
+      )}
 
       <section className="resort-info-grid" aria-label={`${spot.name}資訊`}>
         <article className="resort-info-card spot-info-card">

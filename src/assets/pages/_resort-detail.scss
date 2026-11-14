@@ -1161,6 +1161,8 @@
 
 // ---- A sight page (SpotDetail.jsx), in the resort page's layout ----
 .spot-hero-motif { width: 70px; height: 70px; overflow: visible; }
+.compact-resort-hero .spot-hero-motif { width: 46px; height: 46px; }
+@media (max-width: 760px) { .compact-resort-hero .spot-hero-motif { width: 36px; height: 36px; } }
 .spot-info-card { display: grid; align-content: start; gap: 18px; }
 .spot-intro { margin: 4px 0 0; color: #244f68; font-size: 17px; font-weight: 600; line-height: 1.75; }
 .spot-highlights { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
