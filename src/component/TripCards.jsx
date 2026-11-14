@@ -22,6 +22,13 @@ const formatDate = (key) => {
   return `${year}/${month}/${day}`;
 };
 
+// 「2026/2/24 – 3/2」: the end drops its year when it is the same as the start's.
+const formatRange = (start, end) => {
+  if (!end || end === start) return formatDate(start);
+  const sameYear = start.slice(0, 4) === end.slice(0, 4);
+  return `${formatDate(start)} – ${sameYear ? formatDate(end).slice(5) : formatDate(end)}`;
+};
+
 // The first and last dated day of a trip's plan.
 const summarise = (days) => {
   const dates = (Array.isArray(days) ? days : [])
@@ -151,6 +158,8 @@ function usePastTrips() {
         id,
         manual: true,
         name: trip.name,
+        // Trips added before countries existed were all to Japan.
+        country: trip.country ?? "japan",
         start: trip.start,
         end: trip.end || trip.start,
         dayCount: daysBetween(trip.start, trip.end || trip.start) + 1,
@@ -163,7 +172,7 @@ function TripRow({ trip, today, kind, onPick, onRemove }) {
   const [confirming, setConfirming] = useState(false);
   let badge;
   if (!trip.start) badge = "尚未排定日期";
-  else if (kind === "done") badge = `${daysBetween(trip.end, today)} 天前結束`;
+  else if (kind === "done") badge = `${daysBetween(trip.end, today)} 天前`;
   else if (trip.start <= today) badge = "旅行中";
   else badge = `還有 ${daysBetween(today, trip.start)} 天`;
 
@@ -173,7 +182,7 @@ function TripRow({ trip, today, kind, onPick, onRemove }) {
       {(trip.start || trip.country) && (
         <span className="trip-card-dates">
           {trip.country && <span className="trip-card-country">{countryById(trip.country)?.name}</span>}
-          {trip.start && `${formatDate(trip.start)}${trip.end !== trip.start ? ` – ${formatDate(trip.end)}` : ""}`}
+          {trip.start && formatRange(trip.start, trip.end)}
         </span>
       )}
       <span className={`trip-card-badge is-${kind}${trip.start && trip.start <= today && kind === "upcoming" ? " is-now" : ""}`}>{badge}</span>
@@ -209,6 +218,7 @@ function TripRow({ trip, today, kind, onPick, onRemove }) {
 
 function PastTripForm({ today, onSave, onCancel }) {
   const [name, setName] = useState("");
+  const [country, setCountry] = useState("japan");
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [error, setError] = useState("");
@@ -223,7 +233,7 @@ function PastTripForm({ today, onSave, onCancel }) {
     if ((end || start) >= today) return setError("已完成的行程要在今天以前結束");
     setSaving(true);
     try {
-      await onSave({ name: trimmed.slice(0, 24), start, end: end || start });
+      await onSave({ name: trimmed.slice(0, 24), country, start, end: end || start });
     } catch {
       setError("儲存失敗，請稍後再試一次");
       setSaving(false);
@@ -243,6 +253,14 @@ function PastTripForm({ today, onSave, onCancel }) {
           setError("");
         }}
       />
+      <label className="trip-card-form-country">
+        <span>國家</span>
+        <select value={country} onChange={(event) => setCountry(event.target.value)}>
+          {globeCountries.map((item) => (
+            <option key={item.id} value={item.id}>{item.name}</option>
+          ))}
+        </select>
+      </label>
       <div className="trip-card-form-dates">
         <div className="trip-card-form-field">
           <span>出發</span>

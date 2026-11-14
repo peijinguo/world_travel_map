@@ -650,3 +650,17 @@ img { max-width: 100%; height: auto; }
   .topbar.topbar--home .nav { right: clamp(24px, 5vw, 92px); }
 }
 .trip-card-country { margin-right: 6px; padding: 1px 7px; border-radius: 999px; background: #eef3f6; color: #5c7586; font-size: 12px; font-weight: 700; }
+.trip-card-form-country { display: flex; align-items: center; gap: 10px; color: #5c7586; font-size: 13px; font-weight: 700; }
+.trip-card-form-country select {
+  flex: 1;
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1.5px solid #b8c7cf;
+  border-radius: 7px 9px 6px 8px;
+  background: #fff;
+  color: #153e56;
+  font-size: 16px;
+  font-weight: 700;
+}
+.trip-card-dates { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trip-card li.is-manual .trip-card-badge { padding: 4px 8px; }
