@@ -193,3 +193,10 @@ main:has(.globe-home) { background: #0b0e17; }
   .space-star, .space-sparkle { animation: none; }
 }
 
+
+// Wide screens: the side panel's right edge lines up with the floating
+// header's (both 12px in from the window), and the globe keeps clear of it.
+@media (min-width: 761px) {
+  .globe-home .globe-panel { right: 12px; }
+  .globe-home .globe-stage { padding-right: calc(clamp(320px, 24vw, 446px) + 36px); }
+}
