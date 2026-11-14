@@ -1,0 +1,104 @@
+name: Sync ski resort live status
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+    inputs:
+      force_publish:
+        description: "Rebuild and publish the website even if the status has not changed"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-ski-resort-status
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Fetch official status
+        run: |
+          node scripts/sync-teine-lift-status.mjs
+          node scripts/sync-bankei-status.mjs
+          # Snow-Forecast's mountain forecasts for the resort pages (each kept
+          # for 3 hours, so most runs skip it).
+          node scripts/sync-teine-snow-forecast.mjs || echo "::warning::Teine forecast sync failed."
+          node scripts/sync-snow-forecasts.mjs || echo "::warning::Snow-Forecast sync failed."
+          # Taoyuan Airport's flight board for 機票住宿; a failure there must
+          # not hold up the ski status.
+          node scripts/sync-flight-status.mjs || echo "::warning::Flight status sync failed."
+
+      - name: Detect status changes
+        id: changes
+        shell: bash
+        run: |
+          if git diff --quiet -- src/data/teineLiftStatus.js src/data/bankeiStatus.js src/data/flightStatus.js src/data/teineSnowForecast.js src/data/snowForecasts.js; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Official status has not changed."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit updated status
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/data/teineLiftStatus.js src/data/bankeiStatus.js src/data/flightStatus.js src/data/teineSnowForecast.js src/data/snowForecasts.js
+          git commit -m "chore: sync ski resort live status"
+          git pull --rebase origin main
+          git push
+
+      # The site reads its Firebase settings at build time.
+      # The whole local .env.local is stored in the ENVLOCAL repository
+      # secret; without it the published site loses cloud sync,
+      # so skip publishing instead.
+      - name: Restore build settings
+        id: build-env
+        if: (steps.changes.outputs.changed == 'true' || inputs.force_publish)
+        shell: bash
+        env:
+          ENV_LOCAL: ${{ secrets.ENVLOCAL }}
+        run: |
+          printf '%s\n' "$ENV_LOCAL" | tr -d '\r' > .env.local
+          if grep -Eq '^VITE_FIREBASE_API_KEY=.+' .env.local; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::The ENVLOCAL secret is missing the Firebase settings; skipped publishing the website."
+          fi
+
+      - name: Build updated website
+        if: (steps.changes.outputs.changed == 'true' || inputs.force_publish) && steps.build-env.outputs.ready == 'true'
+        run: npx vite build
+
+      - name: Publish updated website
+        if: (steps.changes.outputs.changed == 'true' || inputs.force_publish) && steps.build-env.outputs.ready == 'true'
+        # gh-pages cannot parse "[bot]" in its -u option, so set the
+        # committer through git config instead. It also pushes from its own
+        # clone, which does not inherit the checkout credentials, so give it
+        # an authenticated repository URL. --dotfiles keeps .nojekyll, so Pages
+        # serves the build as is instead of running it through Jekyll.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          npx gh-pages -d dist --dotfiles -r "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
