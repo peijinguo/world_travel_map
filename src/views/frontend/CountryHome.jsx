@@ -99,9 +99,50 @@ function CountryHome() {
   const clamp = (value) => Math.min(SIZE - 120, Math.max(120, value));
   const emblem = [clamp(fx + (fx > SIZE / 2 ? -270 : 270)), clamp(fy - 240)];
 
+  // Where each motif sits: pushed out from its place (by its offset, or
+  // straight out from the map's middle), then nudged apart from its
+  // neighbours and kept inside the map, so no two motifs overlap.
+  const motifSpots = new Map();
+  if (drawing?.regions) {
+    const spots = places.map((place) => {
+      const [x, y] = drawing.project(place.lonLat);
+      let [ox, oy] = place.offset ?? [0, 0];
+      if (!place.offset) {
+        const dx = x - SIZE / 2;
+        const dy = y - SIZE * 0.45;
+        const length = Math.hypot(dx, dy) || 1;
+        [ox, oy] = [(dx / length) * 150, (dy / length) * 150];
+      }
+      return { id: place.id, x: x + ox, y: y + oy };
+    });
+    const GAP = 118;
+    const keepInside = (spot) => {
+      spot.x = Math.min(SIZE - 70, Math.max(70, spot.x));
+      spot.y = Math.min(SIZE - 110, Math.max(70, spot.y));
+    };
+    for (let round = 0; round < 80; round += 1) {
+      spots.forEach((a, i) => {
+        spots.slice(i + 1).forEach((b) => {
+          const dx = b.x - a.x;
+          const dy = b.y - a.y;
+          const distance = Math.hypot(dx, dy) || 0.01;
+          if (distance >= GAP) return;
+          const push = (GAP - distance) / 2;
+          a.x -= (dx / distance) * push;
+          a.y -= (dy / distance) * push;
+          b.x += (dx / distance) * push;
+          b.y += (dy / distance) * push;
+        });
+      });
+      spots.forEach(keepInside);
+    }
+    spots.forEach((spot) => motifSpots.set(spot.id, [Math.round(spot.x), Math.round(spot.y)]));
+  }
+
   const marker = (place) => {
     const [x, y] = drawing.project(place.lonLat);
-    const [ox, oy] = place.offset ?? [0, 0];
+    const [mx, my] = motifSpots.get(place.id);
+    const [ox, oy] = [mx - x, my - y];
     const active = place.id === activePlace?.id;
     return (
       <g
@@ -260,4 +301,11 @@ function CountryHome() {
   );
 }
 
-export default CountryHome;
+// A fresh map for each country, so moving from one country's page straight
+// to another's never shows the last country's map or place.
+function CountryHomeRoute() {
+  const { country } = useParams();
+  return <CountryHome key={country} />;
+}
+
+export default CountryHomeRoute;
