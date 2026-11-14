@@ -598,7 +598,7 @@ img { max-width: 100%; height: auto; }
 .brand-tip {
   position: absolute;
   top: calc(100% + 10px);
-  left: 50%;
+  left: -6px; // starts under the logo so the longer label stays on screen
   z-index: 1100;
   padding: 5px 11px;
   border-radius: 999px;
@@ -610,17 +610,16 @@ img { max-width: 100%; height: auto; }
   white-space: nowrap;
   pointer-events: none;
   opacity: 0;
-  transform: translate(-50%, -4px);
+  transform: translateY(-4px);
   transition: opacity .15s ease, transform .15s ease;
 }
 .brand-tip::before {
   content: "";
   position: absolute;
   bottom: 100%;
-  left: 50%;
+  left: 22px; // under the middle of the logo
   border: 5px solid transparent;
   border-bottom-color: #123653;
-  transform: translateX(-50%);
 }
 .brand--logo-only:hover .brand-tip,
-.brand--logo-only:focus-visible .brand-tip { opacity: 1; transform: translate(-50%, 0); }
+.brand--logo-only:focus-visible .brand-tip { opacity: 1; transform: none; }

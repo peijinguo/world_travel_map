@@ -150,7 +150,7 @@ function Header() {
             <span className="brand-mark brand-mark--logo" aria-hidden="true">
               <BrandLogo />
             </span>
-            <span className="brand-tip" aria-hidden="true">首頁</span>
+            <span className="brand-tip" aria-hidden="true">世界旅圖</span>
           </Link>
           <span className="brand-divider" aria-hidden="true" />
           <Link className="brand brand--country" to="/japan" aria-label="日本雪場地圖" onClick={() => setIsMobileMenuOpen(false)}>
