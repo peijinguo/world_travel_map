@@ -20,11 +20,14 @@ import {
 } from "../../services/firebase";
 import {
   findCoordinatesInText,
+  getSearchCountry,
   isLodgingName,
   requestRoute,
   requestTransitTime,
   searchJapanPlace,
+  setSearchCountry,
 } from "../../services/freeMaps";
+import { countryById } from "../../data/countries";
 import "../../assets/pages/_planner.scss";
 
 const STORAGE_KEY = "yuki-tabi-planner-days-v2";
@@ -1064,7 +1067,9 @@ const getGeocodingErrorMessage = (error) =>
 function geocodeJapanesePlace(text) {
   const query = getLocationQuery(text);
   if (!query) return Promise.resolve(null);
-  const cacheKey = query.toLocaleLowerCase();
+  // The same name can be a different place in another country's planner.
+  const country = getSearchCountry();
+  const cacheKey = `${country === "japan" ? "" : `${country}:`}${query.toLocaleLowerCase()}`;
   try {
     const cache = JSON.parse(localStorage.getItem(GEOCODE_CACHE_KEY)) ?? {};
     // 只重用成功的定位；先前暫時失敗留下的 null 必須允許重新查詢。
@@ -2459,7 +2464,14 @@ function RoadConditionSummary({ stops }) {
 }
 
 function Planner() {
-  const { user, syncSpaceId, syncVersion, tripName } = useAuth();
+  const { user, syncSpaceId, syncVersion, tripName, country } = useAuth();
+  // Stops are searched, and the route map starts, in this planner's country.
+  setSearchCountry(country);
+  const countryInfo = countryById(country) ?? countryById("japan");
+  const mapHome = useMemo(
+    () => ({ center: countryInfo.focus, zoom: countryInfo.mapZoom }),
+    [countryInfo],
+  );
   const cloudKey = user && syncSpaceId ? syncSpaceId : null;
   const [searchParams] = useSearchParams();
   const linkedVersionAppliedRef = useRef("");
@@ -3311,7 +3323,7 @@ function Planner() {
             </div>
           </div>
           <div className="planner-map-stage has-route-map">
-            <RouteMap stops={plannedStops} paths={routePaths} label={routeMapTitle} focus={mapFocus} />
+            <RouteMap stops={plannedStops} paths={routePaths} label={routeMapTitle} focus={mapFocus} home={mapHome} />
           </div>
           <p className="planner-map-hint">
           </p>

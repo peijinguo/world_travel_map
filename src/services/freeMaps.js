@@ -27,10 +27,26 @@ const ROUTE_CACHE_KEY = "yuki-tabi-route-cache-v1";
 const JAPAN_BBOX = "122,24,154,46";
 // Trips start and end in Taiwan (home, airport, 高鐵), so Taiwan is searched
 // when nothing in Japan matches.
+// Every country on the globe has its own 行程規劃; stops are searched in the
+// country whose planner is open (see setSearchCountry), then in Taiwan.
 const REGIONS = {
   japan: { countryCode: "JP", nominatimCode: "jp", bbox: JAPAN_BBOX },
   taiwan: { countryCode: "TW", nominatimCode: "tw", bbox: "118,21,123,27" },
+  iceland: { countryCode: "IS", nominatimCode: "is", bbox: "-25,63,-13,67" },
+  norway: { countryCode: "NO", nominatimCode: "no", bbox: "4,57,32,72" },
+  finland: { countryCode: "FI", nominatimCode: "fi", bbox: "19,59,32,71" },
+  netherlands: { countryCode: "NL", nominatimCode: "nl", bbox: "3,50.7,7.3,53.7" },
+  france: { countryCode: "FR", nominatimCode: "fr", bbox: "-5.5,41,10,51.5" },
+  switzerland: { countryCode: "CH", nominatimCode: "ch", bbox: "5.9,45.8,10.5,47.9" },
+  newZealand: { countryCode: "NZ", nominatimCode: "nz", bbox: "166,-48,179,-34" },
+  canada: { countryCode: "CA", nominatimCode: "ca", bbox: "-141,41,-52,84" },
 };
+
+let searchCountry = "japan";
+export const setSearchCountry = (id) => {
+  searchCountry = REGIONS[id] ? id : "japan";
+};
+export const getSearchCountry = () => searchCountry;
 const REQUEST_TIMEOUT_MS = 10000;
 
 // The planner decides lodging and food stops from Google-style place types, so
@@ -216,7 +232,17 @@ let photonDownUntil = 0;
 
 // fullName is the stop's complete name when query is only a part of it.
 // Photon is tried first; Nominatim takes over when Photon is down.
+// Searches the open country (Japan unless setSearchCountry says otherwise).
 export async function searchJapanPlace(query, fullName = query) {
+  if (searchCountry === "taiwan") {
+    return (await searchTaiwanPlace(query, fullName)) ?? searchRegion(query, fullName, REGIONS.taiwan);
+  }
+  if (searchCountry !== "japan") {
+    return (
+      (await searchRegion(query, fullName, REGIONS[searchCountry])) ??
+      (await searchTaiwanPlace(query, fullName))
+    );
+  }
   return (
     (await searchRegion(query, fullName, REGIONS.japan)) ??
     (await searchJapaneseAddress(query)) ??
@@ -300,8 +326,14 @@ async function searchPhoton(query, fullName, region = REGIONS.japan) {
   };
 }
 
+const inBox = (bbox, latitude, longitude) => {
+  const [west, south, east, north] = bbox.split(",").map(Number);
+  return latitude > south - 1 && latitude < north + 1 && longitude > west - 1 && longitude < east + 1;
+};
 const inJapan = (latitude, longitude) =>
-  (latitude > 20 && latitude < 46 && longitude > 122 && longitude < 154) ||
+  (searchCountry === "japan"
+    ? latitude > 20 && latitude < 46 && longitude > 122 && longitude < 154
+    : inBox(REGIONS[searchCountry].bbox, latitude, longitude)) ||
   // Taiwan, for pasted coordinates of the trip's start and end.
   (latitude > 21 && latitude < 27 && longitude > 118 && longitude < 123);
 

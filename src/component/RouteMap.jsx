@@ -293,8 +293,13 @@ function makeStopMarker(map, stop, index, coordinate, offset, allCoordinates = [
   return new maplibregl.Marker({ element: marker, anchor: "bottom", offset }).setLngLat(coordinate);
 }
 
-function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = null }) {
+// `home` is where the map starts before any stop is placed: the country of
+// the open planner (Japan unless told otherwise).
+const JAPAN_HOME = { center: JAPAN_CENTER, zoom: JAPAN_ZOOM };
+
+function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = null, home = JAPAN_HOME }) {
   const canvasRef = useRef(null);
+  const homeRef = useRef(home);
   const mapRef = useRef(null);
   const markersRef = useRef([]);
   const stopsRef = useRef(stops);
@@ -320,14 +325,20 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
     pathsRef.current = paths;
   }, [stops, paths]);
 
+  // Another country's planner: show that country while there are no stops.
+  useEffect(() => {
+    homeRef.current = home;
+    if (mapReady && !stopsRef.current.length) mapRef.current?.jumpTo(home);
+  }, [home, mapReady]);
+
   useEffect(() => {
     if (!webglSupported || !canvasRef.current) return undefined;
     const map = new maplibregl.Map({
       container: canvasRef.current,
       style: MAP_STYLE,
-      center: JAPAN_CENTER,
-      zoom: JAPAN_ZOOM,
-      minZoom: 2,
+      center: homeRef.current.center,
+      zoom: homeRef.current.zoom,
+      minZoom: 1.5,
       attributionControl: false,
     });
     mapRef.current = map;
@@ -415,7 +426,7 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
     );
 
     if (!coordinates.length) {
-      map.jumpTo({ center: JAPAN_CENTER, zoom: JAPAN_ZOOM });
+      map.jumpTo(homeRef.current);
     } else if (coordinates.length === 1) {
       map.jumpTo({ center: coordinates[0], zoom: 12 });
     } else {
