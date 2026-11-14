@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { loadPlannerCloud, subscribePlannerCloud } from "../../services/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { countryBase } from "../../data/countries";
 import { Link, useSearchParams } from "react-router-dom";
@@ -19,6 +20,8 @@ const normalizeVersionLabel = (label) => {
 
 const LODGING_STORAGE_KEY = "yuki-tabi-lodgings-v1";
 const PLANNER_STORAGE_KEY = "yuki-tabi-planner-days-v2";
+// Which synced trip this device's copy of 行程規劃 belongs to (Planner.jsx).
+const PLANNER_SPACE_STORAGE_KEY = "yuki-tabi-planner-space-v1";
 const NON_LODGING_NAME_PATTERN = /滑雪場|滑雪场|スキー場|ski\s*(?:area|resort)/iu;
 const CHECKOUT_PATTERN = /退房|退宿|チェック[\s-]*アウト|check[\s-]*out/iu;
 const LODGING_TYPES = new Set([
@@ -62,12 +65,14 @@ const formatStayDate = (dateString, dayNumber) => {
   return `${ymd} (${weekday}) DAY ${dayNumber ?? "?"} 入住`;
 };
 
-function loadLodgings() {
+// The lodgings of a trip, from its 行程規劃 days: the synced trip's days when
+// given, else this device's copy (which may belong to another trip).
+function loadLodgings(days) {
   try {
     const lodgings = JSON.parse(localStorage.getItem(LODGING_STORAGE_KEY)) ?? [];
     if (!Array.isArray(lodgings)) return [];
 
-    const plannerDays = JSON.parse(localStorage.getItem(PLANNER_STORAGE_KEY)) ?? [];
+    const plannerDays = days ?? JSON.parse(localStorage.getItem(PLANNER_STORAGE_KEY)) ?? [];
     const lodgingItems = Array.isArray(plannerDays)
       ? plannerDays.flatMap((day, dayIndex) => {
           const versions = Array.isArray(day.versions) && day.versions.length
@@ -145,8 +150,35 @@ function loadLodgings() {
 
 function Hotel() {
   // This country's own pages (Japan: /hotel, others: /c/<id>/hotel).
-  const base = countryBase(useAuth().country);
-  const [lodgings, setLodgings] = useState(loadLodgings);
+  const { country, user, syncSpaceId, isFirebaseConfigured } = useAuth();
+  const base = countryBase(country);
+  const cloudKey = user && syncSpaceId ? syncSpaceId : null;
+  // This device's copy of 行程規劃 is only used when it is this trip's.
+  const [lodgings, setLodgings] = useState(() =>
+    !isFirebaseConfigured || localStorage.getItem(PLANNER_SPACE_STORAGE_KEY) === syncSpaceId
+      ? loadLodgings()
+      : [],
+  );
+  // The chosen trip's days from the cloud, so switching trips (or coming
+  // from another country's pages) always shows that trip's lodgings.
+  const cloudDaysRef = useRef(null);
+  useEffect(() => {
+    cloudDaysRef.current = null;
+    if (!cloudKey) return undefined;
+    let cancelled = false;
+    const apply = (cloud) => {
+      if (cancelled) return;
+      const days = Array.isArray(cloud?.days) ? cloud.days : [];
+      cloudDaysRef.current = days;
+      setLodgings(loadLodgings(days));
+    };
+    loadPlannerCloud(cloudKey).then(apply).catch(() => {});
+    const stop = subscribePlannerCloud(cloudKey, apply, () => {});
+    return () => {
+      cancelled = true;
+      stop();
+    };
+  }, [cloudKey]);
   const [searchParams] = useSearchParams();
   const selectedLodgingId = searchParams.get("lodging");
   const availableVersions = [
@@ -162,7 +194,10 @@ function Hotel() {
     (lodging) => normalizeVersionLabel(lodging.stayVersionLabel) === selectedVersion,
   );
   const [selectedLodgingElement, setSelectedLodgingElement] = useState(null);
-  const refreshLodgings = useCallback(() => setLodgings(loadLodgings()), []);
+  const refreshLodgings = useCallback(
+    () => setLodgings(loadLodgings(cloudDaysRef.current ?? undefined)),
+    [],
+  );
   const groupedLodgings = [...versionLodgings.reduce((groups, lodging) => {
     const key = lodging.id || `${lodging.name}::${lodging.displayName}`;
     const group = groups.get(key) ?? {

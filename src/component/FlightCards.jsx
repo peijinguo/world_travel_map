@@ -298,7 +298,8 @@ function FlightCards() {
     if (!cloudKey) return undefined;
     let cancelled = false;
     const apply = (cloud) => {
-      if (!cancelled && Array.isArray(cloud?.days) && cloud.days.length) setDays(cloud.days);
+      // A trip with no days yet has no flights, not the last trip's.
+      if (!cancelled) setDays(Array.isArray(cloud?.days) ? cloud.days : []);
     };
     loadPlannerCloud(cloudKey).then(apply).catch(() => {});
     const stop = subscribePlannerCloud(cloudKey, apply, () => {});
