@@ -129,7 +129,7 @@ export default function usePrepSnowfall(sheetRef) {
   const cap = (
     <svg
       className={`prep-snowcap ${brushing ? "is-brushed" : ""}`}
-      style={{ "--brush": brushing, "--level": Math.max(0.08, level) }}
+      style={{ "--brush": brushing, "--level": level }}
       viewBox="0 0 400 30"
       preserveAspectRatio="none"
       aria-hidden="true"
