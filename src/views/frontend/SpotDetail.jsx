@@ -118,7 +118,7 @@ function SpotDetail() {
         <div>
           <Link className="back-to-map" to={`/c/${countryId}`}>← 返回{country.name}地圖</Link>
           <p className="resort-location">{regionName || country.name} · {place.name}</p>
-          <h1><span className="brush-title">{spot.name}</span></h1>
+          <h1>{spot.name}</h1>
         </div>
         <div className="resort-hero-motif" aria-hidden="true">
           <svg className="spot-hero-motif" viewBox="-24 -24 48 48"><PlaceMotif type={place.motif} /></svg>
@@ -128,7 +128,7 @@ function SpotDetail() {
         <section className="compact-resort-hero" aria-label={`${spot.name} heading`}>
           <div>
             <p className="resort-location">{regionName || country.name} · {place.name}</p>
-            <h1><span className="brush-title">{spot.name}</span></h1>
+            <h1>{spot.name}</h1>
           </div>
           <div className="resort-hero-motif" aria-hidden="true">
             <svg className="spot-hero-motif" viewBox="-24 -24 48 48"><PlaceMotif type={place.motif} /></svg>
