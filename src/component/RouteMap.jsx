@@ -378,7 +378,8 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
           "icon-rotate": ["get", "bearing"],
           "icon-rotation-alignment": "map",
           "icon-offset": byZoom((k) => ["case", isLeftFoot(k), ["literal", [-5, 0]], ["literal", [5, 0]]]),
-          "icon-size": 1.05,
+          // Small prints, so they read as a trail beside the pins, not over them.
+          "icon-size": 0.7,
           "icon-allow-overlap": true,
           "icon-ignore-placement": true,
           "icon-padding": 0,
