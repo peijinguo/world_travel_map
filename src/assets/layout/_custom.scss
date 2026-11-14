@@ -593,3 +593,34 @@ img { max-width: 100%; height: auto; }
   .brand-group { gap: 9px; }
   .brand-divider { height: 26px; }
 }
+// Hovering (or keyboard-focusing) the logo on an inner page says where it goes.
+.brand--logo-only { position: relative; }
+.brand-tip {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  z-index: 1100;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: #123653;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -4px);
+  transition: opacity .15s ease, transform .15s ease;
+}
+.brand-tip::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  border: 5px solid transparent;
+  border-bottom-color: #123653;
+  transform: translateX(-50%);
+}
+.brand--logo-only:hover .brand-tip,
+.brand--logo-only:focus-visible .brand-tip { opacity: 1; transform: translate(-50%, 0); }
