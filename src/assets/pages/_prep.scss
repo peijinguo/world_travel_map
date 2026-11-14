@@ -96,8 +96,15 @@ html:has(.prep-page), html:has(.prep-page) body { background: #fff; }
 // swipe brushes it all away; vertical drags still scroll the page.
 .prep-notebook { touch-action: pan-y; }
 // The cap is the original snow shape, grown upward from the frame line (y 19
-// of its 30) as the level rises.
-.prep-snowcap { position: absolute; top: -20px; left: -5px; z-index: 3; width: calc(100% + 10px); height: 42px; overflow: visible; pointer-events: none; transform: scaleY(var(--level)); transform-origin: 50% 63%; transition: transform .25s linear; }
+// of its 30) as the level rises: it starts from the frame line itself (20px
+// down its 42), so a thin layer sits right on the frame, and starts narrower
+// so its ends stay inside the rounded corners, fading out at both ends.
+.prep-snowcap { position: absolute; top: -20px; left: -5px; z-index: 3; width: calc(100% + 10px); height: 42px; overflow: visible; pointer-events: none; transform: scale(calc(.86 + .14 * var(--level)), var(--level)); transform-origin: 50% 47.6%; transition: transform .25s linear;
+  // While thin, the ends fade into the frame instead of ending in lumps.
+  --fade: calc((1 - var(--level)) * 14%);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 var(--fade), #000 calc(100% - var(--fade)), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 var(--fade), #000 calc(100% - var(--fade)), transparent);
+}
 .prep-snowcap path { fill: #fff; stroke: #34434a; stroke-width: 2; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 .prep-snowcap.is-brushed path { animation: prep-snow-brush .5s ease-in forwards; }
 .prep-snow-clumps { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
