@@ -39,6 +39,20 @@ function SpotDetail() {
   const [regionName, setRegionName] = useState("");
   const [forecast, setForecast] = useState(null);
   const [weatherState, setWeatherState] = useState("loading");
+  const [info, setInfo] = useState(null);
+
+  // The sight's introduction (src/data/spotInfo/<country>.js), loaded with
+  // the page so the map does not carry every country's text.
+  useEffect(() => {
+    if (!spot) return undefined;
+    let live = true;
+    import(`../../data/spotInfo/${countryId}.js`).then((module) => {
+      if (live) setInfo(module.default[spot.en] ?? null);
+    });
+    return () => {
+      live = false;
+    };
+  }, [countryId, spot]);
 
   useEffect(() => {
     if (!place) return undefined;
@@ -70,7 +84,6 @@ function SpotDetail() {
   if (!country || !place || !spot) return <Navigate to={country ? `/c/${countryId}` : "/"} replace />;
 
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${spot.en}, ${country.en}`)}`;
-  const wikiUrl = `https://zh.wikipedia.org/w/index.php?search=${encodeURIComponent(spot.name)}`;
   // Today is the current weather; the six days after it are the forecast.
   const days = forecast?.daily?.time?.slice(1, 7).map((date, offset) => {
     const index = offset + 1;
@@ -84,9 +97,6 @@ function SpotDetail() {
     };
   }) ?? [];
   const current = forecast?.current;
-  const otherSpots = place.spots
-    .map((item, index) => ({ ...item, index }))
-    .filter((item) => item.index !== Number(spotIndex));
 
   return (
     <div className="resort-detail-page spot-detail-page">
@@ -104,27 +114,25 @@ function SpotDetail() {
       <section className="resort-info-grid" aria-label={`${spot.name}資訊`}>
         <article className="resort-info-card spot-info-card">
           <h2><span className="brush-title">景點資訊</span></h2>
-          <dl className="spot-facts">
-            <div><dt>名稱</dt><dd>{spot.name}<small>{spot.en}</small></dd></div>
-            <div><dt>所在地</dt><dd>{country.name} · {regionName || "—"} · {place.name}</dd></div>
-            <div><dt>城鎮特色</dt><dd>{place.note}</dd></div>
-          </dl>
+          {info ? (
+            <>
+              <p className="spot-intro">{info.intro}</p>
+              <ul className="spot-highlights">
+                {info.highlights.map((item) => <li key={item}>{item}</li>)}
+              </ul>
+              <dl className="spot-facts">
+                <div><dt>建議停留</dt><dd>{info.stay}</dd></div>
+                <div><dt>最佳季節</dt><dd>{info.season}</dd></div>
+                <div><dt>交通</dt><dd>{info.access}</dd></div>
+                <div><dt>小提醒</dt><dd>{info.tip}</dd></div>
+              </dl>
+            </>
+          ) : (
+            <p className="weather-message">正在載入景點介紹…</p>
+          )}
           <div className="spot-links">
             <a href={mapsUrl} target="_blank" rel="noreferrer">在 Google 地圖查看 ↗</a>
-            <a href={wikiUrl} target="_blank" rel="noreferrer">維基百科介紹 ↗</a>
           </div>
-          {otherSpots.length > 0 && (
-            <>
-              <h3 className="spot-more-title">{place.name}的其他景點</h3>
-              <ul className="spot-more">
-                {otherSpots.map((item) => (
-                  <li key={item.en}>
-                    <Link to={`/c/${countryId}/spot/${place.id}/${item.index}`}>{item.name}<small>{item.en}</small></Link>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
         </article>
 
         <div className="resort-weather-column">
