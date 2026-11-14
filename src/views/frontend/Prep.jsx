@@ -121,7 +121,7 @@ function Prep() {
       <div className="prep-notebook">
         <div className="prep-sheet">
         <header className="prep-heading">
-          <h1>行前準備</h1>
+          <h1><span className="brush-title">行前準備</span></h1>
           <p>
             {items.length ? (
               <span

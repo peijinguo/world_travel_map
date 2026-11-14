@@ -544,7 +544,7 @@ function Home() {
           <div className="panel-topline"><span>{activeTown.prefecture}</span><span>{activeTown.kana}</span></div>
           <div className="town-heading">
             <div className="town-illustration"><HandDrawnMotif type={activeTown.motif} /></div>
-            <div><h2>{activeTown.name}</h2><p>{activeTown.note}</p></div>
+            <div><h2><span className="brush-title">{activeTown.name}</span></h2><p>{activeTown.note}</p></div>
           </div>
           <ul className="resort-list">
             {activeTown.resorts.map((resort, index) => (

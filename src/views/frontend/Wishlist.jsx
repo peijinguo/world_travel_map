@@ -410,7 +410,7 @@ function Wishlist() {
     <section className="wishlist-page">
       <WishlistScene />
       <header className="wishlist-heading">
-        <h1>想吃清單</h1>
+        <h1><span className="brush-title">想吃清單</span></h1>
         <p>
           {!dishCount && "還沒有想吃的東西。"}
           上傳圖片新增，或在行程規劃打開店家的菜單，點菜名旁的圖示。
@@ -425,7 +425,7 @@ function Wishlist() {
       )}
       {wishes.length > 0 && (
         <section className="wishlist-day">
-          <h2>自己加的</h2>
+          <h2><span className="brush-title">自己加的</span></h2>
           <ul className="wishlist-wishes">
             {orderedWishes.map((wish) => (
               <li
@@ -453,7 +453,7 @@ function Wishlist() {
       {wishlist.map((day) => (
         <section className="wishlist-day" key={day.id}>
           <h2>
-            行程 {day.label}
+            <span className="brush-title">行程 {day.label}</span>
             {day.date && <small>{day.date.replaceAll("-", "/")}</small>}
           </h2>
           {day.shops.map((shop) => (

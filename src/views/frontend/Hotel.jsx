@@ -205,9 +205,9 @@ function Hotel() {
   return (
     <section className="hotel-page">
       <HotelScene />
-      <h2 className="hotel-section-title">機票</h2>
+      <h2 className="hotel-section-title"><span className="brush-title">機票</span></h2>
       <FlightCards />
-      <h2 className="hotel-section-title">住宿</h2>
+      <h2 className="hotel-section-title"><span className="brush-title">住宿</span></h2>
       {availableVersions.length > 0 && (
         <nav className="hotel-version-nav" aria-label="住宿行程版本">
           {availableVersions.map((version) => (

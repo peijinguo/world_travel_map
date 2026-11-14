@@ -623,3 +623,20 @@ img { max-width: 100%; height: auto; }
 }
 .brand--logo-only:hover .brand-tip,
 .brand--logo-only:focus-visible .brand-tip { opacity: 1; transform: none; }
+
+// The brown brush stroke under 「日本」 in the header, for page and section
+// titles on the Japan pages: <h1><span className="brush-title">…</span></h1>.
+.brush-title { position: relative; display: inline-block; }
+.brush-title::after {
+  content: "";
+  position: absolute;
+  top: calc(100% + 1px);
+  left: -2px;
+  right: 2px;
+  height: 7px;
+  pointer-events: none;
+  border-top: 3px solid #8b5a3c;
+  border-radius: 50%;
+  transform: rotate(-2deg);
+  opacity: .72;
+}

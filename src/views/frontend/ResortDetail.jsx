@@ -407,7 +407,7 @@ function ResortExperienceNote({ resort, storageKey }) {
     <section className="resort-experience-card" aria-labelledby="resort-experience-title">
       <div className="experience-heading">
         <div>
-          <h2 id="resort-experience-title">雪場體驗</h2>
+          <h2 id="resort-experience-title"><span className="brush-title">雪場體驗</span></h2>
         </div>
       </div>
 
@@ -1154,7 +1154,7 @@ function ResortDetail() {
         <div>
           <Link className="back-to-map" to="/japan">← 返回地圖</Link>
           <p className="resort-location">{town.prefecture} · {town.name}</p>
-          <h1>{resort}</h1>
+          <h1><span className="brush-title">{resort}</span></h1>
         </div>
         <div className="resort-hero-motif" aria-hidden="true"><HandDrawnMotif type={town.motif} /></div>
       </section>
@@ -1162,7 +1162,7 @@ function ResortDetail() {
         <section className="compact-resort-hero" aria-label={`${resort} resort heading`}>
           <div>
             <p className="resort-location">{town.prefecture} 繚 {town.name}</p>
-            <h1>{resort}</h1>
+            <h1><span className="brush-title">{resort}</span></h1>
           </div>
           <div className="resort-hero-motif" aria-hidden="true"><HandDrawnMotif type={town.motif} /></div>
         </section>
@@ -1170,7 +1170,7 @@ function ResortDetail() {
 
       <section className="resort-info-grid" aria-label={`${resort}雪場資訊`}>
         <article className="trail-card resort-info-card">
-          <h2>雪道資訊</h2>
+          <h2><span className="brush-title">雪道資訊</span></h2>
           {isSapporoMoiwa ? (
             <>
               <figure className="official-trail-map sapporo-moiwa-official-map">
@@ -1358,7 +1358,7 @@ function ResortDetail() {
 
         <div className="resort-weather-column">
           <article className="current-weather-card resort-info-card">
-          <h2>目前天氣</h2>
+          <h2><span className="brush-title">目前天氣</span></h2>
           {!isTeine && !isOfficialOnze && !isZaoSarukura && !isAppiKogen && (usesSnowSapporo ? snowSapporoState === "loading" : weatherState === "loading") && <p className="weather-message">正在取得最新預報…</p>}
           {!isTeine && !isOfficialOnze && !isZaoSarukura && !isAppiKogen && (usesSnowSapporo ? snowSapporoState === "error" : weatherState === "error") && <p className="weather-message">暫時無法取得天氣資料，請稍後再試。</p>}
           {isOfficialMoiwa && <><div className="official-moiwa-status"><span aria-hidden="true">⏸</span><div><strong>2025–26 SEASON COMPLETE</strong><p>官方公告：本季營運已結束。</p></div></div><a className="official-weather-link" href="https://niseko-moiwa.jp/slope/" target="_blank" rel="noreferrer">查看 Niseko Moiwa 官方即時公告 ↗</a></>}
@@ -1480,7 +1480,7 @@ function ResortDetail() {
 
           <section className="snow-forecast-card">
             <div className="forecast-heading">
-              <div><h2>未來 {isTeine ? 7 : daily?.length || 7} 天降雪量</h2></div>
+              <div><h2><span className="brush-title">未來 {isTeine ? 7 : daily?.length || 7} 天降雪量</span></h2></div>
               <small>單位：cm</small>
             </div>
             {!isTeine && weatherState === "loading" && <p className="weather-message">正在載入 7 天降雪預報…</p>}
