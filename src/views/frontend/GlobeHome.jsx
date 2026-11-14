@@ -209,6 +209,9 @@ function GlobeHome() {
     const country = globeCountries.find((item) => item.id === id);
     setSelectedId(id);
     turnTo(country.focus);
+    // The card sits at the top of the globe; on a phone scrolled down it
+    // would slide under the floating header, so the page goes back up.
+    if (phone && window.scrollY > 0) window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const enter = () => {
