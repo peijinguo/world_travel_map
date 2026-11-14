@@ -9,7 +9,7 @@ import {
   signInAnonymous,
   subscribeTripCodes,
 } from "../services/firebase";
-import { hashSyncCode } from "../services/syncCode";
+import { countryFromHash, hashSyncCode, spaceIdFor } from "../services/syncCode";
 
 const AuthContext = createContext(null);
 const SYNC_CODE_STORAGE_KEY = "travel-map-sync-code";
@@ -87,6 +87,10 @@ export function AuthProvider({ children }) {
   );
   const [syncSpaceId, setSyncSpaceId] = useState(null);
   const [syncVersion, setSyncVersion] = useState(0);
+  // The country whose pages are open; each country has its own copy of a
+  // trip's data. Read from the address at start, then kept up to date by the
+  // layout as the route changes (see FrontendLayout).
+  const [country, setCountry] = useState(() => countryFromHash());
 
   useEffect(() => {
     let attempted = false;
@@ -132,13 +136,13 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let cancelled = false;
     setSyncSpaceId(null);
-    hashSyncCode(syncCode).then((spaceId) => {
+    spaceIdFor(country, syncCode).then((spaceId) => {
       if (!cancelled) setSyncSpaceId(spaceId);
     });
     return () => {
       cancelled = true;
     };
-  }, [syncCode]);
+  }, [syncCode, country]);
 
   const setSyncCode = (value) => {
     const next = normalizeSyncCode(value);
@@ -155,7 +159,7 @@ export function AuthProvider({ children }) {
     setSyncSpaceId(null);
     setSyncCodeState(next);
     setSyncVersion((version) => version + 1);
-    hashSyncCode(next).then(setSyncSpaceId);
+    spaceIdFor(country, next).then(setSyncSpaceId);
     shareTripCode(next);
     return true;
   };
@@ -242,11 +246,13 @@ export function AuthProvider({ children }) {
       tripNames,
       tripName: tripNames[syncCode] ?? "",
       tripDirectoryId,
+      country,
+      setCountry,
       renameTrip,
     }),
     // The setters read these too, so a new list or directory id must reach them.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [user, authReady, authError, syncCode, syncCodes, localSyncCodes, tripDirectoryId, syncSpaceId, syncVersion, tripNames],
+    [user, authReady, authError, syncCode, syncCodes, localSyncCodes, tripDirectoryId, syncSpaceId, syncVersion, tripNames, country],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

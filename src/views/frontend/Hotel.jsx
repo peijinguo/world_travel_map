@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
+import { useAuth } from "../../context/AuthContext";
+import { countryBase } from "../../data/countries";
 import { Link, useSearchParams } from "react-router-dom";
 import { isLodgingName } from "../../services/freeMaps";
 import "../../assets/pages/_hotel.scss";
@@ -142,6 +144,8 @@ function loadLodgings() {
 }
 
 function Hotel() {
+  // This country's own pages (Japan: /hotel, others: /c/<id>/hotel).
+  const base = countryBase(useAuth().country);
   const [lodgings, setLodgings] = useState(loadLodgings);
   const [searchParams] = useSearchParams();
   const selectedLodgingId = searchParams.get("lodging");
@@ -214,7 +218,7 @@ function Hotel() {
             <Link
               key={version}
               className={version === selectedVersion ? "is-active" : undefined}
-              to={`/hotel?version=${encodeURIComponent(version)}`}
+              to={`${base}/hotel?version=${encodeURIComponent(version)}`}
             >
               {version}
             </Link>
@@ -244,7 +248,7 @@ function Hotel() {
                     .map((entry) => (
                       <Link
                         key={entry.key}
-                        to={`/planner?day=${encodeURIComponent(entry.dayId)}&version=${encodeURIComponent(entry.versionId)}`}
+                        to={`${base}/planner?day=${encodeURIComponent(entry.dayId)}&version=${encodeURIComponent(entry.versionId)}`}
                       >
                         {formatStayDate(entry.date, entry.dayNumber)}
                       </Link>

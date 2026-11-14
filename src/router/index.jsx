@@ -1,6 +1,7 @@
 import { createHashRouter } from "react-router-dom";
 import Home from "../views/frontend/Home";
 import GlobeHome from "../views/frontend/GlobeHome";
+import CountryHome from "../views/frontend/CountryHome";
 import ResortDetail from "../views/frontend/ResortDetail";
 import FrontendLayout from "../layout/FrontendLayout";
 import Planner from "../views/frontend/Planner";
@@ -40,7 +41,17 @@ export const router = createHashRouter([
             {
                 path: 'wishlist',
                 element: <Wishlist />
-            }
+            },
+            // Every other country: its map, then the same four pages, each
+            // with that country's own copy of the trip (see services/syncCode).
+            {
+                path: 'c/:country',
+                element: <CountryHome />,
+            },
+            { path: 'c/:country/prep', element: <Prep /> },
+            { path: 'c/:country/planner', element: <Planner /> },
+            { path: 'c/:country/hotel', element: <Hotel /> },
+            { path: 'c/:country/wishlist', element: <Wishlist /> },
 
         ]
     }

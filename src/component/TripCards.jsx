@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { isFirebaseConfigured, loadPlannerCloud, savePastTrip, subscribePastTrips } from "../services/firebase";
-import { hashSyncCode } from "../services/syncCode";
+import { spaceIdFor } from "../services/syncCode";
+import { countryBase, countryById, globeCountries } from "../data/countries";
 import PlannerDatePicker from "./PlannerDatePicker";
 
 // The planner keeps the current trip's days here when there is no cloud.
@@ -39,7 +40,11 @@ const readLocalDays = () => {
 };
 
 // Every saved trip with its dates: from the cloud when connected, otherwise
-// only the current trip, whose plan is the one kept on this device.
+// only the current trip, whose plan is the one kept on this device. Each
+// country keeps its own copy of a trip, so every trip is looked up in every
+// country; Japan lists all trips, the others only those with a plan there.
+const hasPlan = (days) =>
+  Array.isArray(days) && days.some((day) => day?.date || day?.items?.length);
 function useTripSummaries() {
   const { user, syncCode, syncCodes, tripNames } = useAuth();
   const [summaries, setSummaries] = useState(null);
@@ -51,16 +56,19 @@ function useTripSummaries() {
     const codes = codesKey ? codesKey.split(",") : [];
     const load = cloud
       ? Promise.all(
-          codes.map(async (code) => {
-            try {
-              const data = await loadPlannerCloud(await hashSyncCode(code));
-              return { code, ...summarise(data?.days) };
-            } catch {
-              return { code, ...summarise([]), failed: true };
-            }
-          }),
-        )
-      : Promise.resolve(codes.map((code) => ({ code, ...summarise(readLocalDays()) })));
+          globeCountries.flatMap(({ id: country }) =>
+            codes.map(async (code) => {
+              try {
+                const data = await loadPlannerCloud(await spaceIdFor(country, code));
+                if (country !== "japan" && !hasPlan(data?.days)) return null;
+                return { code, country, ...summarise(data?.days) };
+              } catch {
+                return country === "japan" ? { code, country, ...summarise([]), failed: true } : null;
+              }
+            }),
+          ),
+        ).then((found) => found.filter(Boolean))
+      : Promise.resolve(codes.map((code) => ({ code, country: "japan", ...summarise(readLocalDays()) })));
     load.then((result) => {
       if (live) setSummaries(result);
     });
@@ -134,9 +142,10 @@ function TripRow({ trip, today, kind, onPick, onRemove }) {
   const body = (
     <>
       <span className="trip-card-name">{trip.name}</span>
-      {trip.start && (
+      {(trip.start || trip.country) && (
         <span className="trip-card-dates">
-          {`${formatDate(trip.start)}${trip.end !== trip.start ? ` – ${formatDate(trip.end)}` : ""}`}
+          {trip.country && <span className="trip-card-country">{countryById(trip.country)?.name}</span>}
+          {trip.start && `${formatDate(trip.start)}${trip.end !== trip.start ? ` – ${formatDate(trip.end)}` : ""}`}
         </span>
       )}
       <span className={`trip-card-badge is-${kind}${trip.start && trip.start <= today && kind === "upcoming" ? " is-now" : ""}`}>{badge}</span>
@@ -163,7 +172,7 @@ function TripRow({ trip, today, kind, onPick, onRemove }) {
 
   return (
     <li>
-      <button type="button" className="trip-card-row" onClick={() => onPick(trip.code)}>
+      <button type="button" className="trip-card-row" onClick={() => onPick(trip.code, trip.country)}>
         {body}
       </button>
     </li>
@@ -244,12 +253,12 @@ function TripCards({ onDone }) {
     // Dated trips soonest first, then the ones without dates.
     .sort((a, b) => (a.start ?? "9999").localeCompare(b.start ?? "9999"));
 
-  const pick = (code) => {
+  const pick = (code, country = "japan") => {
     setSyncCode(code);
     onDone?.();
     // Render the planner right away: the spinning globe updates every frame,
     // and would otherwise keep interrupting the router's deferred page change.
-    navigate("/planner", { flushSync: true });
+    navigate(`${countryBase(country)}/planner`, { flushSync: true });
   };
 
   const card = (kind, title, icon, list, empty, extra) => (
@@ -276,7 +285,7 @@ function TripCards({ onDone }) {
         <ul>
           {list.map((trip) => (
             <TripRow
-              key={trip.id ?? trip.code}
+              key={trip.id ?? `${trip.country}-${trip.code}`}
               trip={trip}
               today={today}
               kind={kind}

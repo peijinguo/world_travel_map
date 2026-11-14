@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { countryBase } from "../../data/countries";
 import {
   addWishCloud,
   deleteWishCloud,
@@ -323,7 +324,7 @@ function useLongPressSort(items, onCommit) {
 }
 
 function Wishlist() {
-  const { user, syncSpaceId } = useAuth();
+  const { user, syncSpaceId, country } = useAuth();
   const cloudKey = user && syncSpaceId ? syncSpaceId : null;
   const [days, setDays] = useState(getInitialDays);
   const [cloudMenus, setCloudMenus] = useState({});
@@ -470,7 +471,7 @@ function Wishlist() {
           ))}
         </section>
       ))}
-      <Link className="wishlist-back" to="/planner">
+      <Link className="wishlist-back" to={`${countryBase(country)}/planner`}>
         回行程規劃
       </Link>
       {wishPendingDelete && (

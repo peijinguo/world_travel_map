@@ -4,7 +4,7 @@ import { geoConicConformal, geoContains, geoDistance, geoGraticule10, geoOrthogr
 import { feature, mesh } from "topojson-client";
 import worldTopo from "world-atlas/countries-110m.json";
 import CountryEmblem from "../../component/CountryEmblem";
-import { globeCountries, loadDetailed, mainland } from "../../data/countries";
+import { countryHomePath, globeCountries, loadDetailed, mainland } from "../../data/countries";
 import { PlanetOrbits, StarrySky } from "../../component/SpaceBackdrop";
 
 const SIZE = 1000;
@@ -80,7 +80,8 @@ function ProjectedCountry({ country, phone, onEnter, onClose }) {
     return { d: geoPath(projection)(shapes), focus: projection(country.focus) };
   }, [shapes, country, CARD.x, CARD.y, CARD.w, CARD.h, ui]);
 
-  const canEnter = Boolean(country.to);
+  // Every country now has its own pages to enter.
+  const canEnter = true;
 
   return (
     <g className="projected-country" key={country.id}>
@@ -98,7 +99,7 @@ function ProjectedCountry({ country, phone, onEnter, onClose }) {
           data-action="enter"
           role="button"
           tabIndex="0"
-          aria-label={canEnter ? `進入${country.name}地圖` : `${country.name}（即將推出）`}
+          aria-label={`進入${country.name}地圖`}
           onKeyDown={(event) => {
             if (event.key === "Enter" || event.key === " ") {
               event.preventDefault();
@@ -115,7 +116,7 @@ function ProjectedCountry({ country, phone, onEnter, onClose }) {
         </g>
         <text className="projected-name" x={CARD.x + 26 * ui} y={CARD.y + 40 * ui} style={{ fontSize: 30 * ui }}>{country.name}</text>
         <text className="projected-hint" x={CARD.x + CARD.w / 2} y={CARD.y + CARD.h - 16 * ui} textAnchor="middle" style={{ fontSize: 14 * ui }}>
-          {canEnter ? "點擊代表物，進入日本雪場地圖" : "地圖準備中，敬請期待"}
+          {country.id === "japan" ? "點擊代表物，進入日本雪場地圖" : `點擊代表物，進入${country.name}地圖`}
         </text>
         <g
           className="projected-close"
@@ -213,8 +214,7 @@ function GlobeHome() {
     if (!selected) return;
     // flushSync: the globe re-renders every frame, which would keep
     // interrupting the router's deferred (transition) page change.
-    if (selected.to) navigate(selected.to, { flushSync: true });
-    else setNotice(`${selected.name}地圖準備中，敬請期待！`);
+    navigate(countryHomePath(selected.id), { flushSync: true });
   };
 
   const projection = useMemo(
@@ -411,8 +411,8 @@ function GlobeHome() {
                 </div>
                 <div><h2>{selected.name}</h2><p>{selected.note}</p></div>
               </div>
-              <button type="button" className={`globe-enter ${selected.to ? "" : "is-soon"}`} onClick={enter}>
-                {selected.to ? "進入日本雪場地圖 →" : "即將推出"}
+              <button type="button" className="globe-enter" onClick={enter}>
+                {selected.id === "japan" ? "進入日本雪場地圖 →" : `進入${selected.name}地圖 →`}
               </button>
             </>
           ) : (

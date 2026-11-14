@@ -3,7 +3,9 @@ import { createPortal } from "react-dom";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import BrandLogo from "./BrandLogo";
-import JapanMapIcon from "./JapanMapIcon";
+import CountryMapIcon from "./CountryMapIcon";
+import { countryBase, countryById, countryHomePath } from "../data/countries";
+import { countryFromHash } from "../services/syncCode";
 import TripCards from "./TripCards";
 
 function Header() {
@@ -19,10 +21,15 @@ function Header() {
     tripNames,
     renameTrip,
   } = useAuth();
+  // The open country's pages: Japan at /prep…, the others at /c/<id>/prep….
+  // Read from the route itself so the header is right on the first render.
+  const { pathname } = useLocation();
+  const currentCountry = countryById(countryFromHash(`#${pathname}`)) ?? countryById("japan");
+  const base = countryBase(currentCountry.id);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   // The globe home page has no search, and its menu lists the trips instead
   // of the page links.
-  const isHome = useLocation().pathname === "/";
+  const isHome = pathname === "/";
   // Pages center things in the space below the header, whose height changes
   // when the menu wraps onto a second row; publish it as --topbar-height.
   const topbarRef = useRef(null);
@@ -153,12 +160,12 @@ function Header() {
             <span className="brand-tip" aria-hidden="true">世界旅圖</span>
           </Link>
           <span className="brand-divider" aria-hidden="true" />
-          <Link className="brand brand--country" to="/japan" aria-label="日本雪場地圖" onClick={() => setIsMobileMenuOpen(false)}>
+          <Link className="brand brand--country" to={countryHomePath(currentCountry.id)} aria-label={`${currentCountry.name}地圖`} onClick={() => setIsMobileMenuOpen(false)}>
             <span className="brand-mark brand-mark--logo" aria-hidden="true">
-              <JapanMapIcon />
+              <CountryMapIcon country={currentCountry} />
             </span>
             <span className="brand-copy">
-              <strong>日本</strong>
+              <strong>{currentCountry.name}</strong>
             </span>
           </Link>
         </div>
@@ -173,7 +180,7 @@ function Header() {
         ) : (
         <>
         {/* The ski guide is the home page, reached from the logo. */}
-        <NavLink to="/prep" onClick={() => setIsMobileMenuOpen(false)}>
+        <NavLink to={`${base}/prep`} onClick={() => setIsMobileMenuOpen(false)}>
           <span className="nav-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24">
               <rect x="5" y="3.5" width="14" height="17" rx="2" />
@@ -182,7 +189,7 @@ function Header() {
           </span>
           行前準備
         </NavLink>
-        <NavLink to="/planner" onClick={() => setIsMobileMenuOpen(false)}>
+        <NavLink to={`${base}/planner`} onClick={() => setIsMobileMenuOpen(false)}>
           <span className="nav-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24">
               <path d="M5 20V5m0 1c4-3 7 3 12 0v8c-5 3-8-3-12 0" />
@@ -191,7 +198,7 @@ function Header() {
           </span>
           行程規劃
         </NavLink>
-        <NavLink to="/hotel" onClick={() => setIsMobileMenuOpen(false)}>
+        <NavLink to={`${base}/hotel`} onClick={() => setIsMobileMenuOpen(false)}>
           <span className="nav-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24">
               <path d="M4 11L12 4l8 7" />
@@ -201,7 +208,7 @@ function Header() {
           </span>
           機票住宿
         </NavLink>
-        <NavLink to="/wishlist" onClick={() => setIsMobileMenuOpen(false)}>
+        <NavLink to={`${base}/wishlist`} onClick={() => setIsMobileMenuOpen(false)}>
           <span className="nav-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24">
               <path d="M12 20s-7.5-4.6-7.5-10.2A4.2 4.2 0 0 1 12 7.4a4.2 4.2 0 0 1 7.5 2.4C19.5 15.4 12 20 12 20z" />

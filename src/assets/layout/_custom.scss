@@ -649,3 +649,4 @@ img { max-width: 100%; height: auto; }
 @media (min-width: 761px) {
   .topbar.topbar--home .nav { right: clamp(24px, 5vw, 92px); }
 }
+.trip-card-country { margin-right: 6px; padding: 1px 7px; border-radius: 999px; background: #eef3f6; color: #5c7586; font-size: 12px; font-weight: 700; }
