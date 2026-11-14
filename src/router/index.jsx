@@ -2,6 +2,7 @@ import { createHashRouter } from "react-router-dom";
 import Home from "../views/frontend/Home";
 import GlobeHome from "../views/frontend/GlobeHome";
 import CountryHome from "../views/frontend/CountryHome";
+import SpotDetail from "../views/frontend/SpotDetail";
 import ResortDetail from "../views/frontend/ResortDetail";
 import FrontendLayout from "../layout/FrontendLayout";
 import Planner from "../views/frontend/Planner";
@@ -52,6 +53,7 @@ export const router = createHashRouter([
             { path: 'c/:country/planner', element: <Planner /> },
             { path: 'c/:country/hotel', element: <Hotel /> },
             { path: 'c/:country/wishlist', element: <Wishlist /> },
+            { path: 'c/:country/spot/:place/:spot', element: <SpotDetail /> },
 
         ]
     }

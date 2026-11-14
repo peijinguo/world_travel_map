@@ -266,19 +266,15 @@ function CountryHome() {
           )}
           {activePlace?.spots ? (
             // Like the Japan map's town card listing its ski resorts: the
-            // place's sights, each opening on Google Maps.
+            // place's sights, each opening its own page (SpotDetail.jsx).
             <ul className="resort-list">
               {activePlace.spots.map((spot, index) => (
                 <li key={spot.en}>
                   <span>{String(index + 1).padStart(2, "0")}</span>
-                  <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${spot.en}, ${country.en}`)}`}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
+                  <Link to={`/c/${country.id}/spot/${activePlace.id}/${index}`}>
                     {spot.name}
                     <small>{spot.en}</small>
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>

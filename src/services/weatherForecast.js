@@ -59,10 +59,11 @@ const feelsLike = (temperature, windKmh) =>
     ? 13.12 + 0.6215 * temperature - 11.37 * windKmh ** 0.16 + 0.3965 * temperature * windKmh ** 0.16
     : temperature;
 
-const japanDate = (iso) =>
-  new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tokyo" }).format(new Date(iso));
+// The calendar day of a time in a time zone (Japan unless told otherwise).
+const localDate = (iso, timeZone = "Asia/Tokyo") =>
+  new Intl.DateTimeFormat("en-CA", { timeZone }).format(new Date(iso));
 
-async function fetchMetNo(latitude, longitude, signal) {
+async function fetchMetNo(latitude, longitude, signal, timeZone = "Asia/Tokyo") {
   const query = new URLSearchParams({
     lat: Number(latitude).toFixed(4),
     lon: Number(longitude).toFixed(4),
@@ -80,7 +81,7 @@ async function fetchMetNo(latitude, longitude, signal) {
     const details = entry.data?.instant?.details ?? {};
     const temperature = details.air_temperature;
     if (!Number.isFinite(temperature)) return;
-    const date = japanDate(entry.time);
+    const date = localDate(entry.time, timeZone);
     const day = days.get(date) ?? { max: -Infinity, min: Infinity, snow: 0, wind: 0, code: 0 };
     day.max = Math.max(day.max, temperature);
     day.min = Math.min(day.min, temperature);
@@ -109,6 +110,7 @@ async function fetchMetNo(latitude, longitude, signal) {
       weather_code: symbolToCode(nextHour?.summary?.symbol_code),
       wind_speed_10m: windKmh,
       snowfall: snowCm(nextHour?.details?.precipitation_amount ?? 0, now.air_temperature),
+      relative_humidity_2m: now.relative_humidity,
     },
     daily: {
       time: dates,
@@ -200,4 +202,32 @@ export async function fetchResortForecast(latitude, longitude, signal, resortKey
     if (signal.aborted) throw error;
     return fetchMetNo(latitude, longitude, signal);
   }
+}
+
+// The weather for a sight on a country map (SpotDetail.jsx): Open-Meteo for
+// the place's coordinates in its own time zone, today and the next six days;
+// MET Norway when Open-Meteo does not answer.
+export async function fetchPlaceForecast(latitude, longitude, signal, timeZone) {
+  try {
+    return await fetchPlaceOpenMeteo(latitude, longitude, signal);
+  } catch (error) {
+    if (signal.aborted) throw error;
+    return fetchMetNo(latitude, longitude, signal, timeZone);
+  }
+}
+
+async function fetchPlaceOpenMeteo(latitude, longitude, signal) {
+  const query = new URLSearchParams({
+    latitude: String(latitude),
+    longitude: String(longitude),
+    current: "temperature_2m,apparent_temperature,weather_code,wind_speed_10m,relative_humidity_2m,precipitation",
+    daily: "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max",
+    timezone: "auto",
+    forecast_days: "7",
+  });
+  const response = await fetch(`https://api.open-meteo.com/v1/forecast?${query}`, {
+    signal: withTimeout(signal, OPEN_METEO_TIMEOUT),
+  });
+  if (!response.ok) throw new Error("Open-Meteo request failed");
+  return response.json();
 }

@@ -1158,3 +1158,29 @@
 @media (max-width: 900px) {
   .sapporo-moiwa-course-guide-grid { grid-template-columns: 1fr; }
 }
+
+// ---- A sight page (SpotDetail.jsx), in the resort page's layout ----
+.spot-hero-motif { width: 70px; height: 70px; overflow: visible; }
+.spot-info-card { display: grid; align-content: start; gap: 18px; }
+.spot-facts { display: grid; gap: 12px; margin: 10px 0 0; }
+.spot-facts div { padding: 14px 16px; border-radius: 14px; background: #f3f7f8; }
+.spot-facts dt { color: #8ca2af; font-size: 15px; }
+.spot-facts dd { margin: 4px 0 0; color: #244f68; font-size: 19px; font-weight: 800; }
+.spot-facts dd small { display: block; color: #8ca2af; font-size: 14px; font-weight: 600; }
+.spot-links { display: flex; flex-wrap: wrap; gap: 10px; }
+.spot-links a { padding: 10px 16px; border-radius: 999px; background: #123653; color: #fff; font-weight: 700; text-decoration: none; }
+.spot-links a:last-child { background: #e7edf0; color: #123653; }
+.spot-more-title { margin: 6px 0 0; color: #123653; font-size: 19px; font-weight: 900; }
+.spot-more { margin: 0; padding: 0; list-style: none; }
+.spot-more li + li { border-top: 1px dashed #dce7ed; }
+.spot-more a { display: block; padding: 10px 2px; color: #365a70; font-size: 17px; font-weight: 800; text-decoration: none; }
+.spot-more a small { display: block; color: #9eb0bb; font-size: 13px; font-weight: 600; }
+.spot-more a:hover { color: #5b8db0; }
+.spot-forecast-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.spot-forecast-grid .moiwa-forecast-day small { color: #77909c; font-size: 13px; }
+.spot-forecast-grid .moiwa-forecast-day em { color: #3181ad; font-size: 13px; font-style: normal; font-weight: 700; }
+@media (max-width: 760px) {
+  .spot-forecast-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .spot-forecast-grid .moiwa-forecast-day { border-bottom: 1px solid #e0e9ed; }
+  .spot-forecast-grid .moiwa-forecast-day:nth-child(3n) { border-right: 0; }
+}
