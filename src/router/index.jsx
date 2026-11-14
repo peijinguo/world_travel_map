@@ -1,5 +1,6 @@
 import { createHashRouter } from "react-router-dom";
 import Home from "../views/frontend/Home";
+import GlobeHome from "../views/frontend/GlobeHome";
 import ResortDetail from "../views/frontend/ResortDetail";
 import FrontendLayout from "../layout/FrontendLayout";
 import Planner from "../views/frontend/Planner";
@@ -14,6 +15,10 @@ export const router = createHashRouter([
         children: [
             {
                 index: true,
+                element: <GlobeHome />,
+            },
+            {
+                path: 'japan',
                 element: <Home />,
             },
             {

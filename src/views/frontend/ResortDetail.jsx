@@ -1128,7 +1128,7 @@ function ResortDetail() {
     return (
       <section className="resort-not-found">
         <p>找不到這座雪場。</p>
-        <Link to="/">返回雪鄉地圖</Link>
+        <Link to="/japan">返回雪鄉地圖</Link>
       </section>
     );
   }
@@ -1152,7 +1152,7 @@ function ResortDetail() {
     <div className="resort-detail-page">
       <section className="resort-detail-hero" ref={heroRef}>
         <div>
-          <Link className="back-to-map" to="/">← 返回地圖</Link>
+          <Link className="back-to-map" to="/japan">← 返回地圖</Link>
           <p className="resort-location">{town.prefecture} · {town.name}</p>
           <h1>{resort}</h1>
         </div>

@@ -127,7 +127,7 @@ function Header() {
 
   return (
     <header ref={topbarRef} className="topbar">
-      <Link className="brand" to="/" aria-label="雪旅地圖首頁" onClick={() => setIsMobileMenuOpen(false)}>
+      <Link className="brand" to="/" aria-label="世界旅圖首頁" onClick={() => setIsMobileMenuOpen(false)}>
         <span className="brand-mark brand-mark--image" aria-hidden="true">
           <img
             src={`${import.meta.env.BASE_URL}assets/logo-options/logo-snowflake.svg`}
@@ -135,7 +135,7 @@ function Header() {
           />
         </span>
         <span className="brand-copy">
-          <strong>雪旅地圖</strong>
+          <strong>世界旅圖</strong>
         </span>
       </Link>
       <nav

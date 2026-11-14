@@ -1,0 +1,151 @@
+// The globe home page (GlobeHome.jsx). It sits on the same sea of waves as
+// the Japan map and uses the same palette: deep green land with pale borders,
+// a dotted leader to each hand-drawn emblem, and the white side panel.
+
+.globe-hero {
+  position: relative;
+  min-height: calc(100dvh - var(--topbar-height, 72px));
+  display: flex;
+  align-items: center;
+}
+
+.globe-stage {
+  position: relative;
+  flex: 1;
+  height: calc(100dvh - var(--topbar-height, 72px));
+  // Leave room for the fixed panel on the right.
+  padding-right: calc(clamp(320px, 24vw, 446px) + clamp(20px, 4vw, 72px));
+}
+
+.globe-map {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+  overflow: visible;
+}
+.globe-map:active { cursor: grabbing; }
+
+.globe-shadow { fill: rgba(31, 59, 77, .18); }
+.globe-ocean { fill: url(#globe-ocean); }
+.globe-graticule { fill: none; stroke: #fff; stroke-opacity: .28; stroke-width: .7; }
+.globe-land {
+  fill: #2c5a4c;
+  stroke: #c4d8cf;
+  stroke-width: .6;
+  stroke-linejoin: round;
+  transition: fill .2s ease;
+}
+.globe-land.is-featured { fill: #17483b; stroke: #e6f1ec; stroke-width: 1.1; cursor: pointer; }
+.globe-land.is-featured.is-active { fill: #ffd96a; stroke: #fff6cf; stroke-width: 1.8; }
+.globe-shine { fill: url(#globe-shine); pointer-events: none; }
+.globe-rim { fill: none; stroke: #eef5f8; stroke-width: 3; pointer-events: none; }
+
+.globe-marker { cursor: pointer; outline: none; }
+.globe-marker-dot { fill: #fff6cf; stroke: #493d36; stroke-width: 1.2; }
+.globe-marker-pop {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(1.15);
+  transition: transform .2s ease-out;
+}
+.globe-marker-halo { fill: #f5f9fc; fill-opacity: .82; stroke: #fff; stroke-width: 1.5; }
+.globe-marker-label rect { fill: #123653; }
+.globe-marker-label text { fill: #fff; font-size: 13px; font-weight: 700; letter-spacing: .06em; }
+.globe-marker.is-active .globe-marker-pop,
+.globe-marker:focus-visible .globe-marker-pop { transform: scale(1.4); }
+.globe-marker.is-active .marker-leader,
+.globe-marker:focus-visible .marker-leader { opacity: .95; stroke-width: 1.6; }
+
+// The chosen country, projected out of the globe onto a card.
+.projector-beam { fill: url(#projector-beam); pointer-events: none; animation: projector-beam .45s ease-out both; }
+.projected-card { animation: projected-card .5s cubic-bezier(.2, .9, .3, 1.2) both; transform-origin: 500px 364px; }
+.projected-card-bg { fill: rgba(245, 249, 252, .93); stroke: #fff; stroke-width: 2.5; filter: drop-shadow(0 14px 22px rgba(31, 59, 77, .22)); }
+.projected-land { fill: #17483b; stroke: #d7e7df; stroke-width: 1; stroke-linejoin: round; }
+.projected-loading { fill: #829bad; }
+.projected-name { fill: #123653; font-weight: 900; letter-spacing: -.02em; }
+.projected-hint { fill: #5c8299; font-weight: 700; letter-spacing: .04em; }
+.projected-emblem { cursor: pointer; outline: none; }
+.projected-emblem-pop {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(1.35);
+  transition: transform .2s ease-out;
+}
+.projected-emblem-halo { fill: #fff; fill-opacity: .72; stroke: #b88f8f; stroke-width: 2; stroke-dasharray: 4 3; }
+.projected-emblem.can-enter .projected-emblem-pop { animation: projected-emblem-bob 2.4s ease-in-out infinite; }
+.projected-emblem:hover .projected-emblem-pop,
+.projected-emblem:focus-visible .projected-emblem-pop { transform: scale(1.55); animation: none; }
+.projected-close { cursor: pointer; outline: none; }
+.projected-close circle { fill: #fff; stroke: #c9d8e1; stroke-width: 1.5; }
+.projected-close path { stroke: #365a70; stroke-width: 2; stroke-linecap: round; }
+.projected-close:hover circle, .projected-close:focus-visible circle { fill: #eaf3f8; }
+
+@keyframes projector-beam { from { opacity: 0; } to { opacity: 1; } }
+@keyframes projected-card { from { opacity: 0; transform: translateY(60px) scale(.35); } to { opacity: 1; transform: none; } }
+@keyframes projected-emblem-bob { 0%, 100% { transform: scale(1.35) translateY(0); } 50% { transform: scale(1.35) translateY(-3px); } }
+
+.globe-notice {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  margin: 0;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: #123653;
+  color: #fff;
+  font-weight: 700;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  box-shadow: 0 10px 22px rgba(18, 54, 83, .25);
+}
+
+.globe-panel p { margin: 6px 0 0; color: #829bad; font-size: 17px; font-weight: 600; }
+.globe-panel .town-heading h2 { font-size: 40px; }
+.globe-list li button {
+  display: block;
+  width: 100%;
+  padding: 10px 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-weight: 700;
+  text-align: left;
+  transition: color .2s ease, transform .2s ease;
+}
+.globe-list li button:hover, .globe-list li button:focus-visible { color: #5b8db0; transform: translateX(3px); outline: none; }
+.globe-enter {
+  width: 100%;
+  margin-top: 6px;
+  padding: 14px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: #123653;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  transition: background .2s ease, transform .2s ease;
+}
+.globe-enter:hover, .globe-enter:focus-visible { background: #1f4f7a; transform: translateY(-1px); }
+.globe-enter.is-soon { background: #c9d8e1; color: #365a70; }
+
+@media (max-width: 760px) {
+  .globe-hero { flex-direction: column; align-items: stretch; padding-bottom: 20px; }
+  .globe-stage { flex: none; height: auto; padding-right: 0; aspect-ratio: 1; }
+  .globe-panel .town-heading h2 { font-size: 34px; }
+  .globe-notice { white-space: normal; text-align: center; width: max-content; max-width: calc(100% - 32px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .projector-beam, .projected-card, .projected-emblem.can-enter .projected-emblem-pop { animation: none; }
+}
+
+// Phones: the emblems grow so they stay easy to tap and read.
+.globe-map.is-phone .globe-marker-pop { transform: scale(1.55); }
+.globe-map.is-phone .globe-marker.is-active .globe-marker-pop { transform: scale(1.8); }
+// While a country is projected, the other emblems step back.
+.globe-marker.is-muted { opacity: .35 !important; }

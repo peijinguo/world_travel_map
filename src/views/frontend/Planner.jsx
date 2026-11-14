@@ -1428,7 +1428,7 @@ const downloadBackupFile = (backup) => {
   );
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = `雪旅地圖行程備份-${backup.id}.json`;
+  link.download = `世界旅圖行程備份-${backup.id}.json`;
   link.click();
   URL.revokeObjectURL(link.href);
 };
