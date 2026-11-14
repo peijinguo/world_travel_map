@@ -640,3 +640,12 @@ img { max-width: 100%; height: auto; }
   transform: rotate(-2deg);
   opacity: .72;
 }
+// The home header has only the logo and the menu button (the menu itself
+// drops down), so give it two columns: the button sits at the right edge
+// instead of the middle column used for the page links elsewhere.
+.topbar.topbar--home { grid-template-columns: 1fr auto; }
+.topbar--home .menu-toggle { grid-column: 2; }
+// On wide screens the drop-down lines up under the button.
+@media (min-width: 761px) {
+  .topbar.topbar--home .nav { right: clamp(24px, 5vw, 92px); }
+}
