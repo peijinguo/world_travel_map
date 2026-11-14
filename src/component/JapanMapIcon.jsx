@@ -1,5 +1,5 @@
 // A small map of Japan for the header on the Japan pages, drawn like the
-// site logo (BrandLogo.jsx): green land with an ink outline, and a red sun.
+// site logo (BrandLogo.jsx): green land with an ink outline.
 // The outline is the 1:110m Natural Earth coastline of Honshu, Hokkaido and
 // Shikoku, projected into the 48 x 48 box.
 
@@ -12,8 +12,7 @@ const JAPAN =
 function JapanMapIcon() {
   return (
     <svg className="japan-map-icon" viewBox="0 0 48 48" aria-hidden="true">
-      <circle className="japan-map-icon-sun" cx="13" cy="15" r="8" fill="#e9776b" stroke={INK} strokeWidth="2.2" />
-      <path className="japan-map-icon-land" d={JAPAN} fill="#93c07f" stroke={INK} strokeWidth="2" strokeLinejoin="round" />
+      <path className="japan-map-icon-land" transform="translate(0 -1)" d={JAPAN} fill="#93c07f" stroke={INK} strokeWidth="2" strokeLinejoin="round" />
     </svg>
   );
 }
