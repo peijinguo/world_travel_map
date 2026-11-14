@@ -90,10 +90,11 @@ const makeRouteLine = (coordinates, paths = []) => ({
 const FOOTPRINT_SOURCE_ID = "planner-footprints";
 const STEP_METERS = 20;
 const MAX_STEPS_PER_LEG = 4000;
-// Zoomed out, only every 2^k-th step is drawn so the prints stay about one
-// step apart on screen: k = 0 at zoom 17 and grows by one per zoom level.
+// Zoomed out, only every 2^k-th step is drawn so the prints stay evenly
+// spaced on screen: k = 0 at zoom 16 and grows by one per zoom level (16
+// rather than 17 keeps the trail twice as dense as one print per step width).
 const FOOTPRINT_MIN_ZOOM = 5;
-const FOOTPRINT_FULL_ZOOM = 17;
+const FOOTPRINT_FULL_ZOOM = 16;
 const skipLevels = Array.from(
   { length: FOOTPRINT_FULL_ZOOM - FOOTPRINT_MIN_ZOOM + 1 },
   (_, index) => ({ zoom: FOOTPRINT_MIN_ZOOM + index, k: FOOTPRINT_FULL_ZOOM - FOOTPRINT_MIN_ZOOM - index }),
@@ -185,7 +186,7 @@ function makeFootprintImage(mirrored) {
   context.lineWidth = 2.4;
   context.strokeStyle = "rgba(255, 255, 255, 0.95)";
   context.stroke();
-  context.fillStyle = "#7d898f"; // a lighter grey than the stop pins
+  context.fillStyle = "#4f5a60"; // a dark grey, a shade lighter than the stop pins
   context.fill();
   return { image: context.getImageData(0, 0, canvas.width, canvas.height), pixelRatio: scale };
 }
@@ -198,10 +199,10 @@ const footprintOpacity = (head) =>
     "behind",
     ["-", head, shownStep(k)],
     ["case",
-      ["<", ["var", "behind"], 0], 0.45,
+      ["<", ["var", "behind"], 0], 0.68,
       ["<", ["var", "behind"], STEP_TRAIL],
-      ["-", 1, ["*", ["/", ["var", "behind"], STEP_TRAIL], 0.3]],
-      0.7],
+      ["-", 1, ["*", ["/", ["var", "behind"], STEP_TRAIL], 0.15]],
+      0.85],
   ]);
 
 // Which drawn steps are on screen, in walking order, so the walker only
