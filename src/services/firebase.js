@@ -140,6 +140,29 @@ export async function removeTripCode(directoryId, code) {
   );
 }
 
+// Trips already taken that were added by hand on the home page menu, shared
+// in the trip directory like the trip codes: { trips: { [id]: { name, start, end } } }.
+const pastTripsDoc = (directoryId) =>
+  doc(db, "syncSpaces", directoryId, "appData", "pastTrips");
+
+export function subscribePastTrips(directoryId, onData, onError) {
+  if (!db) return () => {};
+  return onSnapshot(
+    pastTripsDoc(directoryId),
+    (snapshot) => onData(snapshot.exists() ? snapshot.data().trips ?? {} : {}),
+    onError,
+  );
+}
+
+export async function savePastTrip(directoryId, id, trip) {
+  if (!db) return;
+  await setDoc(
+    pastTripsDoc(directoryId),
+    { trips: { [id]: trip ?? deleteField() }, updatedAt: serverTimestamp() },
+    { merge: true },
+  );
+}
+
 // Deletes everything a trip keeps in the cloud: the itinerary, store menus,
 // resort notes and the 想吃清單 photos. It cannot be undone.
 export async function deleteTripCloud(syncSpaceId) {

@@ -9,6 +9,7 @@ import {
   signInAnonymous,
   subscribeTripCodes,
 } from "../services/firebase";
+import { hashSyncCode } from "../services/syncCode";
 
 const AuthContext = createContext(null);
 const SYNC_CODE_STORAGE_KEY = "travel-map-sync-code";
@@ -50,13 +51,6 @@ function getSavedSyncCodes(currentCode) {
   }
 }
 
-async function hashSyncCode(code) {
-  const data = new TextEncoder().encode(`travel-map:${code}`);
-  const digest = await crypto.subtle.digest("SHA-256", data);
-  return [...new Uint8Array(digest)]
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
-}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -247,6 +241,7 @@ export function AuthProvider({ children }) {
       deleteTrip,
       tripNames,
       tripName: tripNames[syncCode] ?? "",
+      tripDirectoryId,
       renameTrip,
     }),
     // The setters read these too, so a new list or directory id must reach them.

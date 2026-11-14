@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import BrandLogo from "./BrandLogo";
+import TripCards from "./TripCards";
 
 function Header() {
   const {
@@ -17,6 +19,9 @@ function Header() {
     renameTrip,
   } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  // The globe home page has no search, and its menu lists the trips instead
+  // of the page links.
+  const isHome = useLocation().pathname === "/";
   // Pages center things in the space below the header, whose height changes
   // when the menu wraps onto a second row; publish it as --topbar-height.
   const topbarRef = useRef(null);
@@ -126,13 +131,10 @@ function Header() {
 
 
   return (
-    <header ref={topbarRef} className="topbar">
+    <header ref={topbarRef} className={`topbar${isHome ? " topbar--home" : ""}`}>
       <Link className="brand" to="/" aria-label="世界旅圖首頁" onClick={() => setIsMobileMenuOpen(false)}>
-        <span className="brand-mark brand-mark--image" aria-hidden="true">
-          <img
-            src={`${import.meta.env.BASE_URL}assets/logo-options/logo-snowflake.svg`}
-            alt=""
-          />
+        <span className="brand-mark brand-mark--logo" aria-hidden="true">
+          <BrandLogo />
         </span>
         <span className="brand-copy">
           <strong>世界旅圖</strong>
@@ -141,8 +143,12 @@ function Header() {
       <nav
         className={`nav${isMobileMenuOpen ? " nav--open" : ""}`}
         id="mobile-navigation"
-        aria-label="主要選單"
+        aria-label={isHome ? "我的行程" : "主要選單"}
       >
+        {isHome ? (
+          <TripCards onDone={() => setIsMobileMenuOpen(false)} />
+        ) : (
+        <>
         {/* The ski guide is the home page, reached from the logo. */}
         <NavLink to="/prep" onClick={() => setIsMobileMenuOpen(false)}>
           <span className="nav-icon" aria-hidden="true">
@@ -180,6 +186,8 @@ function Header() {
           </span>
           想吃清單
         </NavLink>
+        </>
+        )}
       </nav>
       <button
         className={`menu-toggle${isMobileMenuOpen ? " menu-toggle--open" : ""}`}
@@ -193,6 +201,7 @@ function Header() {
         <span />
         <span />
       </button>
+      {!isHome && (
       <div className="header-controls">
         <div className="header-sync" ref={syncRef}>
           <button
@@ -389,6 +398,7 @@ function Header() {
           )}
         </div>
       </div>
+      )}
       {codePendingRemoval &&
         createPortal(
           <div

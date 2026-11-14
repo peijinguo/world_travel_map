@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { geoCentroid, geoConicConformal, geoContains, geoDistance, geoGraticule10, geoOrthographic, geoPath } from "d3-geo";
-import { feature } from "topojson-client";
+import { feature, mesh } from "topojson-client";
 import worldTopo from "world-atlas/countries-110m.json";
 import CountryEmblem from "../../component/CountryEmblem";
-import HomeWaves from "../../component/HomeWaves";
+import { PlanetOrbits, StarrySky } from "../../component/SpaceBackdrop";
 
 // The countries on the globe. `focus` is a real [longitude, latitude] on the
 // country's land: the globe turns to it, and its emblem and the projected
@@ -29,13 +29,16 @@ export const globeCountries = [
 
 const SIZE = 1000;
 const CENTER = [500, 540];
-const RADIUS = 380;
+const RADIUS = 330;
 // Degrees the globe turns per globe unit dragged.
 const DRAG_SPEED = 0.28;
 const START = [70, 32];
 
 const featured = new Map(globeCountries.map((country) => [country.topoId, country]));
 const graticule = geoGraticule10();
+// Coastlines only (edges that belong to one country), drawn as one dark ink
+// line so the land reads like the hand-drawn planets around it.
+const coastline = mesh(worldTopo, worldTopo.objects.countries, (a, b) => a === b);
 const sphere = { type: "Sphere" };
 
 const easeInOut = (t) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
@@ -319,7 +322,7 @@ function GlobeHome() {
 
   return (
     <div className="home-page globe-home">
-      <HomeWaves />
+      <StarrySky />
       <section className="globe-hero" aria-labelledby="globe-title">
         <h1 id="globe-title" className="visually-hidden">旅行地圖：選擇國家</h1>
         <div className="globe-stage">
@@ -338,13 +341,19 @@ function GlobeHome() {
           >
             <defs>
               <radialGradient id="globe-ocean" cx="38%" cy="32%" r="75%">
-                <stop offset="0" stopColor="#d6e6ef" />
-                <stop offset=".6" stopColor="#a8c2d3" />
-                <stop offset="1" stopColor="#7f9fb4" />
+                <stop offset="0" stopColor="#8cc3ea" />
+                <stop offset=".7" stopColor="#6fa9d8" />
+                <stop offset="1" stopColor="#5b93c4" />
               </radialGradient>
               <radialGradient id="globe-shine" cx="34%" cy="28%" r="60%">
-                <stop offset="0" stopColor="#fff" stopOpacity=".38" />
-                <stop offset="1" stopColor="#fff" stopOpacity="0" />
+                <stop offset="0" stopColor="#fff" stopOpacity=".22" />
+                <stop offset=".55" stopColor="#fff" stopOpacity="0" />
+                <stop offset=".85" stopColor="#0b0e17" stopOpacity="0" />
+                <stop offset="1" stopColor="#0b0e17" stopOpacity=".22" />
+              </radialGradient>
+              <radialGradient id="globe-glow">
+                <stop offset=".78" stopColor="#8fc4ff" stopOpacity=".28" />
+                <stop offset="1" stopColor="#8fc4ff" stopOpacity="0" />
               </radialGradient>
               <linearGradient id="projector-beam" x1="0" y1="1" x2="0" y2="0">
                 <stop offset="0" stopColor="#fff" stopOpacity=".7" />
@@ -352,8 +361,11 @@ function GlobeHome() {
               </linearGradient>
             </defs>
 
+            <circle className="globe-glow" cx={CENTER[0]} cy={CENTER[1]} r={RADIUS + 46} />
+            <PlanetOrbits center={CENTER} />
+
             <g className="globe">
-              <circle className="globe-shadow" cx={CENTER[0] + 10} cy={CENTER[1] + 16} r={RADIUS} />
+              <circle className="globe-outline" cx={CENTER[0]} cy={CENTER[1]} r={RADIUS + 5} />
               <path className="globe-ocean" d={path(sphere)} />
               <path className="globe-graticule" d={path(graticule)} />
               {world.map((shape) => {
@@ -371,9 +383,12 @@ function GlobeHome() {
                   />
                 );
               })}
+              <path className="globe-coast" d={path(coastline)} />
               <path className="globe-shine" d={path(sphere)} />
               <path className="globe-rim" d={path(sphere)} />
             </g>
+
+            <PlanetOrbits center={CENTER} front />
 
             <g className="globe-markers">
               {globeCountries.map((country) => {
@@ -402,7 +417,6 @@ function GlobeHome() {
                       }
                     }}
                   >
-                    <circle className="globe-marker-dot" cx={x} cy={y} r="4" />
                     <line className="marker-leader" x1={x} y1={y} x2={x + ox} y2={y + oy} />
                     <g transform={`translate(${x + ox} ${y + oy})`}>
                       <g className="globe-marker-pop">

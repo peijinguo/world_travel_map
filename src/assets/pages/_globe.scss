@@ -29,23 +29,26 @@
 }
 .globe-map:active { cursor: grabbing; }
 
-.globe-shadow { fill: rgba(31, 59, 77, .18); }
+.globe-glow { fill: url(#globe-glow); pointer-events: none; }
+.globe-outline { fill: #161a22; }
 .globe-ocean { fill: url(#globe-ocean); }
-.globe-graticule { fill: none; stroke: #fff; stroke-opacity: .28; stroke-width: .7; }
+.globe-graticule { fill: none; stroke: #fff; stroke-opacity: .16; stroke-width: .8; }
+// Cartoon land like the planets: light green with soft borders, a darker
+// green for the countries you can open, and one ink line along the coasts.
 .globe-land {
-  fill: #2c5a4c;
-  stroke: #c4d8cf;
-  stroke-width: .6;
+  fill: #a8d070;
+  stroke: #8fbd5a;
+  stroke-width: .8;
   stroke-linejoin: round;
   transition: fill .2s ease;
 }
-.globe-land.is-featured { fill: #17483b; stroke: #e6f1ec; stroke-width: 1.1; cursor: pointer; }
-.globe-land.is-featured.is-active { fill: #ffd96a; stroke: #fff6cf; stroke-width: 1.8; }
+.globe-land.is-featured { fill: #2f7a3e; stroke: #24632f; stroke-width: 1; cursor: pointer; }
+.globe-land.is-featured.is-active { fill: #ffd96a; stroke: #f0c24c; stroke-width: 1.4; }
+.globe-coast { fill: none; stroke: #161a22; stroke-width: 1.6; stroke-linejoin: round; pointer-events: none; }
 .globe-shine { fill: url(#globe-shine); pointer-events: none; }
 .globe-rim { fill: none; stroke: #eef5f8; stroke-width: 3; pointer-events: none; }
 
 .globe-marker { cursor: pointer; outline: none; }
-.globe-marker-dot { fill: #fff6cf; stroke: #493d36; stroke-width: 1.2; }
 .globe-marker-pop {
   transform-box: fill-box;
   transform-origin: center;
@@ -64,7 +67,7 @@
 .projector-beam { fill: url(#projector-beam); pointer-events: none; animation: projector-beam .45s ease-out both; }
 .projected-card { animation: projected-card .5s cubic-bezier(.2, .9, .3, 1.2) both; transform-origin: 500px 364px; }
 .projected-card-bg { fill: rgba(245, 249, 252, .93); stroke: #fff; stroke-width: 2.5; filter: drop-shadow(0 14px 22px rgba(31, 59, 77, .22)); }
-.projected-land { fill: #17483b; stroke: #d7e7df; stroke-width: 1; stroke-linejoin: round; }
+.projected-land { fill: #a8d070; stroke: #161a22; stroke-width: 2; stroke-linejoin: round; }
 .projected-loading { fill: #829bad; }
 .projected-name { fill: #123653; font-weight: 900; letter-spacing: -.02em; }
 .projected-hint { fill: #5c8299; font-weight: 700; letter-spacing: .04em; }
@@ -149,3 +152,44 @@
 .globe-map.is-phone .globe-marker.is-active .globe-marker-pop { transform: scale(1.8); }
 // While a country is projected, the other emblems step back.
 .globe-marker.is-muted { opacity: .35 !important; }
+
+// ---- Night sky (SpaceBackdrop.jsx) ----
+html:has(.globe-home),
+body:has(.globe-home),
+#root:has(.globe-home),
+main:has(.globe-home) { background: #0b0e17; }
+
+.space-sky {
+  position: fixed;
+  // Under the header too: the home header is see-through.
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 45%, #141a2b 0%, #0b0e17 70%);
+}
+.space-sky > svg:first-child { position: absolute; inset: 0; }
+.space-star { fill: #f5f1e3; animation: space-twinkle 4s ease-in-out infinite; }
+.space-sparkle {
+  position: absolute;
+  overflow: visible;
+  transform: translate(-50%, -50%);
+  animation: space-twinkle 3.2s ease-in-out infinite;
+}
+.space-sparkle path { fill: #f6d36b; }
+@keyframes space-twinkle {
+  0%, 100% { opacity: .95; }
+  50% { opacity: .3; }
+}
+
+.planet-orbits { pointer-events: none; }
+.planet-orbit { fill: none; stroke: #e9eef5; stroke-opacity: .75; stroke-width: 2; stroke-dasharray: 7 6; }
+
+// On the dark sky the dotted leaders and the globe's rim turn light.
+.globe-home .marker-leader { stroke: #e9eef5; opacity: .75; }
+.globe-home .globe-rim { stroke: #161a22; stroke-width: 6; }
+
+@media (prefers-reduced-motion: reduce) {
+  .space-star, .space-sparkle { animation: none; }
+}
+

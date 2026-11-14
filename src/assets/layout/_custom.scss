@@ -71,6 +71,49 @@
   .brand:hover .brand-mark--image img, .brand:hover .brand-copy strong { transform: none; }
   .brand:hover .brand-copy strong::after { animation: none; }
 }
+// The folded-map logo (BrandLogo.jsx). It brings its own colours, so it
+// opts out of the white line style above.
+.brand-mark--logo { padding: 0; overflow: visible; background: transparent; box-shadow: none; }
+.brand-mark--logo .brand-logo { width: 100%; height: 100%; overflow: visible; fill: initial; stroke: initial; stroke-width: initial; }
+.brand-logo-map {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: brand-map-unfold .6s cubic-bezier(.3, 1.3, .5, 1) both;
+}
+.brand-logo-pin {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  // Drop in after the map opens, then take turns to hop every few seconds.
+  animation: brand-pin-drop .55s cubic-bezier(.3, 1.5, .5, 1) both, brand-pin-hop 6s ease-in-out 1.6s infinite;
+}
+.brand-logo-pin.is-red { animation-delay: .45s, 1.6s; }
+.brand-logo-pin.is-yellow { animation-delay: .6s, 3.6s; }
+.brand-logo-pin.is-blue { animation-delay: .75s, 5.6s; }
+.brand:hover .brand-logo-pin, .brand:focus-visible .brand-logo-pin { animation: brand-pin-jump .5s ease-out; }
+.brand:hover .brand-logo-pin.is-yellow, .brand:focus-visible .brand-logo-pin.is-yellow { animation-delay: .08s; }
+.brand:hover .brand-logo-pin.is-blue, .brand:focus-visible .brand-logo-pin.is-blue { animation-delay: .16s; }
+@keyframes brand-map-unfold {
+  from { opacity: 0; transform: scaleX(.25); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes brand-pin-drop {
+  from { opacity: 0; transform: translateY(-14px) scale(.6); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes brand-pin-hop {
+  0%, 8%, 100% { transform: none; }
+  3% { transform: translateY(-4px) scaleY(1.06); }
+  6% { transform: translateY(0) scaleY(.92); }
+}
+@keyframes brand-pin-jump {
+  0%, 100% { transform: none; }
+  40% { transform: translateY(-6px); }
+  70% { transform: translateY(0) scaleY(.9); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brand-logo-map, .brand-logo-pin,
+  .brand:hover .brand-logo-pin { animation: none; }
+}
 .brand-copy small { color: #8098a9; font-size: 13px; font-weight: 700; letter-spacing: .25em; }
 
 .topbar .nav {
@@ -367,3 +410,164 @@ img { max-width: 100%; height: auto; }
 .back-to-top:focus-visible { outline: 3px solid rgba(18, 54, 83, .35); outline-offset: 3px; }
 .sync-code-confirm .planner-confirm p.sync-code-confirm-error { margin-top: -8px; color: #bf3f39; font-weight: 700; }
 .sync-code-confirm .planner-confirm-actions button:disabled { opacity: .6; cursor: progress; }
+
+// ---- Home page menu: trip cards (TripCards.jsx) ----
+// On the globe home page the menu is a drop-down at every width, listing
+// finished and upcoming trips instead of the page links.
+.topbar--home .menu-toggle {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  justify-self: end;
+  gap: 5px;
+  padding: 0;
+  border: 1px solid #d8e5eb;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+}
+.topbar--home .menu-toggle span { width: 19px; height: 2px; border-radius: 2px; background: #123653; transition: transform .2s ease, opacity .2s ease; }
+.topbar--home .menu-toggle--open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.topbar--home .menu-toggle--open span:nth-child(2) { opacity: 0; }
+.topbar--home .menu-toggle--open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+.topbar--home .menu-toggle:hover, .topbar--home .menu-toggle:focus-visible { background: #e7edf0; }
+.topbar.topbar--home .nav {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  left: auto;
+  width: min(420px, 100%);
+  max-height: calc(100dvh - var(--topbar-height, 72px) - 24px);
+  overflow-y: auto;
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px);
+  transition: opacity .2s ease, transform .2s ease;
+}
+.topbar.topbar--home .nav.nav--open { opacity: 1; pointer-events: auto; transform: none; }
+
+.trip-cards { display: grid; gap: 12px; }
+.trip-card {
+  position: relative;
+  padding: 18px 18px 10px;
+  border: 2px solid rgba(255, 255, 255, .8);
+  border-top-width: 7px; // the coloured strip along the top
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 16px 34px rgba(5, 9, 20, .35);
+}
+.trip-card.is-done { border-top-color: #93c07f; }
+.trip-card.is-upcoming { border-top-color: #e9776b; }
+.trip-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.trip-card-head h2 { flex: 1; margin: 0; color: #123653; font-size: 19px; font-weight: 900; letter-spacing: .04em; }
+.trip-card-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; }
+.trip-card-icon svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.trip-card.is-done .trip-card-icon { background: #e8f3e2; color: #3f7d3a; }
+.trip-card.is-upcoming .trip-card-icon { background: #fde9e5; color: #c4523f; }
+.trip-card-count { min-width: 28px; padding: 2px 9px; border-radius: 999px; background: #eef3f6; color: #5c7586; font-size: 14px; font-weight: 700; text-align: center; }
+.trip-card ul { margin: 0; padding: 0; list-style: none; }
+.trip-card li + li { border-top: 1px dashed #dce7ed; }
+.trip-card-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 10px;
+  align-items: center;
+  padding: 11px 4px;
+  border: 0;
+  background: none;
+  color: #123653;
+  text-align: left;
+  cursor: pointer;
+  transition: transform .2s ease;
+}
+.trip-card-row:hover, .trip-card-row:focus-visible { transform: translateX(3px); outline: none; }
+.trip-card-name { font-size: 17px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trip-card-dates { grid-column: 1; color: #829bad; font-size: 13px; font-weight: 600; }
+.trip-card-badge { grid-column: 2; grid-row: 1 / span 2; padding: 4px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.trip-card-badge.is-done { background: #eef3f6; color: #6f8796; }
+.trip-card-badge.is-upcoming { background: #fdeee0; color: #b8612d; }
+.trip-card-badge.is-upcoming.is-now { background: #e8f3e2; color: #3f7d3a; }
+.trip-card-empty { margin: 8px 0 10px; color: #9eb0bb; font-size: 14px; }
+.trip-card-add {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #cfe2c6;
+  border-radius: 50%;
+  background: #f1f8ed;
+  color: #3f7d3a;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+.trip-card-add:hover, .trip-card-add:focus-visible { background: #e2f0da; outline: none; }
+.trip-card li.is-manual { display: flex; align-items: center; gap: 6px; }
+.trip-card li.is-manual .trip-card-row { flex: 1; min-width: 0; cursor: default; }
+.trip-card li.is-manual .trip-card-row:hover { transform: none; }
+.trip-card-remove {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 999px;
+  background: #f1f4f6;
+  color: #829bad;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.trip-card-remove.is-confirming { background: #d9534f; color: #fff; font-size: 13px; }
+.trip-card-form { display: grid; gap: 10px; margin: 10px 0 12px; padding: 12px; border-radius: 14px; background: #f5f9f3; }
+.trip-card-form input {
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1px solid #d6e4d0;
+  border-radius: 10px;
+  background: #fff;
+  color: #123653;
+  font-size: 16px; // 16px keeps phones from zooming in on focus
+}
+// The dates use the 行程規劃 calendar (PlannerDatePicker). Its pop-up opens
+// inside the form, across both fields, so it pushes the form down instead of
+// floating past the bottom of the menu. The fields and the calendar wrapper
+// step out of the layout (display: contents) so their parts sit on one grid.
+.trip-card-form-dates { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; }
+.trip-card-form-field, .trip-card-form .planner-calendar { display: contents; }
+.trip-card-form-field > span { grid-row: 1; color: #5c7586; font-size: 13px; font-weight: 700; }
+.trip-card-form .planner-calendar-trigger { grid-row: 2; min-width: 0; min-height: 42px; background: #fff; }
+.trip-card-form-field:first-child > span, .trip-card-form-field:first-child .planner-calendar-trigger { grid-column: 1; }
+.trip-card-form-field:last-child > span, .trip-card-form-field:last-child .planner-calendar-trigger { grid-column: 2; }
+.trip-card-form .planner-calendar-trigger > span:first-child { overflow: hidden; font-size: 15px; text-overflow: ellipsis; white-space: nowrap; }
+.trip-card-form .planner-calendar-weekday { display: none; }
+.trip-card-form .planner-calendar-popover { position: static; grid-row: 3; grid-column: 1 / -1; width: auto; margin-top: 6px; }
+.trip-card-form-error { margin: 0; color: #c4523f; font-size: 13px; font-weight: 700; }
+.trip-card-form-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.trip-card-form-actions button { min-height: 38px; padding: 0 16px; border: 1px solid #d6e4d0; border-radius: 999px; background: #fff; color: #365a70; font-weight: 700; cursor: pointer; }
+.trip-card-form-actions button.is-primary { border-color: #3f7d3a; background: #3f7d3a; color: #fff; }
+.trip-card-form-actions button:disabled { opacity: .6; cursor: default; }
+
+// On the globe home page the header floats over the night sky: a rounded,
+// see-through bar, so the stars show behind it.
+.topbar.topbar--home {
+  top: 10px;
+  margin: 10px 12px -10px; // the negative bottom keeps the page below in place
+  border: 1px solid rgba(255, 255, 255, .55);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, .62);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  backdrop-filter: blur(14px) saturate(1.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .28);
+}
+.topbar--home .menu-toggle { background: rgba(255, 255, 255, .7); }
