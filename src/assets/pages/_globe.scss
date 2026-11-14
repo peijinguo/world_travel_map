@@ -33,16 +33,16 @@
 .globe-outline { fill: #161a22; }
 .globe-ocean { fill: url(#globe-ocean); }
 .globe-graticule { fill: none; stroke: #fff; stroke-opacity: .16; stroke-width: .8; }
-// Cartoon land like the planets: light green with soft borders, a darker
+// Cartoon land like the planets: deep green with soft borders, a darker
 // green for the countries you can open, and one ink line along the coasts.
 .globe-land {
-  fill: #a8d070;
-  stroke: #8fbd5a;
+  fill: #4f8a45;
+  stroke: #437a3b;
   stroke-width: .8;
   stroke-linejoin: round;
   transition: fill .2s ease;
 }
-.globe-land.is-featured { fill: #2f7a3e; stroke: #24632f; stroke-width: 1; cursor: pointer; }
+.globe-land.is-featured { fill: #22582c; stroke: #1b4a24; stroke-width: 1; cursor: pointer; }
 .globe-land.is-featured.is-active { fill: #ffd96a; stroke: #f0c24c; stroke-width: 1.4; }
 .globe-coast { fill: none; stroke: #161a22; stroke-width: 1.6; stroke-linejoin: round; pointer-events: none; }
 .globe-shine { fill: url(#globe-shine); pointer-events: none; }
@@ -67,7 +67,7 @@
 .projector-beam { fill: url(#projector-beam); pointer-events: none; animation: projector-beam .45s ease-out both; }
 .projected-card { animation: projected-card .5s cubic-bezier(.2, .9, .3, 1.2) both; transform-origin: 500px 364px; }
 .projected-card-bg { fill: rgba(245, 249, 252, .93); stroke: #fff; stroke-width: 2.5; filter: drop-shadow(0 14px 22px rgba(31, 59, 77, .22)); }
-.projected-land { fill: #a8d070; stroke: #161a22; stroke-width: 2; stroke-linejoin: round; }
+.projected-land { fill: #4f8a45; stroke: #161a22; stroke-width: 2; stroke-linejoin: round; }
 .projected-loading { fill: #829bad; }
 .projected-name { fill: #123653; font-weight: 900; letter-spacing: -.02em; }
 .projected-hint { fill: #5c8299; font-weight: 700; letter-spacing: .04em; }
