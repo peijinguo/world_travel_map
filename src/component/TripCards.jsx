@@ -134,11 +134,11 @@ function TripRow({ trip, today, kind, onPick, onRemove }) {
   const body = (
     <>
       <span className="trip-card-name">{trip.name}</span>
-      <span className="trip-card-dates">
-        {trip.start
-          ? `${formatDate(trip.start)}${trip.end !== trip.start ? ` – ${formatDate(trip.end)}` : ""} · ${trip.dayCount} 天`
-          : `${trip.dayCount} 天`}
-      </span>
+      {trip.start && (
+        <span className="trip-card-dates">
+          {`${formatDate(trip.start)}${trip.end !== trip.start ? ` – ${formatDate(trip.end)}` : ""}`}
+        </span>
+      )}
       <span className={`trip-card-badge is-${kind}${trip.start && trip.start <= today && kind === "upcoming" ? " is-now" : ""}`}>{badge}</span>
     </>
   );
