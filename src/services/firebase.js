@@ -112,6 +112,14 @@ export function subscribeTripCodes(directoryId, onData, onError) {
   );
 }
 
+// The same list once, for the home page's trip cards (every country's list).
+export async function loadTripCodes(directoryId) {
+  if (!db) return { codes: [], names: {} };
+  const snapshot = await withSyncTimeout(getDoc(tripCodesDoc(directoryId)));
+  const data = snapshot.exists() ? snapshot.data() : {};
+  return { codes: data.codes ?? [], names: data.names ?? {} };
+}
+
 // A trip's display name, shared like its code; an empty name clears it.
 export async function setTripName(directoryId, code, name) {
   if (!db) return;

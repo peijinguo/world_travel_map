@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   addTripCode,
   deleteTripCloud,
@@ -9,18 +9,17 @@ import {
   signInAnonymous,
   subscribeTripCodes,
 } from "../services/firebase";
-import { countryFromHash, hashSyncCode, spaceIdFor } from "../services/syncCode";
+import { countryFromHash, directoryIdFor, spaceIdFor, storageKeyFor } from "../services/syncCode";
 
 const AuthContext = createContext(null);
 const SYNC_CODE_STORAGE_KEY = "travel-map-sync-code";
 const SYNC_CODE_HISTORY_STORAGE_KEY = "travel-map-sync-code-history";
-const TRIP_DIRECTORY_KEY = "__trip-directory__";
 const TRIP_NAMES_STORAGE_KEY = "travel-map-trip-names";
 const MAX_TRIP_NAME_LENGTH = 24;
 
-function getSavedTripNames() {
+function getSavedTripNames(country) {
   try {
-    const names = JSON.parse(localStorage.getItem(TRIP_NAMES_STORAGE_KEY) ?? "{}");
+    const names = JSON.parse(localStorage.getItem(storageKeyFor(TRIP_NAMES_STORAGE_KEY, country)) ?? "{}");
     return names && typeof names === "object" && !Array.isArray(names) ? names : {};
   } catch {
     return {};
@@ -37,10 +36,10 @@ function normalizeSyncCode(value) {
   return value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 32);
 }
 
-function getSavedSyncCodes(currentCode) {
+function getSavedSyncCodes(currentCode, country) {
   try {
     const savedCodes = JSON.parse(
-      localStorage.getItem(SYNC_CODE_HISTORY_STORAGE_KEY) ?? "[]",
+      localStorage.getItem(storageKeyFor(SYNC_CODE_HISTORY_STORAGE_KEY, country)) ?? "[]",
     );
     const normalizedCodes = Array.isArray(savedCodes)
       ? savedCodes.map(normalizeSyncCode).filter((code) => code.length >= 8)
@@ -51,23 +50,29 @@ function getSavedSyncCodes(currentCode) {
   }
 }
 
+// A country's current trip on this device; a country opened for the first
+// time starts with a new trip of its own.
+function getSavedSyncCode(country) {
+  const key = storageKeyFor(SYNC_CODE_STORAGE_KEY, country);
+  const saved = normalizeSyncCode(localStorage.getItem(key) ?? "");
+  if (saved.length >= 8) return saved;
+  const next = createSyncCode();
+  localStorage.setItem(key, next);
+  return next;
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [authReady, setAuthReady] = useState(false);
   const [authError, setAuthError] = useState("");
-  const [syncCode, setSyncCodeState] = useState(() => {
-    const saved = normalizeSyncCode(
-      localStorage.getItem(SYNC_CODE_STORAGE_KEY) ?? "",
-    );
-    if (saved.length >= 8) return saved;
-    const next = createSyncCode();
-    localStorage.setItem(SYNC_CODE_STORAGE_KEY, next);
-    return next;
-  });
-  const [localSyncCodes, setSyncCodes] = useState(() => getSavedSyncCodes(syncCode));
+  // The country whose pages are open. Each country has its own trips (list,
+  // current trip, names) and its own copy of each trip's data. Read from the
+  // address at start, then kept up to date by the layout (FrontendLayout).
+  const [country, setCountryState] = useState(() => countryFromHash());
+  const [syncCode, setSyncCodeState] = useState(() => getSavedSyncCode(country));
+  const [localSyncCodes, setSyncCodes] = useState(() => getSavedSyncCodes(syncCode, country));
   const [sharedSyncCodes, setSharedSyncCodes] = useState([]);
-  const [localTripNames, setLocalTripNames] = useState(getSavedTripNames);
+  const [localTripNames, setLocalTripNames] = useState(() => getSavedTripNames(country));
   const [sharedTripNames, setSharedTripNames] = useState({});
   // Names from the cloud win; this device's copy covers offline use.
   const tripNames = useMemo(
@@ -87,10 +92,22 @@ export function AuthProvider({ children }) {
   );
   const [syncSpaceId, setSyncSpaceId] = useState(null);
   const [syncVersion, setSyncVersion] = useState(0);
-  // The country whose pages are open; each country has its own copy of a
-  // trip's data. Read from the address at start, then kept up to date by the
-  // layout as the route changes (see FrontendLayout).
-  const [country, setCountry] = useState(() => countryFromHash());
+  // Opening another country switches to that country's own trips.
+  const countryRef = useRef(country);
+  const setCountry = useCallback((next) => {
+    if (countryRef.current === next) return;
+    countryRef.current = next;
+    const code = getSavedSyncCode(next);
+    setCountryState(next);
+    setSyncCodeState(code);
+    setSyncCodes(getSavedSyncCodes(code, next));
+    setLocalTripNames(getSavedTripNames(next));
+    setSharedSyncCodes([]);
+    setSharedTripNames({});
+    setTripDirectoryId(null);
+    setSyncSpaceId(null);
+    setSyncVersion((version) => version + 1);
+  }, []);
 
   useEffect(() => {
     let attempted = false;
@@ -111,8 +128,14 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    hashSyncCode(TRIP_DIRECTORY_KEY).then(setTripDirectoryId);
-  }, []);
+    let cancelled = false;
+    directoryIdFor(country).then((id) => {
+      if (!cancelled) setTripDirectoryId(id);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [country]);
 
   useEffect(() => {
     if (!user || !tripDirectoryId) return undefined;
@@ -147,11 +170,11 @@ export function AuthProvider({ children }) {
   const setSyncCode = (value) => {
     const next = normalizeSyncCode(value);
     if (next.length < 8) return false;
-    localStorage.setItem(SYNC_CODE_STORAGE_KEY, next);
+    localStorage.setItem(storageKeyFor(SYNC_CODE_STORAGE_KEY, country), next);
     setSyncCodes((codes) => {
       const updatedCodes = [...new Set([next, ...codes])].slice(0, 8);
       localStorage.setItem(
-        SYNC_CODE_HISTORY_STORAGE_KEY,
+        storageKeyFor(SYNC_CODE_HISTORY_STORAGE_KEY, country),
         JSON.stringify(updatedCodes),
       );
       return updatedCodes;
@@ -170,7 +193,7 @@ export function AuthProvider({ children }) {
     if (remainingCodes.length === 0) return false;
 
     localStorage.setItem(
-      SYNC_CODE_HISTORY_STORAGE_KEY,
+      storageKeyFor(SYNC_CODE_HISTORY_STORAGE_KEY, country),
       JSON.stringify(localSyncCodes.filter((code) => code !== codeToRemove)),
     );
     setSyncCodes((codes) => codes.filter((code) => code !== codeToRemove));
@@ -184,7 +207,7 @@ export function AuthProvider({ children }) {
 
     if (codeToRemove === syncCode) {
       const nextCode = remainingCodes[0];
-      localStorage.setItem(SYNC_CODE_STORAGE_KEY, nextCode);
+      localStorage.setItem(storageKeyFor(SYNC_CODE_STORAGE_KEY, country), nextCode);
       setSyncSpaceId(null);
       setSyncCodeState(nextCode);
       setSyncVersion((version) => version + 1);
@@ -199,7 +222,7 @@ export function AuthProvider({ children }) {
       const nextNames = { ...names, [code]: nextName };
       if (!nextName) delete nextNames[code];
       try {
-        localStorage.setItem(TRIP_NAMES_STORAGE_KEY, JSON.stringify(nextNames));
+        localStorage.setItem(storageKeyFor(TRIP_NAMES_STORAGE_KEY, country), JSON.stringify(nextNames));
       } catch {
         // The name still shows for this visit.
       }
@@ -226,7 +249,7 @@ export function AuthProvider({ children }) {
     if (!syncCodes.some((savedCode) => savedCode !== code)) {
       throw new Error("last-trip");
     }
-    await deleteTripCloud(await hashSyncCode(code));
+    await deleteTripCloud(await spaceIdFor(country, code));
     removeSyncCode(code);
   };
 

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { isFirebaseConfigured, loadPlannerCloud, savePastTrip, subscribePastTrips } from "../services/firebase";
-import { spaceIdFor } from "../services/syncCode";
+import { isFirebaseConfigured, loadPlannerCloud, loadTripCodes, savePastTrip, subscribePastTrips } from "../services/firebase";
+import { directoryIdFor, spaceIdFor, storageKeyFor } from "../services/syncCode";
 import { countryBase, countryById, globeCountries } from "../data/countries";
 import PlannerDatePicker from "./PlannerDatePicker";
 
@@ -39,45 +39,73 @@ const readLocalDays = () => {
   }
 };
 
-// Every saved trip with its dates: from the cloud when connected, otherwise
-// only the current trip, whose plan is the one kept on this device. Each
-// country keeps its own copy of a trip, so every trip is looked up in every
-// country; Japan lists all trips, the others only those with a plan there.
+// Every saved trip with its dates. Each country has its own trips: its own
+// list on this device and in its cloud trip directory, and its own copy of
+// each trip's plan. With the cloud, every country's list is read; without
+// it, only Japan's current trip, whose plan is the one kept on this device.
 const hasPlan = (days) =>
   Array.isArray(days) && days.some((day) => day?.date || day?.items?.length);
+
+const readJson = (key, fallback) => {
+  try {
+    return JSON.parse(localStorage.getItem(key) ?? "null") ?? fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+// One country's trips: codes and names from this device and the cloud.
+async function countryTrips(country) {
+  const localCodes = readJson(storageKeyFor("travel-map-sync-code-history", country), []);
+  const current = localStorage.getItem(storageKeyFor("travel-map-sync-code", country));
+  const localNames = readJson(storageKeyFor("travel-map-trip-names", country), {});
+  let shared = { codes: [], names: {} };
+  try {
+    shared = await loadTripCodes(await directoryIdFor(country));
+  } catch {
+    // This device's list still shows.
+  }
+  const codes = [...new Set([current, ...localCodes, ...shared.codes].filter((code) => code?.length >= 8))];
+  return { codes, names: { ...localNames, ...shared.names } };
+}
+
 function useTripSummaries() {
-  const { user, syncCode, syncCodes, tripNames } = useAuth();
+  const { user, syncCode, tripNames, syncVersion } = useAuth();
   const [summaries, setSummaries] = useState(null);
   const cloud = Boolean(user && isFirebaseConfigured);
-  const codesKey = (cloud ? syncCodes : [syncCode]).join(",");
 
   useEffect(() => {
     let live = true;
-    const codes = codesKey ? codesKey.split(",") : [];
     const load = cloud
       ? Promise.all(
-          globeCountries.flatMap(({ id: country }) =>
-            codes.map(async (code) => {
-              try {
-                const data = await loadPlannerCloud(await spaceIdFor(country, code));
-                if (country !== "japan" && !hasPlan(data?.days)) return null;
-                return { code, country, ...summarise(data?.days) };
-              } catch {
-                return country === "japan" ? { code, country, ...summarise([]), failed: true } : null;
-              }
-            }),
-          ),
-        ).then((found) => found.filter(Boolean))
-      : Promise.resolve(codes.map((code) => ({ code, country: "japan", ...summarise(readLocalDays()) })));
+          globeCountries.map(async ({ id: country }) => {
+            const { codes, names } = await countryTrips(country);
+            return Promise.all(
+              codes.map(async (code) => {
+                try {
+                  const data = await loadPlannerCloud(await spaceIdFor(country, code));
+                  // Another country's untouched starter trip is not listed.
+                  if (country !== "japan" && !hasPlan(data?.days)) return null;
+                  return { code, country, name: names[code] || code, ...summarise(data?.days) };
+                } catch {
+                  return country === "japan" ? { code, country, name: names[code] || code, ...summarise([]), failed: true } : null;
+                }
+              }),
+            );
+          }),
+        ).then((found) => found.flat().filter(Boolean))
+      : Promise.resolve([{ code: syncCode, country: "japan", name: tripNames[syncCode] || syncCode, ...summarise(readLocalDays()) }]);
     load.then((result) => {
       if (live) setSummaries(result);
     });
     return () => {
       live = false;
     };
-  }, [cloud, codesKey]);
+    // syncVersion: reload after a trip is added, switched or renamed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cloud, syncVersion]);
 
-  return summaries?.map((trip) => ({ ...trip, name: tripNames[trip.code] || trip.code }));
+  return summaries;
 }
 
 const PAST_TRIPS_KEY = "travel-map-past-trips";
@@ -254,7 +282,10 @@ function TripCards({ onDone }) {
     .sort((a, b) => (a.start ?? "9999").localeCompare(b.start ?? "9999"));
 
   const pick = (code, country = "japan") => {
-    setSyncCode(code);
+    // The home page is Japan's; another country's trip becomes that country's
+    // current trip, which it opens with once its page is shown.
+    if (country === "japan") setSyncCode(code);
+    else localStorage.setItem(storageKeyFor("travel-map-sync-code", country), code);
     onDone?.();
     // Render the planner right away: the spinning globe updates every frame,
     // and would otherwise keep interrupting the router's deferred page change.

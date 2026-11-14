@@ -19,3 +19,14 @@ export function spaceIdFor(country, code) {
 export function countryFromHash(hash = window.location.hash) {
   return hash.match(/^#\/c\/([A-Za-z]+)/)?.[1] ?? "japan";
 }
+
+// Each country also has its own list of trips: its own current trip, trip
+// history and trip names on this device, and its own shared trip directory
+// in the cloud. Japan keeps the original keys and directory.
+export const storageKeyFor = (base, country) =>
+  !country || country === "japan" ? base : `${base}:${country}`;
+
+const TRIP_DIRECTORY_KEY = "__trip-directory__";
+export function directoryIdFor(country) {
+  return hashSyncCode(storageKeyFor(TRIP_DIRECTORY_KEY, country));
+}
