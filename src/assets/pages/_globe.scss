@@ -240,3 +240,13 @@ main:has(.globe-home) { background: #0b0e17; }
 // the two cards do not stack on top of each other.
 .globe-panel { transition: opacity .2s ease, visibility .2s ease; }
 body:has(.topbar--home .nav--open) .globe-panel { opacity: 0; visibility: hidden; pointer-events: none; }
+// Places on a country map (CountryHome.jsx); the markers use the Japan map's
+// .town-marker styles. Thin lines are scaled to read at this map's size.
+.country-map .marker-leader.country-place-leader { stroke-width: 2.2; stroke-dasharray: 5 5; }
+.country-map .town-marker.is-active .marker-leader { stroke-width: 3; }
+.country-place-dot { fill: #fff6cf; stroke: #493d36; stroke-width: 2; }
+.country-map .municipality-shape { fill: transparent; stroke: transparent; }
+.country-map .town-marker.is-active .municipality-shape { fill: #ffd96a; stroke: #fff6cf; }
+@media (hover: hover) {
+  .country-map .town-marker:hover .municipality-shape { fill: #ffd96a; stroke: #fff6cf; }
+}
