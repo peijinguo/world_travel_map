@@ -154,7 +154,10 @@ function SpotDetail() {
                 </dl>
               </>
             )}
-            <small>{place.name}的天氣，由 Open-Meteo 或 MET Norway 提供。</small>
+            <details className="weather-source">
+              <summary aria-label="資料來源">i</summary>
+              <p>{place.name}的天氣，由 Open-Meteo 或 MET Norway 提供。</p>
+            </details>
           </article>
 
           <section className="snow-forecast-card spot-forecast-card">

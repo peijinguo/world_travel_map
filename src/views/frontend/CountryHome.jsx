@@ -80,6 +80,73 @@ function CountryHome() {
     };
   }, [shape, regions, country]);
 
+  // Where each motif sits. The land is painted onto a small mask, then each
+  // place, in turn, takes the nearest spot around it where its motif and
+  // label cover no land, stay inside the map and keep clear of the motifs
+  // already placed; the dotted leader runs back to the place.
+  const motifSpots = useMemo(() => {
+    const spots = new Map();
+    if (!drawing?.regions || typeof document === "undefined") return spots;
+    const SCALE = 4;
+    const side = SIZE / SCALE;
+    const canvas = document.createElement("canvas");
+    canvas.width = side;
+    canvas.height = side;
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    if (!context) return spots;
+    context.scale(1 / SCALE, 1 / SCALE);
+    context.fillStyle = "#000";
+    drawing.regions.forEach((region) => {
+      if (region.d) context.fill(new Path2D(region.d), "evenodd");
+    });
+    const pixels = context.getImageData(0, 0, side, side).data;
+    const land = (x, y) => {
+      const px = Math.floor(x / SCALE);
+      const py = Math.floor(y / SCALE);
+      if (px < 0 || py < 0 || px >= side || py >= side) return false;
+      return pixels[(py * side + px) * 4 + 3] > 0;
+    };
+    // A motif's footprint around its centre, in map units: the drawing
+    // (about 48 wide) and the name tag under it, at the marker scale.
+    const footprint = (place) => {
+      // A tapped motif pops a little bigger, so each gets some room to spare.
+      const grow = MARKER_SCALE * 1.12;
+      const half = Math.max(25, place.name.length * 6 + 10) * grow;
+      return { left: -half, right: half, top: -27 * grow, bottom: 50 * grow };
+    };
+    const placed = [];
+    const GAP = 6;
+    places.forEach((place) => {
+      const [x, y] = drawing.project(place.lonLat);
+      const box = footprint(place);
+      let best = null;
+      for (let radius = 60; radius <= 560; radius += 12) {
+        for (let step = 0; step < 36; step += 1) {
+          const angle = (step / 36) * Math.PI * 2;
+          const cx = x + Math.cos(angle) * radius;
+          const cy = y + Math.sin(angle) * radius;
+          const rect = { left: cx + box.left, right: cx + box.right, top: cy + box.top, bottom: cy + box.bottom };
+          if (rect.left < 8 || rect.top < 8 || rect.right > SIZE - 8 || rect.bottom > SIZE - 8) continue;
+          if (placed.some((other) => rect.left < other.right + GAP && rect.right > other.left - GAP && rect.top < other.bottom + GAP && rect.bottom > other.top - GAP)) continue;
+          let hits = 0;
+          for (let sx = rect.left; sx <= rect.right; sx += 8) {
+            for (let sy = rect.top; sy <= rect.bottom; sy += 8) {
+              if (land(sx, sy)) hits += 1;
+            }
+          }
+          const score = hits * 400 + radius;
+          if (!best || score < best.score) best = { score, hits, cx, cy, rect };
+        }
+        // The nearest clear ring wins; farther rings only matter if none is.
+        if (best?.hits === 0) break;
+      }
+      if (!best) best = { cx: x, cy: y, rect: { left: x + box.left, right: x + box.right, top: y + box.top, bottom: y + box.bottom } };
+      placed.push(best.rect);
+      spots.set(place.id, [Math.round(best.cx), Math.round(best.cy)]);
+    });
+    return spots;
+  }, [drawing, places]);
+
   // Japan has its own snow map; unknown ids go back to the globe.
   if (countryId === "japan") return <Navigate to="/japan" replace />;
   if (!country) return <Navigate to="/" replace />;
@@ -98,46 +165,6 @@ function CountryHome() {
   const [fx, fy] = drawing?.focus ?? [SIZE / 2, SIZE / 2];
   const clamp = (value) => Math.min(SIZE - 120, Math.max(120, value));
   const emblem = [clamp(fx + (fx > SIZE / 2 ? -270 : 270)), clamp(fy - 240)];
-
-  // Where each motif sits: pushed out from its place (by its offset, or
-  // straight out from the map's middle), then nudged apart from its
-  // neighbours and kept inside the map, so no two motifs overlap.
-  const motifSpots = new Map();
-  if (drawing?.regions) {
-    const spots = places.map((place) => {
-      const [x, y] = drawing.project(place.lonLat);
-      let [ox, oy] = place.offset ?? [0, 0];
-      if (!place.offset) {
-        const dx = x - SIZE / 2;
-        const dy = y - SIZE * 0.45;
-        const length = Math.hypot(dx, dy) || 1;
-        [ox, oy] = [(dx / length) * 150, (dy / length) * 150];
-      }
-      return { id: place.id, x: x + ox, y: y + oy };
-    });
-    const GAP = 118;
-    const keepInside = (spot) => {
-      spot.x = Math.min(SIZE - 70, Math.max(70, spot.x));
-      spot.y = Math.min(SIZE - 110, Math.max(70, spot.y));
-    };
-    for (let round = 0; round < 80; round += 1) {
-      spots.forEach((a, i) => {
-        spots.slice(i + 1).forEach((b) => {
-          const dx = b.x - a.x;
-          const dy = b.y - a.y;
-          const distance = Math.hypot(dx, dy) || 0.01;
-          if (distance >= GAP) return;
-          const push = (GAP - distance) / 2;
-          a.x -= (dx / distance) * push;
-          a.y -= (dy / distance) * push;
-          b.x += (dx / distance) * push;
-          b.y += (dy / distance) * push;
-        });
-      });
-      spots.forEach(keepInside);
-    }
-    spots.forEach((spot) => motifSpots.set(spot.id, [Math.round(spot.x), Math.round(spot.y)]));
-  }
 
   const marker = (place) => {
     const [x, y] = drawing.project(place.lonLat);

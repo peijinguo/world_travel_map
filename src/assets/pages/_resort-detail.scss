@@ -1171,6 +1171,8 @@
 .spot-facts dd { margin: 4px 0 0; color: #244f68; font-size: 16px; font-weight: 700; line-height: 1.6; }
 .spot-links { display: flex; flex-wrap: wrap; gap: 10px; }
 .spot-links a { padding: 10px 16px; border-radius: 999px; background: #123653; color: #fff; font-weight: 700; text-decoration: none; }
+// Its source note sits in the card's bottom-right ⓘ, like a resort page's.
+.spot-detail-page .current-weather-card { position: relative; padding-bottom: 46px; }
 .spot-forecast-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 .spot-forecast-grid .moiwa-weather-icon { background: none; }
 .spot-forecast-grid .moiwa-forecast-day small { color: #77909c; font-size: 13px; }
