@@ -108,7 +108,7 @@ const byZoom = (makeExpression) => [
 ];
 const shownStep = (k) => ["floor", ["/", ["get", "step"], 2 ** k]];
 const isLeftFoot = (k) => ["==", ["%", shownStep(k), 2], 0];
-const STEP_TRAIL = 14; // how many prints behind the walker stay darkened
+const STEP_TRAIL = 8; // prints behind the walker still showing (two pairs, then two fading)
 const STEP_PAUSE = 8; // ticks the walker waits at the last stop before starting over
 const STEP_TICK_MS = 340;
 
@@ -191,18 +191,21 @@ function makeFootprintImage(mirrored) {
   return { image: context.getImageData(0, 0, canvas.width, canvas.height), pixelRatio: scale };
 }
 
-// The walker's head is a drawn-step number at the current zoom; prints just
-// behind it are darkest and fade, prints ahead stay faint.
+// The walker's head is a drawn-step number at the current zoom; only the
+// prints just behind it show.
 const footprintOpacity = (head) =>
   byZoom((k) => [
     "let",
     "behind",
     ["-", head, shownStep(k)],
+    // Only the walker's own prints show: the newest two pairs (four steps)
+    // fully, the two pairs before them fading out; every other print is hidden.
     ["case",
-      ["<", ["var", "behind"], 0], 0.68,
-      ["<", ["var", "behind"], STEP_TRAIL],
-      ["-", 1, ["*", ["/", ["var", "behind"], STEP_TRAIL], 0.15]],
-      0.85],
+      ["<", ["var", "behind"], 0], 0,
+      ["<", ["var", "behind"], 4], 1,
+      ["<", ["var", "behind"], 8],
+      ["-", 1, ["/", ["-", ["var", "behind"], 3], 5]],
+      0],
   ]);
 
 // Which drawn steps are on screen, in walking order, so the walker only
