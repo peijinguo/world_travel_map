@@ -247,7 +247,9 @@ function TripCards({ onDone }) {
   const pick = (code) => {
     setSyncCode(code);
     onDone?.();
-    navigate("/planner");
+    // Render the planner right away: the spinning globe updates every frame,
+    // and would otherwise keep interrupting the router's deferred page change.
+    navigate("/planner", { flushSync: true });
   };
 
   const card = (kind, title, icon, list, empty, extra) => (

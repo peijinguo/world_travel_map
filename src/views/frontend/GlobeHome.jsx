@@ -252,7 +252,9 @@ function GlobeHome() {
 
   const enter = () => {
     if (!selected) return;
-    if (selected.to) navigate(selected.to);
+    // flushSync: the globe re-renders every frame, which would keep
+    // interrupting the router's deferred (transition) page change.
+    if (selected.to) navigate(selected.to, { flushSync: true });
     else setNotice(`${selected.name}地圖準備中，敬請期待！`);
   };
 
