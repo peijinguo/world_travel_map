@@ -223,17 +223,37 @@ function CountryHome() {
               </div>
             </>
           )}
-          <ul className="resort-list">
-            {pages.map((page, index) => (
-              <li key={page.path}>
-                <span>{String(index + 1).padStart(2, "0")}</span>
-                <Link to={`${base}/${page.path}`}>
-                  {page.name}
-                  <small>{page.note}</small>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          {activePlace?.spots ? (
+            // Like the Japan map's town card listing its ski resorts: the
+            // place's sights, each opening on Google Maps.
+            <ul className="resort-list">
+              {activePlace.spots.map((spot, index) => (
+                <li key={spot.en}>
+                  <span>{String(index + 1).padStart(2, "0")}</span>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${spot.en}, ${country.en}`)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {spot.name}
+                    <small>{spot.en}</small>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <ul className="resort-list">
+              {pages.map((page, index) => (
+                <li key={page.path}>
+                  <span>{String(index + 1).padStart(2, "0")}</span>
+                  <Link to={`${base}/${page.path}`}>
+                    {page.name}
+                    <small>{page.note}</small>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </aside>
       </section>
     </div>
