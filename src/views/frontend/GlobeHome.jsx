@@ -36,7 +36,8 @@ const world = feature(worldTopo, worldTopo.objects.countries).features.map((shap
 // the globe fills the screen width, so the card spans nearly all of it and
 // its text, close button and emblem grow by `ui` to stay readable.
 const cardFor = (phone) => (phone
-  ? { x: 30, y: 6, w: 940, h: 500, ui: 2 }
+  // Starts below the floating header, which covers the top of the globe.
+  ? { x: 30, y: 60, w: 940, h: 460, ui: 2 }
   : { x: 270, y: 34, w: 460, h: 330, ui: 1 });
 
 const usePhoneLayout = () => {
