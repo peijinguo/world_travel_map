@@ -235,3 +235,8 @@ main:has(.globe-home) { background: #0b0e17; }
 @media (prefers-reduced-motion: reduce) {
   .country-map-emblem { animation: none; }
 }
+
+// While the home menu (trip cards) is open, the 旅行地圖 panel steps aside so
+// the two cards do not stack on top of each other.
+.globe-panel { transition: opacity .2s ease, visibility .2s ease; }
+body:has(.topbar--home .nav--open) .globe-panel { opacity: 0; visibility: hidden; pointer-events: none; }
