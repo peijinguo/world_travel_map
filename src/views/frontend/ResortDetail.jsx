@@ -1262,7 +1262,7 @@ function ResortDetail() {
             <div className="trail-sketch"><CartoonTrailMap resort={resort} /></div>
           )}
           <div className="lift-route-section">
-            <div className="lift-route-heading"><h3>纜車運行狀況</h3></div>
+            <div className="lift-route-heading"><h3><span className="brush-title">纜車運行狀況</span></h3></div>
             {isKamuiSkiLinks ? (
               <KamuiLiftStatus />
             ) : isSapporoKokusai ? (
