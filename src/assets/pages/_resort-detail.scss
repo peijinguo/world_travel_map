@@ -1176,7 +1176,7 @@
 .spot-forecast-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 .spot-forecast-grid .moiwa-weather-icon { background: none; }
 .spot-forecast-grid .moiwa-forecast-day small { color: #77909c; font-size: 13px; }
-.spot-forecast-grid .moiwa-forecast-day em { color: #3181ad; font-size: 13px; font-style: normal; font-weight: 700; }
+.spot-forecast-grid .moiwa-forecast-day em { padding: 0; background: none; color: #3181ad; font-size: 13px; font-style: normal; font-weight: 700; }
 @media (max-width: 760px) {
   .spot-forecast-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .spot-forecast-grid .moiwa-forecast-day { border-bottom: 1px solid #e0e9ed; }
