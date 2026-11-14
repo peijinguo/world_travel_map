@@ -2702,16 +2702,34 @@ function Planner() {
     return () => cancelAnimationFrame(frame);
   }, [activeDayId]);
 
-  // Keep the chosen DAY tab in the middle of the strip, so the days on both
-  // sides of it show too, even when it was at the very left or right edge.
+  // Keep the chosen DAY tab and the two days on each side of it in view. If
+  // they already show, the strip stays put; otherwise it moves just enough to
+  // bring them in, and only centres the tab when they cannot all fit.
   useEffect(() => {
     const picker = dayPickerRef.current;
     const tab = picker?.querySelector(".planner-day-tab.is-active");
     if (!picker || !tab) return;
+    const tabs = [...picker.querySelectorAll(".planner-day-tab")];
+    const index = tabs.indexOf(tab);
     const pickerBox = picker.getBoundingClientRect();
     const tabBox = tab.getBoundingClientRect();
-    const target =
-      picker.scrollLeft + (tabBox.left - pickerBox.left) - (picker.clientWidth - tabBox.width) / 2;
+    const EDGE = 4;
+    const viewLeft = pickerBox.left + EDGE;
+    const viewRight = pickerBox.left + picker.clientWidth - EDGE;
+    // On a narrow phone two days each side may not fit; then one each side.
+    let target = null;
+    for (const reach of [2, 1]) {
+      const first = tabs[Math.max(0, index - reach)].getBoundingClientRect();
+      const last = tabs[Math.min(tabs.length - 1, index + reach)].getBoundingClientRect();
+      if (last.right - first.left > viewRight - viewLeft) continue;
+      if (first.left >= viewLeft && last.right <= viewRight) return;
+      target = picker.scrollLeft + (first.left < viewLeft ? first.left - viewLeft : last.right - viewRight);
+      break;
+    }
+    if (target === null) {
+      target =
+        picker.scrollLeft + (tabBox.left - pickerBox.left) - (picker.clientWidth - tabBox.width) / 2;
+    }
     // Jump rather than glide: the day board below scrolls smoothly at the
     // same moment, and Chrome cancels one smooth scroll when another starts.
     // scrollLeft (not scrollTo with behavior "instant") also works in iOS
