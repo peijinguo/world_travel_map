@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 // The snow on top of the 行前準備 notebook: it piles up slowly along the top
-// edge; once the pile is full, clumps of it slide off and land on the first
-// items, hiding their text. A sideways swipe across the notebook brushes the
-// snow away, and it starts piling up again.
+// edge; each time the pile is full, clumps of it slide off onto the next items
+// down the list, hiding their text, and it keeps piling up. A sideways swipe
+// across the notebook brushes the snow away, and it starts piling up again.
 const FILL_SECONDS = 45; // empty to full
 const TICK_MS = 200;
 const AFTER_FALL = 0.3; // what stays on top once the clumps have fallen
@@ -30,48 +30,55 @@ export default function usePrepSnowfall(sheetRef) {
   const [clumps, setClumps] = useState([]);
   const [brushing, setBrushing] = useState(0); // swipe direction while clearing
   const levelRef = useRef(level);
-  const fallenRef = useRef(false);
+  // True while a fall or a brush plays, so the pile waits for it.
+  const holdRef = useRef(false);
+  // How many times snow has fallen since the last brush: each fall lands on
+  // the next four items down the list.
+  const dropsRef = useRef(0);
 
-  // Snow over the first few items' text, placed from the list as it is now.
+  // Snow over the next few items' text, placed from the list as it is now.
   const dropClumps = useCallback(() => {
     const sheet = sheetRef.current;
     if (!sheet) return;
     const sheetBox = sheet.getBoundingClientRect();
-    const texts = [...sheet.querySelectorAll(".prep-list .prep-text")].slice(0, 4);
+    const all = [...sheet.querySelectorAll(".prep-list .prep-text")];
+    if (!all.length) return;
+    const from = (dropsRef.current * 4) % all.length;
+    dropsRef.current += 1;
+    const texts = all.slice(from, from + 4);
     const seed = Date.now() % 1000;
-    setClumps(
-      texts.flatMap((text, index) => {
-        const box = text.getBoundingClientRect();
-        const width = Math.min(150, Math.max(80, box.width * 0.75));
-        const left = box.left - sheetBox.left - 8 + ((seed * (index + 3)) % 30);
-        return [{
-          id: `${seed}-${index}`,
-          left,
-          top: box.top - sheetBox.top + box.height / 2 - 18,
-          width,
-          fallFrom: box.top - sheetBox.top + 60,
-          delay: index * 0.18,
-          seed: seed + index,
-        }];
-      }),
-    );
+    const added = texts.map((text, index) => {
+      const box = text.getBoundingClientRect();
+      const width = Math.min(150, Math.max(80, box.width * 0.75));
+      return {
+        id: `${seed}-${from + index}`,
+        left: box.left - sheetBox.left - 8 + ((seed * (index + 3)) % 30),
+        top: box.top - sheetBox.top + box.height / 2 - 18,
+        width,
+        fallFrom: box.top - sheetBox.top + 60,
+        delay: index * 0.18,
+        seed: seed + index,
+      };
+    });
+    setClumps((current) => [...current, ...added]);
   }, [sheetRef]);
 
-  // Pile up, and let the clumps fall once full.
+  // Pile up; each time it is full, clumps fall and it keeps piling up.
   useEffect(() => {
     if (still) return undefined;
     const step = TICK_MS / 1000 / FILL_SECONDS;
     const timer = window.setInterval(() => {
-      if (fallenRef.current) return;
+      if (holdRef.current) return;
       const next = Math.min(1, levelRef.current + step);
       levelRef.current = next;
       setLevel(next);
       if (next >= 1) {
-        fallenRef.current = true;
+        holdRef.current = true;
         dropClumps();
         window.setTimeout(() => {
           levelRef.current = AFTER_FALL;
           setLevel(AFTER_FALL);
+          holdRef.current = false;
         }, 250);
       }
     }, TICK_MS);
@@ -80,15 +87,16 @@ export default function usePrepSnowfall(sheetRef) {
 
   // Brush everything off, then start piling up again.
   const brush = useCallback((direction) => {
-    if (still || (!fallenRef.current && levelRef.current < 0.08)) return;
+    if (still || (!dropsRef.current && levelRef.current < 0.08)) return;
     setBrushing(direction);
-    fallenRef.current = true; // hold the pile while it slides off
+    holdRef.current = true; // hold the pile while it slides off
     window.setTimeout(() => {
       levelRef.current = 0;
+      dropsRef.current = 0;
       setLevel(0);
       setClumps([]);
       setBrushing(0);
-      fallenRef.current = false;
+      holdRef.current = false;
     }, 520);
   }, [still]);
 
