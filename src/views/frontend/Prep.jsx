@@ -4,6 +4,7 @@ import { savePrepCloud, subscribePrepCloud } from "../../services/firebase";
 import "../../assets/pages/_prep.scss";
 import PrepScene from "../../component/PrepScene";
 import { prepStarterFor } from "../../data/prepStarters";
+import usePrepSnowfall from "../../component/PrepSnowfall";
 import { storageKeyFor } from "../../services/syncCode";
 
 // 行前準備: a hand-drawn notebook checklist. Tapping an item ticks its box and
@@ -52,6 +53,8 @@ function Prep() {
   const [draft, setDraft] = useState("");
   const [status, setStatus] = useState("");
   const cloudReadyRef = useRef(false);
+  const sheetRef = useRef(null);
+  const snow = usePrepSnowfall(sheetRef);
 
   // Follow the trip's list; a trip with no list yet starts from this device's.
   useEffect(() => {
@@ -113,8 +116,10 @@ function Prep() {
   return (
     <section className="prep-page">
       <PrepScene />
-      <div className="prep-notebook">
-        <div className="prep-sheet">
+      <div className="prep-notebook" {...snow.swipeHandlers}>
+        {snow.cap}
+        <div className="prep-sheet" ref={sheetRef}>
+        {snow.fallen}
         <header className="prep-heading">
           <h1><span className="brush-title">行前準備</span></h1>
           <p>
