@@ -45,6 +45,11 @@ function SpotDetail() {
   const heroRef = useRef(null);
   const [isHeroCompact, setIsHeroCompact] = useState(false);
 
+  // A sight page opens at its top, not where the map page was scrolled to.
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, []);
+
   useEffect(() => {
     const updateCompactHero = () => {
       const heroBottom = heroRef.current?.getBoundingClientRect().bottom ?? Infinity;
