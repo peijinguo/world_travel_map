@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import BrandLogo from "./BrandLogo";
+import JapanMapIcon from "./JapanMapIcon";
 import TripCards from "./TripCards";
 
 function Header() {
@@ -132,14 +133,35 @@ function Header() {
 
   return (
     <header ref={topbarRef} className={`topbar${isHome ? " topbar--home" : ""}`}>
-      <Link className="brand" to="/" aria-label="世界旅圖首頁" onClick={() => setIsMobileMenuOpen(false)}>
-        <span className="brand-mark brand-mark--logo" aria-hidden="true">
-          <BrandLogo />
-        </span>
-        <span className="brand-copy">
-          <strong>世界旅圖</strong>
-        </span>
-      </Link>
+      {isHome ? (
+        <Link className="brand" to="/" aria-label="世界旅圖首頁" onClick={() => setIsMobileMenuOpen(false)}>
+          <span className="brand-mark brand-mark--logo" aria-hidden="true">
+            <BrandLogo />
+          </span>
+          <span className="brand-copy">
+            <strong>世界旅圖</strong>
+          </span>
+        </Link>
+      ) : (
+        // Inside a country the logo alone leads back to the globe, and the
+        // country's own map and name lead to its map page.
+        <div className="brand-group">
+          <Link className="brand brand--logo-only" to="/" aria-label="回到世界旅圖首頁" onClick={() => setIsMobileMenuOpen(false)}>
+            <span className="brand-mark brand-mark--logo" aria-hidden="true">
+              <BrandLogo />
+            </span>
+          </Link>
+          <span className="brand-divider" aria-hidden="true" />
+          <Link className="brand brand--country" to="/japan" aria-label="日本雪場地圖" onClick={() => setIsMobileMenuOpen(false)}>
+            <span className="brand-mark brand-mark--logo" aria-hidden="true">
+              <JapanMapIcon />
+            </span>
+            <span className="brand-copy">
+              <strong>日本</strong>
+            </span>
+          </Link>
+        </div>
+      )}
       <nav
         className={`nav${isMobileMenuOpen ? " nav--open" : ""}`}
         id="mobile-navigation"
