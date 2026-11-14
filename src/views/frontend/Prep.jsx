@@ -3,43 +3,36 @@ import { useAuth } from "../../context/AuthContext";
 import { savePrepCloud, subscribePrepCloud } from "../../services/firebase";
 import "../../assets/pages/_prep.scss";
 import PrepScene from "../../component/PrepScene";
+import { prepStarterFor } from "../../data/prepStarters";
+import { storageKeyFor } from "../../services/syncCode";
 
 // 行前準備: a hand-drawn notebook checklist. Tapping an item ticks its box and
 // strikes it through; items can be added and removed. It syncs with the
 // chosen trip, or stays on this device when no trip is chosen.
 const LOCAL_KEY = "yuki-tabi-prep-items";
 
-const STARTER_ITEMS = [
-  "護照（效期 6 個月以上）",
-  "Visit Japan Web 入境登錄",
-  "電子機票、訂位紀錄",
-  "住宿訂房確認",
-  "台灣駕照正本＋日文譯本",
-  "租車預約確認",
-  "旅遊保險（含滑雪意外）",
-  "日圓現金、信用卡",
-  "網卡／eSIM",
-  "雪票、滑雪課程預約",
-  "雪衣、雪褲",
-  "手套、雪鏡、毛帽、面罩",
-  "發熱衣、羊毛襪",
-  "暖暖包",
-  "防滑鞋或冰爪",
-  "護唇膏、乳液",
-  "常備藥",
-  "行動電源（放隨身行李）",
-];
-
 const makeId = () => `prep-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
-const starterList = () => STARTER_ITEMS.map((text, index) => ({ id: `starter-${index + 1}`, text, done: false }));
+// A new trip starts from its country's own list (src/data/prepStarters.js).
+const starterList = (country) =>
+  prepStarterFor(country).map((text, index) => ({ id: `starter-${index + 1}`, text, done: false }));
 
-const loadLocal = () => {
+// Each country keeps its own copy on this device (Japan the original one).
+const loadLocal = (country) => {
   try {
-    const saved = JSON.parse(localStorage.getItem(LOCAL_KEY));
-    return Array.isArray(saved) ? saved : starterList();
+    const saved = JSON.parse(localStorage.getItem(storageKeyFor(LOCAL_KEY, country)));
+    return Array.isArray(saved) && !isUntouchedJapanList(saved, country) ? saved : starterList(country);
   } catch {
-    return starterList();
+    return starterList(country);
   }
+};
+
+// Before each country had its own list, every trip started from Japan's. A
+// list still exactly that, untouched, in another country gets that country's.
+const isUntouchedJapanList = (list, country) => {
+  if (country === "japan" || !Array.isArray(list) || !list.length) return false;
+  const japan = prepStarterFor("japan");
+  return list.length === japan.length &&
+    list.every((item, index) => item.id === `starter-${index + 1}` && item.text === japan[index] && !item.done);
 };
 
 // A slightly wobbly square, drawn like a pen box; a tick appears when done.
@@ -53,9 +46,9 @@ function HandBox({ done }) {
 }
 
 function Prep() {
-  const { user, syncSpaceId } = useAuth();
+  const { user, syncSpaceId, country } = useAuth();
   const cloudKey = user && syncSpaceId ? syncSpaceId : null;
-  const [items, setItems] = useState(loadLocal);
+  const [items, setItems] = useState(() => loadLocal(country));
   const [draft, setDraft] = useState("");
   const [status, setStatus] = useState("");
   const cloudReadyRef = useRef(false);
@@ -67,10 +60,12 @@ function Prep() {
     return subscribePrepCloud(
       cloudKey,
       (cloudItems) => {
-        if (Array.isArray(cloudItems)) {
+        if (Array.isArray(cloudItems) && !isUntouchedJapanList(cloudItems, country)) {
           setItems(cloudItems);
         } else if (!cloudReadyRef.current) {
-          savePrepCloud(cloudKey, loadLocal()).catch((error) =>
+          const starter = Array.isArray(cloudItems) ? starterList(country) : loadLocal(country);
+          setItems(starter);
+          savePrepCloud(cloudKey, starter).catch((error) =>
             console.error("無法建立行前準備清單", error),
           );
         }
@@ -78,7 +73,7 @@ function Prep() {
       },
       (error) => console.error("無法即時接收行前準備清單", error),
     );
-  }, [cloudKey]);
+  }, [cloudKey, country]);
 
   // Each change builds on the latest list, so quick taps never undo each other.
   const latestRef = useRef(items);
@@ -88,7 +83,7 @@ function Prep() {
     latestRef.current = nextItems;
     setItems(nextItems);
     try {
-      localStorage.setItem(LOCAL_KEY, JSON.stringify(nextItems));
+      localStorage.setItem(storageKeyFor(LOCAL_KEY, country), JSON.stringify(nextItems));
     } catch {
       // Storage full or blocked: the list still syncs to the trip.
     }
@@ -187,4 +182,11 @@ function Prep() {
   );
 }
 
-export default Prep;
+// A fresh list for each country, so moving between countries never shows
+// another country's list.
+function PrepRoute() {
+  const { country } = useAuth();
+  return <Prep key={country} />;
+}
+
+export default PrepRoute;
