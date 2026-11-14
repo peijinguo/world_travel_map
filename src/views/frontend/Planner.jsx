@@ -2690,17 +2690,24 @@ function Planner() {
     return () => cancelAnimationFrame(frame);
   }, [activeDayId]);
 
-  // Keep the chosen DAY tab in the middle of the strip.
+  // Keep the chosen DAY tab in the middle of the strip, so the days on both
+  // sides of it show too, even when it was at the very left or right edge.
   useEffect(() => {
     const picker = dayPickerRef.current;
     const tab = picker?.querySelector(".planner-day-tab.is-active");
     if (!picker || !tab) return;
+    const pickerBox = picker.getBoundingClientRect();
+    const tabBox = tab.getBoundingClientRect();
+    const target =
+      picker.scrollLeft + (tabBox.left - pickerBox.left) - (picker.clientWidth - tabBox.width) / 2;
     // Jump rather than glide: the day board below scrolls smoothly at the
     // same moment, and Chrome cancels one smooth scroll when another starts.
-    picker.scrollTo({
-      left: tab.offsetLeft - (picker.clientWidth - tab.offsetWidth) / 2,
-      behavior: "instant",
-    });
+    // scrollLeft (not scrollTo with behavior "instant") also works in iOS
+    // Safari, which rejects "instant" and would not scroll at all.
+    const previousBehavior = picker.style.scrollBehavior;
+    picker.style.scrollBehavior = "auto";
+    picker.scrollLeft = Math.max(0, Math.min(target, picker.scrollWidth - picker.clientWidth));
+    picker.style.scrollBehavior = previousBehavior;
   }, [activeDayId, days.length]);
 
   const activeDay = days.find((day) => day.id === activeDayId) ?? days[0];
