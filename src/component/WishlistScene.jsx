@@ -7,7 +7,8 @@ import tall from "../assets/wishlist-bg-tall.webp";
 // portrait one (a phone) the tall one.
 //
 // Each picture's snow area is a polygon in its own pixels: everything above
-// the table, stepping around the latte glass that stands up into the view.
+// the table, stepping around the latte glass and the Mont Blanc that stand
+// up into the view.
 // The sea is the band of open water between the horizon and the railing,
 // [top, bottom] in the picture's pixels, which ripples (see Sea below).
 const SCENES = [
@@ -16,7 +17,7 @@ const SCENES = [
     src: wide,
     w: 1999,
     h: 1125,
-    snow: [[0, 0], [1999, 0], [1999, 903], [1080, 903], [1080, 722], [925, 722], [925, 903], [0, 903]],
+    snow: [[0, 0], [1999, 0], [1999, 903], [1300, 903], [1300, 824], [1140, 824], [1140, 903], [1080, 903], [1080, 722], [925, 722], [925, 903], [0, 903]],
     count: 140,
     sea: [598, 674],
   },
@@ -25,7 +26,7 @@ const SCENES = [
     src: tall,
     w: 633,
     h: 1125,
-    snow: [[0, 0], [633, 0], [633, 842], [360, 842], [360, 752], [262, 752], [262, 842], [0, 842]],
+    snow: [[0, 0], [633, 0], [633, 842], [464, 842], [464, 820], [398, 820], [398, 842], [360, 842], [360, 752], [262, 752], [262, 842], [0, 842]],
     count: 90,
     sea: [616, 668],
   },
