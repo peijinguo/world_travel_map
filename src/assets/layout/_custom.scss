@@ -429,7 +429,7 @@ img { max-width: 100%; height: auto; }
   background: #fff;
   cursor: pointer;
 }
-.menu-toggle-book { width: 23px; height: 23px; fill: none; stroke: #123653; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; } // the same navy as the menu lines
+.menu-toggle-book { width: 27px; height: 27px; fill: none; stroke: #123653; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; } // the same navy as the menu lines
 .topbar--home .menu-toggle span { width: 19px; height: 2px; border-radius: 2px; background: #123653; transition: transform .2s ease, opacity .2s ease; }
 .topbar--home .menu-toggle--open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
 .topbar--home .menu-toggle--open span:nth-child(2) { opacity: 0; }
