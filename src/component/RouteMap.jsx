@@ -88,13 +88,13 @@ const makeRouteLine = (coordinates, paths = []) => ({
 // face the way the trip goes, with a darker wave of fresh prints walking
 // forward from stop to stop.
 const FOOTPRINT_SOURCE_ID = "planner-footprints";
-const STEP_METERS = 20;
+const STEP_METERS = 14;
 const MAX_STEPS_PER_LEG = 4000;
 // Zoomed out, only every 2^k-th step is drawn so the prints stay evenly
-// spaced on screen: k = 0 at zoom 16 and grows by one per zoom level (16
-// rather than 17 keeps the trail twice as dense as one print per step width).
+// spaced on screen: k = 0 at zoom 15 and grows by one per zoom level (15
+// rather than 17 keeps the trail four times as dense as one print per step width).
 const FOOTPRINT_MIN_ZOOM = 5;
-const FOOTPRINT_FULL_ZOOM = 16;
+const FOOTPRINT_FULL_ZOOM = 15;
 const skipLevels = Array.from(
   { length: FOOTPRINT_FULL_ZOOM - FOOTPRINT_MIN_ZOOM + 1 },
   (_, index) => ({ zoom: FOOTPRINT_MIN_ZOOM + index, k: FOOTPRINT_FULL_ZOOM - FOOTPRINT_MIN_ZOOM - index }),
@@ -110,7 +110,7 @@ const shownStep = (k) => ["floor", ["/", ["get", "step"], 2 ** k]];
 const isLeftFoot = (k) => ["==", ["%", shownStep(k), 2], 0];
 const STEP_TRAIL = 8; // prints behind the walker still showing (two pairs, then two fading)
 const STEP_PAUSE = 1; // ticks the walker waits at the last stop before starting over
-const STEP_TICK_MS = 340;
+const STEP_TICK_MS = 240; // quicker steps, so the denser trail still crosses the map at the same pace
 
 const metersBetween = ([lng1, lat1], [lng2, lat2]) => {
   const latScale = Math.cos((((lat1 + lat2) / 2) * Math.PI) / 180);
@@ -392,9 +392,9 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
           "icon-image": byZoom((k) => ["case", isLeftFoot(k), "footprint-left", "footprint-right"]),
           "icon-rotate": ["get", "bearing"],
           "icon-rotation-alignment": "map",
-          "icon-offset": byZoom((k) => ["case", isLeftFoot(k), ["literal", [-5, 0]], ["literal", [5, 0]]]),
+          "icon-offset": byZoom((k) => ["case", isLeftFoot(k), ["literal", [-4, 0]], ["literal", [4, 0]]]),
           // Small prints, so they read as a trail beside the pins, not over them.
-          "icon-size": 0.7,
+          "icon-size": 0.5,
           "icon-allow-overlap": true,
           "icon-ignore-placement": true,
           "icon-padding": 0,
