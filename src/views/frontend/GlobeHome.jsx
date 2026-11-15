@@ -165,10 +165,6 @@ function GlobeHome() {
     const country = globeCountries.find((item) => item.id === id);
     setSelectedId(id);
     turnTo(country.focus);
-    // On a phone the panel sits below the globe; bring it into view.
-    if (phone) {
-      requestAnimationFrame(() => document.querySelector(".globe-panel")?.scrollIntoView({ behavior: "smooth", block: "nearest" }));
-    }
   };
 
   const enter = () => {
