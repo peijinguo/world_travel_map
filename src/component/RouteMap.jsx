@@ -84,6 +84,62 @@ const makeRouteLine = (coordinates, paths = []) => ({
   },
 });
 
+// The drawn line keeps one shape at every zoom: the route as it looks with the
+// whole trip in view, without the small road bends that zooming in reveals.
+// Points closer than this share of the trip's size to the simplified line drop.
+const SMOOTH_SHARE = 0.006;
+const toMeters = ([lng, lat], latScale) => [lng * latScale * 111320, lat * 110540];
+const distanceToSegment = ([x, y], [x1, y1], [x2, y2]) => {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const length = dx * dx + dy * dy;
+  const t = length ? Math.max(0, Math.min(1, ((x - x1) * dx + (y - y1) * dy) / length)) : 0;
+  return Math.hypot(x - (x1 + t * dx), y - (y1 + t * dy));
+};
+// Douglas–Peucker on one leg, in meters.
+const simplifyLeg = (points, metric, tolerance) => {
+  if (points.length < 3) return points;
+  const keep = new Array(points.length).fill(false);
+  keep[0] = keep[points.length - 1] = true;
+  const stack = [[0, points.length - 1]];
+  while (stack.length) {
+    const [first, last] = stack.pop();
+    let farthest = -1;
+    let farthestDistance = tolerance;
+    for (let i = first + 1; i < last; i += 1) {
+      const distance = distanceToSegment(metric[i], metric[first], metric[last]);
+      if (distance > farthestDistance) {
+        farthest = i;
+        farthestDistance = distance;
+      }
+    }
+    if (farthest > 0) {
+      keep[farthest] = true;
+      stack.push([first, farthest], [farthest, last]);
+    }
+  }
+  return points.filter((_, i) => keep[i]);
+};
+const smoothRouteLine = (feature) => {
+  const legs = feature.geometry.coordinates;
+  const all = legs.flat();
+  if (all.length < 3) return feature;
+  const lats = all.map(([, lat]) => lat);
+  const latScale = Math.cos((((Math.min(...lats) + Math.max(...lats)) / 2) * Math.PI) / 180);
+  const metric = all.map((point) => toMeters(point, latScale));
+  const xs = metric.map(([x]) => x);
+  const ys = metric.map(([, y]) => y);
+  const size = Math.hypot(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
+  const tolerance = Math.max(size * SMOOTH_SHARE, 15);
+  return {
+    ...feature,
+    geometry: {
+      ...feature.geometry,
+      coordinates: legs.map((leg) => simplifyLeg(leg, leg.map((point) => toMeters(point, latScale)), tolerance)),
+    },
+  };
+};
+
 // The route is drawn as a trail of footprints, left and right steps turned to
 // face the way the trip goes, with a darker wave of fresh prints walking
 // forward from stop to stop.
@@ -93,7 +149,7 @@ const MAX_STEPS_PER_LEG = 4000;
 // Zoomed out, only every 2^k-th step is drawn so the prints stay evenly
 // spaced on screen: k = 0 at zoom 16 and grows by one per zoom level (16
 // rather than 17 keeps the trail twice as dense as one print per step width).
-const FOOTPRINT_MIN_ZOOM = 5;
+const FOOTPRINT_MIN_ZOOM = 13;
 const FOOTPRINT_FULL_ZOOM = 16;
 const skipLevels = Array.from(
   { length: FOOTPRINT_FULL_ZOOM - FOOTPRINT_MIN_ZOOM + 1 },
@@ -360,9 +416,25 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
       map.addSource(ROUTE_SOURCE_ID, {
         type: "geojson",
         data: makeRouteLine([]),
+        // The line arrives already smoothed (smoothRouteLine); this only trims
+        // what is too small to see when zoomed far out.
+        tolerance: 1.2,
       });
-      // A dashed line along the whole route, under the footprints; it keeps
-      // the route readable when zoomed far out, where the footprints thin out.
+      // A soft white band under the route, so the dashes stand out from the
+      // busy roads and green of the map.
+      map.addLayer({
+        id: `${ROUTE_SOURCE_ID}-casing`,
+        type: "line",
+        source: ROUTE_SOURCE_ID,
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: {
+          "line-color": "#ffffff",
+          "line-width": 6,
+          "line-opacity": 0.75,
+          "line-blur": 1,
+        },
+      });
+      // The route itself: even, rounded dashes in the app's dark ink.
       map.addLayer({
         id: ROUTE_SOURCE_ID,
         type: "line",
@@ -370,9 +442,10 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
         layout: { "line-cap": "round", "line-join": "round" },
         paint: {
           "line-color": "#1f2629",
-          "line-width": 3,
+          "line-width": 2.5,
           "line-opacity": 1,
-          "line-dasharray": [1.2, 3],
+          // In line widths; round caps add one width to each dash.
+          "line-dasharray": [2, 2.5],
         },
       });
       map.addImage("footprint-left", makeFootprintImage(false).image, { pixelRatio: 2 });
@@ -385,7 +458,7 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
         id: FOOTPRINT_SOURCE_ID,
         type: "symbol",
         source: FOOTPRINT_SOURCE_ID,
-        // Below zoom 5 (all of Japan) only the faint dotted guide is drawn.
+        // Below zoom 13 (town and wider) only the dashed line is drawn.
         minzoom: FOOTPRINT_MIN_ZOOM,
         filter: byZoom((k) => [">=", ["get", "rank"], k]),
         layout: {
@@ -398,6 +471,8 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
           "icon-allow-overlap": true,
           "icon-ignore-placement": true,
           "icon-padding": 0,
+          // Hidden: at every zoom the route is only the plain line.
+          visibility: "none",
         },
         paint: { "icon-opacity": footprintOpacity(-1) },
       });
@@ -453,7 +528,7 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
     if (!map || !mapReady) return;
     const coordinates = stopsRef.current.map(({ town }) => [town.longitude, town.latitude]);
     const routeLine = makeRouteLine(coordinates, pathsRef.current);
-    map.getSource(ROUTE_SOURCE_ID)?.setData(routeLine);
+    map.getSource(ROUTE_SOURCE_ID)?.setData(smoothRouteLine(routeLine));
     const footprints = makeFootprints(routeLine);
     map.getSource(FOOTPRINT_SOURCE_ID)?.setData(footprints);
     // A changed route starts the walk over from the first stop on screen.

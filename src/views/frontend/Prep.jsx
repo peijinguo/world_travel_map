@@ -2,9 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { savePrepCloud, subscribePrepCloud } from "../../services/firebase";
 import "../../assets/pages/_prep.scss";
-import PrepScene from "../../component/PrepScene";
 import CountryScene from "../../component/CountryScene";
-import { isSnowyCountry } from "../../data/countries";
 import { prepStarterFor } from "../../data/prepStarters";
 import usePrepSnowfall from "../../component/PrepSnowfall";
 import { storageKeyFor } from "../../services/syncCode";
@@ -56,7 +54,8 @@ function Prep() {
   const [status, setStatus] = useState("");
   const cloudReadyRef = useRef(false);
   const sheetRef = useRef(null);
-  const snow = usePrepSnowfall(sheetRef, isSnowyCountry(country));
+  // No snow on 行前準備: nothing piles up on the notebook.
+  const snow = usePrepSnowfall(sheetRef, false);
 
   // Follow the trip's list; a trip with no list yet starts from this device's.
   useEffect(() => {
@@ -117,7 +116,7 @@ function Prep() {
 
   return (
     <section className="prep-page">
-      {country === "japan" ? <PrepScene /> : <CountryScene country={country} page="prep" />}
+      <CountryScene country={country} page="prep" />
       <div className="prep-notebook" {...snow.swipeHandlers}>
         {snow.cap}
         <div className="prep-sheet" ref={sheetRef}>

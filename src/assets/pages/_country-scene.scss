@@ -8,19 +8,76 @@
 .country-scene-motion g { transform-box: fill-box; transform-origin: center; }
 
 // Northern lights shimmering.
-.cs-aurora { animation: cs-aurora 6s ease-in-out infinite alternate; }
-.cs-aurora.is-late { animation-delay: -3s; }
+.cs-aurora { animation: cs-aurora 4s ease-in-out infinite alternate; }
+.cs-aurora.is-late { animation-delay: -2s; }
 @keyframes cs-aurora {
-  from { opacity: .05; transform: translateY(2px); }
-  to { opacity: .55; transform: translateY(-3px); }
+  from { opacity: .05; transform: translateY(4px); }
+  to { opacity: .8; transform: translateY(-6px); }
 }
 
-// Chimney smoke rising and fading.
-.cs-smoke { animation: cs-smoke 4.2s ease-out infinite; }
-@keyframes cs-smoke {
-  from { opacity: 0; transform: translateY(4px) scale(.7); }
-  25% { opacity: .9; }
-  to { opacity: 0; transform: translateY(-26px) scale(1.4); }
+// Spray at a waterfall's foot swelling and settling.
+.cs-mist { transform-box: fill-box; transform-origin: center; animation: cs-mist 3.2s ease-in-out infinite alternate; }
+.cs-mist.is-late { animation-delay: -1.6s; }
+@keyframes cs-mist {
+  from { opacity: .35; transform: scale(.9, .85); }
+  to { opacity: .8; transform: scale(1.08, 1.15); }
+}
+
+// A head looking about: up at the sky, a quick peck down, then still a while.
+.cs-head { animation: cs-head 5s ease-in-out infinite; }
+@keyframes cs-head {
+  0%, 20% { transform: rotate(0deg); }
+  32%, 48% { transform: rotate(-7deg); }
+  58% { transform: rotate(7deg); }
+  64% { transform: rotate(2deg); }
+  70% { transform: rotate(7deg); }
+  80%, 100% { transform: rotate(0deg); }
+}
+
+// A head nodding down and back now and then, with a little shake.
+.cs-nod { animation: cs-nod 7s ease-in-out infinite; }
+@keyframes cs-nod {
+  0%, 35% { transform: rotate(0deg) scale(1); }
+  48%, 58% { transform: rotate(3.5deg) scale(1.05); }
+  64% { transform: rotate(1.5deg) scale(1.03); }
+  70% { transform: rotate(3deg) scale(1.04); }
+  82%, 100% { transform: rotate(0deg) scale(1); }
+}
+
+// Hot-spring steam rising, swelling and fading.
+.country-scene-motion .cs-steam { opacity: 0; transform-box: fill-box; transform-origin: center bottom; animation: cs-steam 7.5s ease-out infinite; }
+@keyframes cs-steam {
+  from { opacity: 0; transform: translate(0, 0) scale(.6, .5); }
+  20% { opacity: .7; }
+  60% { opacity: .45; transform: translate(-4px, -60px) scale(1.4, 1.5); }
+  to { opacity: 0; transform: translate(6px, -110px) scale(2, 2.2); }
+}
+
+// A hanging lantern swinging a little in the wind; it grows a touch as it
+// swings so it always covers the lantern drawn beneath it.
+.cs-sway { animation: cs-sway 3.6s ease-in-out infinite; }
+@keyframes cs-sway {
+  0%, 100% { transform: rotate(0deg) scale(1.01); }
+  25% { transform: rotate(2.5deg) scale(1.05); }
+  75% { transform: rotate(-2.5deg) scale(1.05); }
+}
+
+// A boat rocking on the water.
+.country-scene-motion .cs-bob { transform-box: fill-box; transform-origin: center; animation: cs-bob 4s ease-in-out infinite; }
+@keyframes cs-bob {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-1.5px) rotate(-.8deg); }
+  50% { transform: translateY(.5px) rotate(0deg); }
+  75% { transform: translateY(-1px) rotate(.8deg); }
+}
+
+// Chimney smoke: soft puffs rising, swelling and fading, drifting right.
+.cs-puff { opacity: 0; transform-box: fill-box; transform-origin: center; animation: cs-puff 4.8s ease-out infinite; }
+@keyframes cs-puff {
+  from { opacity: 0; transform: translate(0, 0) scale(.5); }
+  15% { opacity: .85; }
+  60% { opacity: .5; transform: translate(6px, -24px) scale(1.6); }
+  to { opacity: 0; transform: translate(18px, -42px) scale(2.4); }
 }
 
 // Things drifting across the sky.
@@ -36,13 +93,6 @@
   from { opacity: 0; transform: translate(0, 0) rotate(0deg); }
   10%, 80% { opacity: 1; }
   to { opacity: 0; transform: translate(-50px, 150px) rotate(260deg); }
-}
-.cs-drift.is-bird { animation: cs-bird 16s linear infinite; }
-@keyframes cs-bird {
-  from { opacity: 0; transform: translate(0, 0) scaleY(1); }
-  10%, 85% { opacity: 1; }
-  50% { transform: translate(120px, -10px) scaleY(.5); }
-  to { opacity: 0; transform: translate(240px, 6px) scaleY(1); }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -5,7 +5,6 @@ import { countryBase } from "../../data/countries";
 import { Link, useSearchParams } from "react-router-dom";
 import { isLodgingName } from "../../services/freeMaps";
 import "../../assets/pages/_hotel.scss";
-import HotelScene from "../../component/HotelScene";
 import CountryScene from "../../component/CountryScene";
 import FlightCards from "../../component/FlightCards";
 import LodgingPrice from "../../component/LodgingPrice";
@@ -244,7 +243,7 @@ function Hotel() {
 
   return (
     <section className="hotel-page">
-      {country === "japan" ? <HotelScene /> : <CountryScene country={country} page="hotel" />}
+      <CountryScene country={country} page="hotel" />
       <h2 className="hotel-section-title"><span className="brush-title">機票</span></h2>
       <FlightCards />
       <h2 className="hotel-section-title"><span className="brush-title">住宿</span></h2>

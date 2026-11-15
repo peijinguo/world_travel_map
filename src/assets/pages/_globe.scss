@@ -94,7 +94,8 @@
 }
 
 .globe-panel p { margin: 6px 0 0; color: #829bad; font-size: 17px; font-weight: 600; }
-.globe-panel .town-heading h2 { font-size: 40px; }
+.globe-panel .town-heading h2 { font-size: 34px; }
+.globe-panel .town-heading p { font-size: 15px; }
 .globe-list li button {
   display: block;
   width: 100%;
@@ -126,7 +127,8 @@
 @media (max-width: 760px) {
   .globe-hero { flex-direction: column; align-items: stretch; padding-bottom: 20px; }
   .globe-stage { flex: none; height: auto; padding-right: 0; aspect-ratio: 1; }
-  .globe-panel .town-heading h2 { font-size: 34px; }
+  .globe-panel .town-heading h2 { font-size: 28px; }
+  .globe-panel .town-heading p { font-size: 15px; }
   .globe-notice { white-space: normal; text-align: center; width: max-content; max-width: calc(100% - 32px); }
 }
 
