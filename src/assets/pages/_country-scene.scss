@@ -1,19 +1,8 @@
 // The small movements in each country's corner drawings (CountryScene.jsx).
 // The drawings sit inside the shared SnowScene (_snow-scene.scss).
 .country-scene-defs { position: absolute; width: 0; height: 0; }
-.country-scene-art { overflow: hidden; }
-// The two drawings overlap in the middle (Japan's leave a gap behind the
-// card), each fading out toward the other, so the bottom of a long page is
-// never blank and there is no seam where they meet.
-.snow-scene-piece.is-half { width: 60%; }
-.snow-scene-piece.is-half.is-bottom-left {
-  -webkit-mask-image: linear-gradient(90deg, #000 58%, transparent 92%);
-  mask-image: linear-gradient(90deg, #000 58%, transparent 92%);
-}
-.snow-scene-piece.is-half.is-bottom-right {
-  -webkit-mask-image: linear-gradient(270deg, #000 58%, transparent 92%);
-  mask-image: linear-gradient(270deg, #000 58%, transparent 92%);
-}
+// One wide drawing across the bottom of the screen, under the card.
+.country-scene-art { position: absolute; left: 0; bottom: 0; display: block; width: 100%; height: auto; overflow: hidden; }
 .country-scene-art g { transform-box: view-box; }
 
 // Windmill sails.
@@ -48,7 +37,8 @@
 
 // Sky lanterns drifting up and starting again.
 .cs-rise { animation: cs-rise 16s linear infinite; }
-.cs-rise.is-late { animation-delay: -8s; }
+.cs-rise.is-late { animation-delay: -5.3s; }
+.cs-rise.is-later { animation-delay: -10.6s; }
 @keyframes cs-rise {
   from { opacity: 0; transform: translate(0, 140px); }
   15% { opacity: 1; }
@@ -82,11 +72,14 @@
 .cs-fall path { stroke-dasharray: 18 14; animation: cs-fall 1.2s linear infinite; }
 @keyframes cs-fall { to { stroke-dashoffset: -32; } }
 
-// The Swiss train crossing its viaduct, left to right, then again.
-.cs-train { animation: cs-train 18s linear infinite; }
+// The Swiss train crossing its viaduct, left to right, then again; it
+// fades in and out at the viaduct's ends.
+.cs-train { animation: cs-train 16s linear infinite; }
 @keyframes cs-train {
-  from { transform: translateX(-200px); }
-  to { transform: translateX(860px); }
+  from { opacity: 0; transform: translateX(-60px); }
+  8% { opacity: 1; }
+  88% { opacity: 1; }
+  to { opacity: 0; transform: translateX(420px); }
 }
 
 // Maple leaves drifting down.
