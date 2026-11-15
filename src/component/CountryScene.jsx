@@ -48,6 +48,7 @@ function Window({ x, y, w = 22, h = 26, lit = true }) {
     <g>
       <rect x={x} y={y} width={w} height={h} fill={lit ? C.glow : C.snow} />
       <path d={`M${x + w / 2} ${y}v${h}M${x} ${y + h / 2}h${w}`} fill="none" strokeWidth={FINE} />
+      <path d={`M${x - 3} ${y + h}h${w + 6}`} fill="none" strokeWidth={FINE + 1} />
     </g>
   );
 }
@@ -71,7 +72,8 @@ function Cloud({ x, y, s = 1 }) {
           a${r(28)} ${r(28)} 0 0 0-${r(52)} ${r(10)}a${r(24)} ${r(24)} 0 0 0-${r(30)} ${r(58)}Z`}
         fill={C.snow}
       />
-      <path d={`M${x + r(20)} ${y - r(10)}q${r(40)} ${r(6)} ${r(90)}-${r(2)}`} fill="none" strokeWidth={FINE} strokeOpacity=".5" />
+      <path d={`M${x + r(6)} ${y - r(4)}q${r(60)} ${r(8)} ${r(120)}-${r(2)}V${y}H${x}Z`} fill={C.shade} stroke="none" />
+      <path d={`M${x + r(20)} ${y - r(10)}q${r(40)} ${r(6)} ${r(90)}-${r(2)}M${x + r(60)} ${y - r(30)}q${r(10)}-${r(8)} ${r(22)}-${r(4)}`} fill="none" strokeWidth={FINE} strokeOpacity=".5" />
     </g>
   );
 }
@@ -87,6 +89,14 @@ function Pine({ x, y, s = 1, snowy = true, fill = C.pine }) {
       <path d={tier(124, 46, 48)} fill={fill} />
       <path d={tier(156, 33, 82)} fill={fill} />
       <Shade d={`M${x} ${y - 150 * s}L${x + 56 * s} ${y - 18 * s}H${x}Z`} />
+      <path
+        d={[[30, 60], [24, 92], [18, 126]]
+          .map(([half, top]) => `M${x - half * s} ${y - (top - 4) * s}l${10 * s}-${10 * s}M${x + half * s * 0.6} ${y - (top - 6) * s}l-${8 * s}-${10 * s}M${x - half * s * 0.2} ${y - (top - 18) * s}l${6 * s}-${8 * s}`)
+          .join("")}
+        fill="none"
+        strokeWidth={FINE}
+        strokeOpacity=".7"
+      />
       {snowy && (
         <g fill={C.snow}>
           <path d={`M${x - 14 * s} ${y - 128 * s}L${x} ${y - 156 * s}L${x + 14 * s} ${y - 128 * s}q-7 6-14 1q-7 5-14-1Z`} />
@@ -107,7 +117,12 @@ function Tree({ x, y, s = 1, fill = C.leaf, tint = C.grass }) {
       <circle cx={x + 32 * s} cy={y - 108 * s} r={36 * s} fill={fill} />
       <circle cx={x} cy={y - 140 * s} r={42 * s} fill={tint} />
       <circle cx={x - 6 * s} cy={y - 100 * s} r={26 * s} fill={tint} />
-      <path d={`M${x - 20 * s} ${y - 150 * s}q${8 * s}-${6 * s} ${16 * s} 0M${x + 22 * s} ${y - 118 * s}q${8 * s}-${6 * s} ${16 * s} 0`} fill="none" strokeWidth={FINE} />
+      <Shade d={`M${x + 10 * s} ${y - 180 * s}a${42 * s} ${42 * s} 0 0 1 ${58 * s} ${74 * s}a${36 * s} ${36 * s} 0 0 1-${40 * s} ${36 * s}Z`} />
+      <path
+        d={`M${x - 20 * s} ${y - 150 * s}q${8 * s}-${6 * s} ${16 * s} 0M${x + 22 * s} ${y - 118 * s}q${8 * s}-${6 * s} ${16 * s} 0M${x - 46 * s} ${y - 108 * s}q${8 * s}-${6 * s} ${16 * s} 0M${x + 4 * s} ${y - 166 * s}q${8 * s}-${6 * s} ${16 * s} 0M${x - 12 * s} ${y - 112 * s}q${8 * s}-${6 * s} ${16 * s} 0`}
+        fill="none"
+        strokeWidth={FINE}
+      />
     </g>
   );
 }
@@ -143,7 +158,8 @@ function Ground({ y, to = W + 20 }) {
   return (
     <g>
       <path d={`M-20 ${y}q${span * 0.3}-24 ${span * 0.6}-6t${span * 0.4}-4V${H + 20}H-20Z`} fill={C.snow} />
-      <path d={`M60 ${y + 40}q60-8 120 0M${to * 0.45} ${y + 60}q60-8 120 0M${to * 0.75} ${y + 30}q60-8 120 0`} fill="none" strokeWidth={FINE} strokeOpacity=".5" />
+      <path d={`M60 ${y + 40}q60-8 120 0M${to * 0.45} ${y + 60}q60-8 120 0M${to * 0.75} ${y + 30}q60-8 120 0M${to * 0.25} ${y + 80}q40-6 80 0M${to * 0.6} ${y + 100}q50-6 100 0M${to * 0.9} ${y + 76}q40-6 80 0`} fill="none" strokeWidth={FINE} strokeOpacity=".5" />
+      <path d={`M-20 ${y + 6}q${span * 0.3}-24 ${span * 0.6}-6t${span * 0.4}-4V${y + 30}q-${span * 0.4} 0-${span * 0.6} 4t-${span * 0.4} 4Z`} fill={C.shade} fillOpacity=".6" stroke="none" />
     </g>
   );
 }
@@ -160,7 +176,14 @@ function House({ x, y, w, h, roof = C.roof, wall = C.cream, windows = 2, door = 
       {snowy ? (
         <path d={`M${x - 12} ${y - h + 6}q${w * 0.15} 10 ${w * 0.3} 0q${w * 0.15} 12 ${w * 0.3} 0q${w * 0.15} 10 ${w * 0.3} 0q${w * 0.1} 8 ${w * 0.1 + 24} 0`} fill="none" strokeWidth={FINE} />
       ) : (
-        <path d={`M${x + w * 0.1} ${y - h - peak * 0.08}h${w * 0.8}M${x + w * 0.3} ${y - h - peak * 0.45}h${w * 0.4}`} fill="none" strokeWidth={FINE} />
+        <path
+          d={`M${x + w * 0.04} ${y - h - peak * 0.04}h${w * 0.92}M${x + w * 0.18} ${y - h - peak * 0.3}h${w * 0.64}M${x + w * 0.32} ${y - h - peak * 0.58}h${w * 0.36}
+            M${x + w * 0.25} ${y - h - peak * 0.04}v-${peak * 0.26}M${x + w * 0.5} ${y - h - peak * 0.04}v-${peak * 0.26}M${x + w * 0.75} ${y - h - peak * 0.04}v-${peak * 0.26}
+            M${x + w * 0.38} ${y - h - peak * 0.3}v-${peak * 0.28}M${x + w * 0.62} ${y - h - peak * 0.3}v-${peak * 0.28}`}
+          fill="none"
+          strokeWidth={FINE}
+          strokeOpacity=".7"
+        />
       )}
       {Array.from({ length: windows }, (_, i) => (
         <Window key={i} x={x + ((i + 1) * w) / (windows + 1) - 12} y={y - h * 0.78} w={24} h={26} />
@@ -168,7 +191,9 @@ function House({ x, y, w, h, roof = C.roof, wall = C.cream, windows = 2, door = 
       {door && (
         <g>
           <rect x={x + w / 2 - 13} y={y - 42} width="26" height="42" fill={C.plank} />
+          <path d={`M${x + w / 2 - 6} ${y - 36}v28M${x + w / 2 + 2} ${y - 36}v28`} fill="none" strokeWidth={FINE} strokeOpacity=".6" />
           <circle cx={x + w / 2 + 7} cy={y - 20} r="2" fill={INK} />
+          <path d={`M${x + w / 2 - 20} ${y}h40v6h-40Z`} fill={C.stone} />
         </g>
       )}
     </g>
@@ -253,9 +278,15 @@ function Water({ y, x0 = -20, x1 = W + 20, fill = C.sea }) {
     <g>
       <path d={`M${x0} ${y}H${x1}V${H + 20}H${x0}Z`} fill={fill} />
       <path d={`M${x0} ${y + 60}H${x1}V${H + 20}H${x0}Z`} fill={C.deep} fillOpacity=".3" stroke="none" />
+      <path d={`M${x0} ${y + 4}H${x1}`} fill="none" stroke="#fff" strokeWidth="4" strokeOpacity=".7" />
       <g className="cs-ripple" fill="none" strokeWidth={FINE} strokeOpacity=".6">
-        {Array.from({ length: Math.ceil((x1 - x0) / 220) }, (_, i) => (
-          <path key={i} d={`M${x0 + 60 + i * 220} ${y + 28 + (i % 3) * 34}q16-7 32 0t32 0`} />
+        {Array.from({ length: Math.ceil((x1 - x0) / 110) }, (_, i) => (
+          <path key={i} d={`M${x0 + 30 + i * 110} ${y + 20 + ((i * 37) % 110)}q${10 + (i % 3) * 6}-6 ${20 + (i % 3) * 12} 0t${20 + (i % 3) * 12} 0`} />
+        ))}
+      </g>
+      <g fill="none" stroke="#fff" strokeWidth="3" strokeOpacity=".7">
+        {Array.from({ length: Math.ceil((x1 - x0) / 260) }, (_, i) => (
+          <path key={i} d={`M${x0 + 120 + i * 260} ${y + 46 + ((i * 53) % 80)}h${30 + (i % 2) * 24}`} />
         ))}
       </g>
     </g>
@@ -289,6 +320,18 @@ function Fence({ x, y, n, gap = 46 }) {
       ))}
       <path d={`M${x - 6} ${y - 26}h${(n - 1) * gap + 24}M${x - 6} ${y - 12}h${(n - 1) * gap + 24}`} fill="none" strokeWidth={FINE + 0.6} />
     </g>
+  );
+}
+
+// Little grass tufts at [x, y] points.
+function Tufts({ at }) {
+  return (
+    <path
+      d={at.map(([x, y]) => `M${x - 8} ${y}l3-10 3 10M${x} ${y}l2-14 3 14M${x + 6} ${y}l4-9 2 9`).join("")}
+      fill="none"
+      stroke={C.leaf}
+      strokeWidth="2.2"
+    />
   );
 }
 
@@ -341,6 +384,7 @@ const SCENES = {
           <path d="M150 470V430h40M350 470V420h-30" fill="none" strokeWidth={FINE} />
         </g>
         <Trail d="M560 580q40-70 160-110t260-40q-130 30-190 70t-110 80Z" />
+        <Tufts at={[[90, 520], [420, 470], [470, 540], [880, 520], [1120, 540], [1300, 520], [1620, 540]]} />
         <Tree x={500} y={420} s={0.6} />
         <Tree x={680} y={400} s={0.45} />
         <path d="M980 470q200-200 732-220V580H980Z" fill={C.grass} />
@@ -384,6 +428,7 @@ const SCENES = {
         </g>
         <path d="M520 470h40v16h40v16h40v16h40v16h40" fill="none" strokeWidth={FINE + 0.8} />
         <Tree x={600} y={440} s={0.5} />
+        <Tufts at={[[80, 470], [260, 500], [420, 480], [560, 540], [680, 520]]} />
         <g>
           <Shadow x={785} y={420} w={80} />
           <path d="M760 420l10-110h30l10 110Z" fill={C.snow} />
@@ -391,10 +436,22 @@ const SCENES = {
           <rect x="770" y="290" width="30" height="20" fill={C.glow} />
           <path d="M764 290l21-20 21 20Z" fill={C.red} />
         </g>
+        {/* Guishan Island as seen from the Yilan coast: the turtle's small
+            head at the left, a dip for the neck, the high domed shell, then
+            a long low tail out to sea; pale cliffs along the waterline. */}
         <g>
-          <path d="M1120 400q40-90 140-80t130-60q40 30 30 70t180 70Z" fill={C.leaf} />
-          <Shade d="M1390 260q40 30 30 70t180 70h-200Z" />
-          <path d="M1180 360q60-20 120-10" fill="none" strokeWidth={FINE} />
+          <path
+            d="M1110 402q8-40 34-58q26-16 50-4q16 10 24 30q20-8 36-30q34-66 84-110q22-16 42-6q40 26 70 90q22 46 64 64q60 18 130 28q50 8 80 0V402Z"
+            fill={C.leaf}
+          />
+          <path d="M1110 402q8-22 30-26q28 6 60 2q30 0 50 10q60-12 120-6q60 8 120 6q70 4 130 2q60 0 92 12V402Z" fill={C.stone} />
+          <path d="M1140 390l6-12M1180 392l4-12M1240 394l6-14M1300 392l4-12M1360 394l6-14M1420 392l4-12M1480 394l6-14M1540 394l4-12" fill="none" strokeWidth={FINE} />
+          <Shade d="M1420 230q40 26 70 90q22 46 64 64q60 18 130 28V402H1430Z" />
+          <path d="M1160 350q12-8 24 0M1300 300q16-10 30 0M1350 250q14-10 28 0M1400 290q14-10 28 0M1520 360q14-10 28 0" fill="none" strokeWidth={FINE} />
+          <path d="M1386 214q-14 30-10 70" fill="none" strokeWidth={FINE} strokeOpacity=".6" />
+          <g fill="none" strokeWidth={FINE} strokeOpacity=".5">
+            <path d="M1180 418h60M1300 422h90M1460 418h70" />
+          </g>
         </g>
         <Boat x={960} y={470} />
       </g>
@@ -647,6 +704,7 @@ const SCENES = {
           <path key={color} d={`M${420 + i * 100} 494l${110 + i * 16}-84h56l-${70 - i * 6} 84Z`} fill={color} />
         ))}
         <Tulips x={380} y={480} cols={8} rows={1} />
+        <Tufts at={[[60, 460], [140, 480], [700, 470], [900, 460]]} />
         {[
           [1000, C.wood, 0],
           [1100, C.red, 1],
@@ -865,6 +923,7 @@ const SCENES = {
           <Shade d="M360 270h60v190h-60Z" />
         </g>
         <Fence x={500} y={462} n={8} />
+        <Tufts at={[[60, 520], [440, 500], [600, 530], [900, 510], [1150, 520], [1420, 500], [1600, 530]]} />
         {[[1000, 470, 1], [1300, 440, 0.8]].map(([x, y, s], i) => (
           <g key={x} transform={`translate(${x} ${y}) scale(${s})`}>
             <Shadow x={0} y={0} w={220} />
@@ -958,6 +1017,7 @@ const SCENES = {
         ))}
         <path d="M-20 480H1712V580H-20Z" fill={C.grass} />
         <Fence x={760} y={482} n={7} />
+        <Tufts at={[[60, 530], [300, 540], [700, 520], [1160, 540], [1380, 530], [1560, 545]]} />
         {[[1060, 470], [1260, 500], [1460, 450], [1610, 490]].map(([x, y], i) => (
           <g key={x} className="cs-graze" style={{ transformOrigin: `${x}px ${y}px`, animationDelay: `${-i * 1.3}s` }}>
             <Shadow x={x} y={y} w={110} />
