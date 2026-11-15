@@ -459,13 +459,24 @@ img { max-width: 100%; height: auto; }
   position: relative;
   padding: 18px 18px 10px;
   border: 2px solid rgba(255, 255, 255, .8);
-  border-top-width: 7px; // the coloured strip along the top
-  border-radius: 22px;
+  border-radius: 28px;
   background: #fff;
   box-shadow: 0 16px 34px rgba(5, 9, 20, .35);
 }
-.trip-card.is-done { border-top-color: #93c07f; }
-.trip-card.is-upcoming { border-top-color: #e9776b; }
+// The coloured strip along the top, cut flat by the rounded corners like the
+// world map's 旅行地圖 panel (.resort-panel::before).
+.trip-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 40px;
+  border-radius: 26px 26px 0 0;
+  background: var(--strip);
+  clip-path: inset(0 0 calc(100% - 7px) 0);
+  pointer-events: none;
+}
+.trip-card.is-done { --strip: #93c07f; padding-top: 23px; }
+.trip-card.is-upcoming { --strip: #e9776b; padding-top: 23px; }
 .trip-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
 .trip-card-head h2 { flex: 1; margin: 0; color: #123653; font-size: 19px; font-weight: 900; letter-spacing: .04em; }
 .trip-card-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; }
