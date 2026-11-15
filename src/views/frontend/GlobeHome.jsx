@@ -309,7 +309,7 @@ function GlobeHome() {
                 const [x, y] = projection(country.focus);
                 // Emblems pull in toward the globe as their country nears the edge.
                 const edge = Math.cos(geoDistance(country.focus, view));
-                const [ox, oy] = country.offset.map((value) => value * (0.55 + 0.45 * edge));
+                const [ox, oy] = country.offset.map((value) => value * (0.7 + 0.3 * edge));
                 const active = country.id === selectedId || country.id === hoverId;
                 return (
                   <g

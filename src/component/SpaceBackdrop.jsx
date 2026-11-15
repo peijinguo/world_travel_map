@@ -162,7 +162,7 @@ export function PlanetOrbits({ center, front = false }) {
           const pathId = `planet-orbit-${orbit.id}-${front ? "front" : "back"}`;
           return (
             <g key={orbit.id}>
-              <path id={pathId} className="planet-orbit" d={d} />
+              <path id={pathId} className={`planet-orbit is-${orbit.id}`} d={d} />
               {orbit.laps.map((lap) => (
                 <g key={lap.planet} className="planet">
                   <g transform={`rotate(${-TILT})`} stroke={INK} strokeWidth="3" strokeLinejoin="round">

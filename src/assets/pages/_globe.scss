@@ -171,6 +171,8 @@ main:has(.globe-home) { background: #0b0e17; }
 
 .planet-orbits { pointer-events: none; }
 .planet-orbit { fill: none; stroke: #e9eef5; stroke-opacity: .75; stroke-width: 2; stroke-dasharray: 7 6; }
+// Only the moon's orbit is drawn; the outer planets travel an unseen one.
+.planet-orbit.is-outer { stroke: none; }
 
 // On the dark sky the dotted leaders and the globe's rim turn light.
 .globe-home .marker-leader { stroke: #e9eef5; opacity: .75; }
