@@ -1,4 +1,5 @@
 import SnowScene from "./SnowScene";
+import { isSnowyCountry } from "../data/countries";
 import "../assets/pages/_country-scene.scss";
 
 // The faint picture behind 行前準備 and 機票住宿 for every country but Japan
@@ -687,8 +688,7 @@ const SCENES = {
   },
 };
 
-// Countries without snow get no snowfall.
-const NO_SNOW = new Set(["taiwan", "netherlands", "newZealand"]);
+
 
 function Drawing({ children }) {
   return (
@@ -708,7 +708,7 @@ function CountryScene({ country, page }) {
   const pair = SCENES[country]?.[page];
   if (!pair) return null;
   return (
-    <SnowScene snow={!NO_SNOW.has(country)}>
+    <SnowScene snow={isSnowyCountry(country)}>
       {/* The pencil look: lines wobble a little, and fills are streaky. */}
       <svg className="country-scene-defs" width="0" height="0" aria-hidden="true">
         <filter id="country-scene-pencil" x="-2%" y="-2%" width="104%" height="104%">
@@ -719,10 +719,10 @@ function CountryScene({ country, page }) {
           <feComposite in="wobble" in2="streakAlpha" operator="in" />
         </filter>
       </svg>
-      <div className="snow-scene-piece is-bottom-left" style={{ "--piece-w": W }}>
+      <div className="snow-scene-piece is-bottom-left is-half" style={{ "--piece-w": W }}>
         <Drawing>{pair[0]}</Drawing>
       </div>
-      <div className="snow-scene-piece is-bottom-right" style={{ "--piece-w": W }}>
+      <div className="snow-scene-piece is-bottom-right is-half" style={{ "--piece-w": W }}>
         <Drawing>{pair[1]}</Drawing>
       </div>
     </SnowScene>

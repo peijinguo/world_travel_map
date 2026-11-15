@@ -2,6 +2,9 @@
 // The drawings sit inside the shared SnowScene (_snow-scene.scss).
 .country-scene-defs { position: absolute; width: 0; height: 0; }
 .country-scene-art { overflow: hidden; }
+// The two drawings meet in the middle (Japan's leave a gap behind the card),
+// so the bottom of a long page, below the card, is never blank.
+.snow-scene-piece.is-half { width: 50%; }
 .country-scene-art g { transform-box: view-box; }
 
 // Windmill sails.

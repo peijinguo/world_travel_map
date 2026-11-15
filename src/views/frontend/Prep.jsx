@@ -4,6 +4,7 @@ import { savePrepCloud, subscribePrepCloud } from "../../services/firebase";
 import "../../assets/pages/_prep.scss";
 import PrepScene from "../../component/PrepScene";
 import CountryScene from "../../component/CountryScene";
+import { isSnowyCountry } from "../../data/countries";
 import { prepStarterFor } from "../../data/prepStarters";
 import usePrepSnowfall from "../../component/PrepSnowfall";
 import { storageKeyFor } from "../../services/syncCode";
@@ -55,7 +56,7 @@ function Prep() {
   const [status, setStatus] = useState("");
   const cloudReadyRef = useRef(false);
   const sheetRef = useRef(null);
-  const snow = usePrepSnowfall(sheetRef);
+  const snow = usePrepSnowfall(sheetRef, isSnowyCountry(country));
 
   // Follow the trip's list; a trip with no list yet starts from this device's.
   useEffect(() => {

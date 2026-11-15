@@ -24,7 +24,8 @@ function clumpPath(seed) {
   return `M6 ${h}C2 ${h - 8} 8 ${10 - r(2) * 4} 20 ${9 - r(3) * 4}C30 ${2 + r(4) * 3} 44 ${3 + r(5) * 4} 54 ${8 - r(6) * 3}C66 ${2 + r(7) * 4} 82 ${6 + r(8) * 3} 90 ${12 + r(9) * 3}C98 ${15 + r(1) * 4} 99 ${h - 6} 94 ${h}C80 ${h + 4} 60 ${h + 2} 48 ${h + 3}C30 ${h + 5} 14 ${h + 4} 6 ${h}Z`;
 }
 
-export default function usePrepSnowfall(sheetRef) {
+// `enabled` is false for a country without snow: nothing piles up or falls.
+export default function usePrepSnowfall(sheetRef, enabled = true) {
   const still = reducedMotion();
   const [level, setLevel] = useState(still ? 1 : 0);
   const [clumps, setClumps] = useState([]);
@@ -65,7 +66,7 @@ export default function usePrepSnowfall(sheetRef) {
 
   // Pile up; each time it is full, clumps fall and it keeps piling up.
   useEffect(() => {
-    if (still) return undefined;
+    if (still || !enabled) return undefined;
     const step = TICK_MS / 1000 / FILL_SECONDS;
     const timer = window.setInterval(() => {
       if (holdRef.current) return;
@@ -83,7 +84,7 @@ export default function usePrepSnowfall(sheetRef) {
       }
     }, TICK_MS);
     return () => window.clearInterval(timer);
-  }, [still, dropClumps]);
+  }, [still, enabled, dropClumps]);
 
   // Brush everything off, then start piling up again.
   const brush = useCallback((direction) => {
@@ -169,5 +170,6 @@ export default function usePrepSnowfall(sheetRef) {
     </div>
   );
 
+  if (!enabled) return { cap: null, fallen: null, swipeHandlers: {}, hasSnow: false };
   return { cap, fallen, swipeHandlers, hasSnow: clumps.length > 0 };
 }

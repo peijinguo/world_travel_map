@@ -50,3 +50,8 @@ export const mainland = (shape, country) => {
   });
   return { type: "Feature", id: shape.id, properties: shape.properties, geometry: { type: "MultiPolygon", coordinates: near } };
 };
+
+// Countries without snow: no snowfall behind 行前準備 or 機票住宿, and no
+// snow piling on the 行前準備 notebook.
+const NO_SNOW = new Set(["taiwan", "netherlands", "newZealand"]);
+export const isSnowyCountry = (country) => !NO_SNOW.has(country);
