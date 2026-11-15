@@ -1,35 +1,13 @@
 import wide from "../assets/wishlist-bg-wide.webp";
 import tall from "../assets/wishlist-bg-tall.webp";
 
-// The picture behind 想吃清單 (coffee and cakes on a table by the snowy sea),
-// filling the screen under the header, with snow falling over the sky and the
-// sea (see _wishlist.scss), and the sea itself rippling. A landscape screen gets the wide picture, a
-// portrait one (a phone) the tall one.
-//
-// Each picture's snow area is a polygon in its own pixels: everything above
-// the table, stepping around the latte glass and the Mont Blanc that stand
-// up into the view.
-// The sea is the band of open water between the horizon and the railing,
-// [top, bottom] in the picture's pixels, which ripples (see Sea below).
+// The picture behind 想吃清單 (little cakes scattered on white), filling the
+// screen under the header, with snow falling over all of it (see
+// _wishlist.scss). A landscape screen gets the wide picture, a portrait one (a
+// phone) the tall one.
 const SCENES = [
-  {
-    name: "wide",
-    src: wide,
-    w: 1630,
-    h: 914,
-    snow: [[0, 0], [1630, 0], [1630, 735], [1056, 735], [1056, 644], [882, 644], [882, 582], [750, 582], [750, 735], [0, 735]],
-    count: 140,
-    sea: [486, 572],
-  },
-  {
-    name: "tall",
-    src: tall,
-    w: 514,
-    h: 918,
-    snow: [[0, 0], [514, 0], [514, 784], [434, 784], [434, 730], [322, 730], [322, 784], [300, 784], [300, 690], [214, 690], [214, 784], [0, 784]],
-    count: 90,
-    sea: [646, 684],
-  },
+  { name: "wide", src: wide, w: 1805, h: 1016, count: 140 },
+  { name: "tall", src: tall, w: 572, h: 1016, count: 90 },
 ];
 
 const pct = (value, total) => `${(value / total) * 100}%`;
@@ -78,35 +56,6 @@ function Snow({ points, w, h, count, seed }) {
   );
 }
 
-// The sea band redrawn through a ripple pattern that sways slowly sideways and
-// bobs up and down, like a gentle swell, instead of changing shape. The
-// pattern is drawn wider and taller than the band so its edges never show.
-const EASE = ".45 0 .55 1;.45 0 .55 1";
-function Sea({ src, w, h, sea: [top, bottom], id }) {
-  const pad = 120;
-  const region = { x: -pad, y: top - pad / 2, width: w + pad * 2, height: bottom - top + pad };
-  return (
-    <svg className="wishlist-scene-sea" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
-      <defs>
-        <filter id={`${id}-ripple`} {...region} filterUnits="userSpaceOnUse">
-          <feTurbulence {...region} type="fractalNoise" baseFrequency="0.0035 0.06" numOctaves="2" seed="3" result="noise" />
-          <feOffset in="noise" result="swell">
-            <animate attributeName="dx" dur="18s" repeatCount="indefinite" values="0;-90;0" calcMode="spline" keyTimes="0;.5;1" keySplines={EASE} />
-            <animate attributeName="dy" dur="6s" repeatCount="indefinite" values="0;12;0" calcMode="spline" keyTimes="0;.5;1" keySplines={EASE} />
-          </feOffset>
-          <feDisplacementMap in="SourceGraphic" in2="swell" scale="5" xChannelSelector="R" yChannelSelector="G" />
-        </filter>
-        <clipPath id={`${id}-band`}>
-          <rect x="0" y={top} width={w} height={bottom - top} />
-        </clipPath>
-      </defs>
-      <g clipPath={`url(#${id}-band)`}>
-        <image href={src} width={w} height={h} filter={`url(#${id}-ripple)`} />
-      </g>
-    </svg>
-  );
-}
-
 function WishlistScene() {
   return (
     <div className="wishlist-scene" aria-hidden="true">
@@ -117,8 +66,7 @@ function WishlistScene() {
           style={{ "--ratio": scene.w / scene.h }}
         >
           <img className="wishlist-scene-bg" src={scene.src} alt="" />
-          <Sea src={scene.src} w={scene.w} h={scene.h} sea={scene.sea} id={`wishlist-sea-${scene.name}`} />
-          <Snow points={scene.snow} w={scene.w} h={scene.h} count={scene.count} seed={index * 7} />
+          <Snow points={[[0, 0], [scene.w, 0], [scene.w, scene.h], [0, scene.h]]} w={scene.w} h={scene.h} count={scene.count} seed={index * 7} />
         </div>
       ))}
     </div>

@@ -1,6 +1,6 @@
 .wishlist-page { width: min(720px, calc(100% - 32px)); margin: 0 auto; padding: 48px 0 80px; color: #284d63; position: relative; z-index: 0; }
 // The picture (WishlistScene.jsx), faint and spanning the screen under the
-// header behind the list, with snow falling over the sky and sea.
+// header behind the list, with snow falling over it.
 .wishlist-scene {
   position: fixed;
   inset: var(--topbar-height, 72px) 0 0;
@@ -30,10 +30,8 @@
   .wishlist-scene-art.is-tall { display: block; }
 }
 .wishlist-scene-bg { display: block; width: 100%; height: 100%; }
-// The rippling sea, laid exactly over the picture (WishlistScene.jsx).
-.wishlist-scene-sea { position: absolute; inset: 0; width: 100%; height: 100%; }
 
-// Snow falling over the sky and sea.
+// Snow falling over the picture.
 .wishlist-scene-window { position: absolute; overflow: hidden; }
 .wishlist-scene-window i {
   position: absolute;
@@ -54,7 +52,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .wishlist-scene * { animation: none !important; }
-  .wishlist-scene-window, .wishlist-scene-sea { display: none; }
+  .wishlist-scene-window { display: none; }
 }
 html:has(.wishlist-page), html:has(.wishlist-page) body { background: #fff; }
 .wishlist-heading h1 { margin: 0; font-size: 30px; font-weight: 900; color: #123653; }
