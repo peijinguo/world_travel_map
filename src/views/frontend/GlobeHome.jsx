@@ -172,6 +172,8 @@ function GlobeHome() {
     // flushSync: the globe re-renders every frame, which would keep
     // interrupting the router's deferred (transition) page change.
     navigate(countryHomePath(selected.id), { flushSync: true });
+    // The button sits below the globe; open the country's map at its top.
+    window.scrollTo({ top: 0, behavior: "instant" });
   };
 
   const projection = useMemo(
