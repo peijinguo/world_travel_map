@@ -46,7 +46,7 @@ const usePhoneLayout = () => {
 };
 
 // How big the country emblems on the globe are drawn.
-const MARKER_SCALE = 1.3;
+const MARKER_SCALE = 1.6;
 
 // The chosen country's outline, drawn in the side panel above the button
 // that enters its map, with its emblem where the globe's marker points.
