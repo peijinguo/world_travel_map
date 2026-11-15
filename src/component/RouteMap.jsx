@@ -109,7 +109,7 @@ const byZoom = (makeExpression) => [
 const shownStep = (k) => ["floor", ["/", ["get", "step"], 2 ** k]];
 const isLeftFoot = (k) => ["==", ["%", shownStep(k), 2], 0];
 const STEP_TRAIL = 8; // prints behind the walker still showing (two pairs, then two fading)
-const STEP_PAUSE = 8; // ticks the walker waits at the last stop before starting over
+const STEP_PAUSE = 1; // ticks the walker waits at the last stop before starting over
 const STEP_TICK_MS = 340;
 
 const metersBetween = ([lng1, lat1], [lng2, lat2]) => {
