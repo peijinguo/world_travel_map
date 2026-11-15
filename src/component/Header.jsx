@@ -227,9 +227,19 @@ function Header() {
         aria-controls="mobile-navigation"
         onClick={() => setIsMobileMenuOpen((open) => !open)}
       >
-        <span />
-        <span />
-        <span />
+        {isHome && !isMobileMenuOpen ? (
+          // The home menu lists your trips, so it opens from a book.
+          <svg className="menu-toggle-book" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 6.6Q8.2 3.6 4.2 4.5Q3 4.8 3 6v11.2q0 1.3 1.3 1Q8.4 17 12 19.6Q15.6 17 19.7 18.2q1.3.3 1.3-1V6q0-1.2-1.2-1.5Q15.8 3.6 12 6.6Z" />
+            <path d="M12 6.6v13M6.2 9.6h3.4M6.2 13.2h3.4M14.4 9.6h3.4M14.4 13.2h3.4" />
+          </svg>
+        ) : (
+          <>
+            <span />
+            <span />
+            <span />
+          </>
+        )}
       </button>
       {!isHome && (
       <div className="header-controls">
