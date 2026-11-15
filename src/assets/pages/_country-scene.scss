@@ -1,11 +1,50 @@
 // Each country's picture (CountryScene.jsx) across the bottom of the screen,
-// under the card, inside the shared SnowScene (_snow-scene.scss).
-.snow-scene .country-scene-art {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  display: block;
-  width: 100%;
-  max-width: none;
-  height: auto;
+// under the card, inside the shared SnowScene (_snow-scene.scss), with its
+// small movements drawn over it.
+.snow-scene:has(.country-scene) { opacity: .9; } // clearer than Japan's faint pencil scenes
+.country-scene { position: absolute; left: 0; bottom: 0; width: 100%; }
+.country-scene-art { display: block; width: 100%; max-width: none; height: 100%; }
+.country-scene-motion { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; }
+.country-scene-motion g { transform-box: fill-box; transform-origin: center; }
+
+// Northern lights shimmering.
+.cs-aurora { animation: cs-aurora 6s ease-in-out infinite alternate; }
+.cs-aurora.is-late { animation-delay: -3s; }
+@keyframes cs-aurora {
+  from { opacity: .05; transform: translateY(2px); }
+  to { opacity: .55; transform: translateY(-3px); }
+}
+
+// Chimney smoke rising and fading.
+.cs-smoke { animation: cs-smoke 4.2s ease-out infinite; }
+@keyframes cs-smoke {
+  from { opacity: 0; transform: translateY(4px) scale(.7); }
+  25% { opacity: .9; }
+  to { opacity: 0; transform: translateY(-26px) scale(1.4); }
+}
+
+// Things drifting across the sky.
+.cs-drift { opacity: 0; }
+.cs-drift.is-lantern { animation: cs-lantern 12s linear infinite; }
+@keyframes cs-lantern {
+  from { opacity: 0; transform: translate(0, 20px); }
+  15%, 80% { opacity: 1; }
+  to { opacity: 0; transform: translate(14px, -110px); }
+}
+.cs-drift.is-petal, .cs-drift.is-leaf { animation: cs-fall-leaf 7s linear infinite; }
+@keyframes cs-fall-leaf {
+  from { opacity: 0; transform: translate(0, 0) rotate(0deg); }
+  10%, 80% { opacity: 1; }
+  to { opacity: 0; transform: translate(-50px, 150px) rotate(260deg); }
+}
+.cs-drift.is-bird { animation: cs-bird 16s linear infinite; }
+@keyframes cs-bird {
+  from { opacity: 0; transform: translate(0, 0) scaleY(1); }
+  10%, 85% { opacity: 1; }
+  50% { transform: translate(120px, -10px) scaleY(.5); }
+  to { opacity: 0; transform: translate(240px, 6px) scaleY(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .country-scene-motion { display: none; }
 }
