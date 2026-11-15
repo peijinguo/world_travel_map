@@ -2,56 +2,59 @@ import wide from "../assets/wishlist-bg-wide.webp";
 import tall from "../assets/wishlist-bg-tall.webp";
 
 // The picture behind 想吃清單 (little cakes scattered on white), filling the
-// screen under the header, with snow falling over all of it (see
-// _wishlist.scss). A landscape screen gets the wide picture, a portrait one (a
-// phone) the tall one.
+// screen under the header, with candy sprinkles drifting slowly up over it and
+// sugar sparkles twinkling (see _wishlist.scss). A landscape screen gets the
+// wide picture, a portrait one (a phone) the tall one.
 const SCENES = [
-  { name: "wide", src: wide, w: 1805, h: 1016, count: 140 },
-  { name: "tall", src: tall, w: 572, h: 1016, count: 90 },
+  { name: "wide", src: wide, w: 1805, h: 1016, sprinkles: 46, sparkles: 22 },
+  { name: "tall", src: tall, w: 572, h: 1016, sprinkles: 28, sparkles: 14 },
 ];
 
-const pct = (value, total) => `${(value / total) * 100}%`;
+const SPRINKLE_COLORS = ["#f4a7b9", "#f7d06b", "#9fd8c4", "#b9a4e3", "#f2b48a", "#8fc3ea"];
 
-// A fixed pseudo-random snowfall, the same on every render.
-const flakes = (count, seed) =>
-  Array.from({ length: count }, (_, index) => {
-    const rand = (n) => Math.abs((Math.sin((index + 1) * n + seed) * 10000) % 1);
-    return {
-      left: Math.round(rand(12.9898) * 1000) / 10,
-      size: Math.round(3 + rand(39.346) * 4),
-      fall: Math.round((6 + rand(4.123) * 6) * 10) / 10,
-      delay: Math.round(rand(93.989) * 120) / 10,
-    };
-  });
+// Fixed pseudo-random numbers, the same on every render.
+const random = (index, seed) => (n) => Math.abs((Math.sin((index + 1) * n + seed) * 10000) % 1);
 
-function Snow({ points, w, h, count, seed }) {
-  const xs = points.map(([x]) => x);
-  const ys = points.map(([, y]) => y);
-  const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
-  const clip = points.map(([x, y]) => `${pct(x - x0, x1 - x0)} ${pct(y - y0, y1 - y0)}`).join(", ");
+function Sweets({ sprinkles, sparkles, seed }) {
   return (
-    <div
-      className="wishlist-scene-window"
-      style={{
-        left: pct(x0, w),
-        top: pct(y0, h),
-        width: pct(x1 - x0, w),
-        height: pct(y1 - y0, h),
-        clipPath: `polygon(${clip})`,
-      }}
-    >
-      {flakes(count, seed).map((flake, index) => (
-        <i
-          key={index}
-          style={{
-            left: `${flake.left}%`,
-            width: flake.size,
-            height: flake.size,
-            animationDuration: `${flake.fall}s, ${(flake.fall / 3).toFixed(1)}s`,
-            animationDelay: `${-flake.delay}s, ${-flake.delay}s`,
-          }}
-        />
-      ))}
+    <div className="wishlist-scene-sweets">
+      {Array.from({ length: sprinkles }, (_, index) => {
+        const r = random(index, seed);
+        const rise = 16 + r(4.123) * 14;
+        return (
+          <i
+            key={`s${index}`}
+            className="wishlist-sprinkle"
+            style={{
+              left: `${Math.round(r(12.9898) * 1000) / 10}%`,
+              background: SPRINKLE_COLORS[index % SPRINKLE_COLORS.length],
+              "--turn": `${Math.round(r(7.77) * 360)}deg`,
+              "--spin": `${r(2.5) > 0.5 ? 1 : -1}`,
+              animationDuration: `${rise.toFixed(1)}s, ${(3 + r(5.31) * 2).toFixed(1)}s`,
+              animationDelay: `${-(r(93.989) * rise).toFixed(1)}s, ${-(r(8.1) * 4).toFixed(1)}s`,
+            }}
+          />
+        );
+      })}
+      {Array.from({ length: sparkles }, (_, index) => {
+        const r = random(index, seed + 50);
+        return (
+          <svg
+            key={`k${index}`}
+            className="wishlist-sparkle"
+            viewBox="-10 -10 20 20"
+            style={{
+              left: `${Math.round(r(12.9898) * 1000) / 10}%`,
+              top: `${Math.round(r(39.346) * 1000) / 10}%`,
+              width: 10 + Math.round(r(4.1) * 8),
+              animationDuration: `${(2.4 + r(6.2) * 2).toFixed(1)}s`,
+              animationDelay: `${-(r(9.7) * 4).toFixed(1)}s`,
+            }}
+          >
+            <path d="M0-10Q1.6-1.6 10 0Q1.6 1.6 0 10Q-1.6 1.6-10 0Q-1.6-1.6 0-10Z" />
+          </svg>
+        );
+      })}
     </div>
   );
 }
@@ -66,7 +69,7 @@ function WishlistScene() {
           style={{ "--ratio": scene.w / scene.h }}
         >
           <img className="wishlist-scene-bg" src={scene.src} alt="" />
-          <Snow points={[[0, 0], [scene.w, 0], [scene.w, scene.h], [0, scene.h]]} w={scene.w} h={scene.h} count={scene.count} seed={index * 7} />
+          <Sweets sprinkles={scene.sprinkles} sparkles={scene.sparkles} seed={index * 7} />
         </div>
       ))}
     </div>
