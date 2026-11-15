@@ -20,6 +20,9 @@ import {
 import WishlistScene from "../../component/WishlistScene";
 import "../../assets/pages/_wishlist.scss";
 
+// Which trip this device's 行程規劃 copy belongs to (written by Planner).
+const PLANNER_SPACE_STORAGE_KEY = "yuki-tabi-planner-space-v1";
+
 // Every dish the traveller tapped as wanted (heart, or coloured thumbs-up) in
 // a stop's menu, gathered across the whole trip and grouped by day and shop.
 // It reads the same synced trip as 行程規劃; marks are changed in each menu.
@@ -324,9 +327,15 @@ function useLongPressSort(items, onCommit) {
 }
 
 function Wishlist() {
-  const { user, syncSpaceId, country } = useAuth();
+  const { user, syncSpaceId, country, isFirebaseConfigured } = useAuth();
   const cloudKey = user && syncSpaceId ? syncSpaceId : null;
-  const [days, setDays] = useState(getInitialDays);
+  // This device's copy of 行程規劃 is only used when it is this trip's, so
+  // another country's 想吃清單 never shows Japan's dishes.
+  const [days, setDays] = useState(() =>
+    !isFirebaseConfigured || localStorage.getItem(PLANNER_SPACE_STORAGE_KEY) === syncSpaceId
+      ? getInitialDays()
+      : [],
+  );
   const [cloudMenus, setCloudMenus] = useState({});
   const [wishes, setWishes] = useState([]);
 
@@ -334,10 +343,9 @@ function Wishlist() {
     setWishes([]);
     if (!cloudKey) return undefined;
     let cancelled = false;
+    // The chosen trip's own days, even when it has none yet.
     const apply = (cloud) => {
-      if (!cancelled && Array.isArray(cloud?.days) && cloud.days.length) {
-        setDays(cloud.days.map(normalizePlannerDay));
-      }
+      if (!cancelled) setDays(Array.isArray(cloud?.days) ? cloud.days.map(normalizePlannerDay) : []);
     };
     loadPlannerCloud(cloudKey).then(apply).catch((error) => console.error("無法載入雲端行程", error));
     const stopPlanner = subscribePlannerCloud(cloudKey, apply, (error) =>
