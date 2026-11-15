@@ -1,0 +1,87 @@
+// The small movements in each country's corner drawings (CountryScene.jsx).
+// The drawings sit inside the shared SnowScene (_snow-scene.scss).
+.country-scene-defs { position: absolute; width: 0; height: 0; }
+.country-scene-art { overflow: hidden; }
+.country-scene-art g { transform-box: view-box; }
+
+// Windmill sails.
+.cs-spin { animation: cs-spin 14s linear infinite; }
+@keyframes cs-spin { to { transform: rotate(360deg); } }
+
+// Boats and canoes riding the swell.
+.cs-bob { animation: cs-bob 3.6s ease-in-out infinite; }
+@keyframes cs-bob {
+  0%, 100% { transform: translateY(0) rotate(-1.5deg); }
+  50% { transform: translateY(5px) rotate(1.5deg); }
+}
+
+// Ripples drifting on water.
+.cs-ripple { animation: cs-ripple 6s ease-in-out infinite alternate; }
+@keyframes cs-ripple { to { transform: translateX(26px); } }
+
+// The northern lights shimmering.
+.cs-aurora { animation: cs-aurora 7s ease-in-out infinite alternate; }
+@keyframes cs-aurora {
+  from { opacity: .45; transform: translateY(0); }
+  to { opacity: 1; transform: translateY(-10px); }
+}
+
+// Chimney smoke rising and fading.
+.cs-smoke { animation: cs-smoke 4s ease-out infinite; }
+@keyframes cs-smoke {
+  from { opacity: 0; transform: translateY(10px) scaleY(.6); }
+  30% { opacity: 1; }
+  to { opacity: 0; transform: translateY(-34px) scaleY(1.1); }
+}
+
+// Sky lanterns drifting up and starting again.
+.cs-rise { animation: cs-rise 16s linear infinite; }
+.cs-rise.is-late { animation-delay: -8s; }
+@keyframes cs-rise {
+  from { opacity: 0; transform: translate(0, 140px); }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  to { opacity: 0; transform: translate(30px, -170px); }
+}
+
+// Hanging lanterns and a cowbell swinging.
+.cs-swing { animation: cs-swing 3s ease-in-out infinite alternate; }
+.cs-swing.is-late { animation-delay: -1.5s; }
+@keyframes cs-swing {
+  from { transform: rotate(-5deg); }
+  to { transform: rotate(5deg); }
+}
+
+// Tulips and ferns nodding in the wind.
+.cs-sway { animation: cs-sway 4s ease-in-out infinite alternate; }
+@keyframes cs-sway {
+  from { transform: rotate(-3deg); }
+  to { transform: rotate(3deg); }
+}
+
+// Sheep grazing: a dip of the head now and then.
+.cs-graze { animation: cs-graze 5s ease-in-out infinite; }
+@keyframes cs-graze {
+  0%, 70%, 100% { transform: translateY(0); }
+  80%, 90% { transform: translateY(3px) rotate(2deg); }
+}
+
+// Skógafoss: water streaming down.
+.cs-fall path { stroke-dasharray: 18 14; animation: cs-fall 1.2s linear infinite; }
+@keyframes cs-fall { to { stroke-dashoffset: -32; } }
+
+// The Swiss train crossing its viaduct, left to right, then again.
+.cs-train { animation: cs-train 18s linear infinite; }
+@keyframes cs-train {
+  from { transform: translateX(-200px); }
+  to { transform: translateX(860px); }
+}
+
+// Maple leaves drifting down.
+.cs-leaf { animation: cs-leaf 7s linear infinite; }
+@keyframes cs-leaf {
+  from { opacity: 0; transform: translate(0, 0) rotate(0deg); }
+  10% { opacity: 1; }
+  80% { opacity: 1; }
+  to { opacity: 0; transform: translate(-60px, 140px) rotate(220deg); }
+}

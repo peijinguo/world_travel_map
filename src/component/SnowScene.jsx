@@ -30,11 +30,13 @@ export function SnowScenePiece({ corner, width, src, children }) {
   );
 }
 
-function SnowScene({ children }) {
+// `snow={false}` for a country without snow (Taiwan, the Netherlands, New
+// Zealand); the picture stays, nothing falls.
+function SnowScene({ children, snow = true }) {
   return (
     <div className="snow-scene" aria-hidden="true">
       {children}
-      <div className="snow-scene-snow">
+      {snow && <div className="snow-scene-snow">
         {FLAKES.map((flake, index) => (
           <span
             key={index}
@@ -52,7 +54,7 @@ function SnowScene({ children }) {
             <i />
           </span>
         ))}
-      </div>
+      </div>}
     </div>
   );
 }
