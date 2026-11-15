@@ -439,7 +439,7 @@ img { max-width: 100%; height: auto; }
   top: calc(100% + 8px);
   right: 0;
   left: auto;
-  width: min(420px, 100%);
+  width: 100%; // a phone: the header's full width, like the world map panel
   max-height: calc(100dvh - var(--topbar-height, 72px) - 24px);
   overflow-y: auto;
   display: block;
@@ -657,9 +657,10 @@ img { max-width: 100%; height: auto; }
 // instead of the middle column used for the page links elsewhere.
 .topbar.topbar--home { grid-template-columns: 1fr auto; }
 .topbar--home .menu-toggle { grid-column: 2; }
-// On wide screens the drop-down lines up under the button.
+// On wide screens the drop-down is as wide as the world map panel, and both
+// line up with the header's right edge.
 @media (min-width: 761px) {
-  .topbar.topbar--home .nav { right: clamp(24px, 5vw, 92px); }
+  .topbar.topbar--home .nav { width: clamp(320px, 24vw, 446px); }
 }
 .trip-card-country { margin-right: 6px; padding: 1px 7px; border-radius: 999px; background: #eef3f6; color: #5c7586; font-size: 12px; font-weight: 700; }
 .trip-card-form-country { display: flex; align-items: center; gap: 10px; color: #5c7586; font-size: 13px; font-weight: 700; }
