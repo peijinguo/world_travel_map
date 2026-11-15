@@ -309,9 +309,9 @@ function GlobeHome() {
           >
             <defs>
               <radialGradient id="globe-ocean" cx="38%" cy="32%" r="75%">
-                <stop offset="0" stopColor="#8cc2dd" />
-                <stop offset=".7" stopColor="#6aa6c8" />
-                <stop offset="1" stopColor="#5690b4" />
+                <stop offset="0" stopColor="#76b1cf" />
+                <stop offset=".7" stopColor="#5593b7" />
+                <stop offset="1" stopColor="#427b9f" />
               </radialGradient>
               <radialGradient id="globe-shine" cx="34%" cy="28%" r="60%">
                 <stop offset="0" stopColor="#fff" stopOpacity=".22" />
