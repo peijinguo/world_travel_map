@@ -32,14 +32,6 @@ const world = feature(worldTopo, worldTopo.objects.countries).features.map((shap
   featured.has(shape.id) ? mainland(shape, featured.get(shape.id)) : shape,
 );
 
-// The card the chosen country is projected onto, above the globe. On a phone
-// the globe fills the screen width, so the card spans nearly all of it and
-// its text, close button and emblem grow by `ui` to stay readable.
-const cardFor = (phone) => (phone
-  // Starts below the floating header, which covers the top of the globe.
-  ? { x: 30, y: 60, w: 940, h: 460, ui: 2 }
-  : { x: 270, y: 34, w: 460, h: 330, ui: 1 });
-
 const usePhoneLayout = () => {
   const query = "(max-width: 760px)";
   const [phone, setPhone] = useState(() => window.matchMedia?.(query).matches ?? false);
@@ -56,9 +48,10 @@ const usePhoneLayout = () => {
 // How big the country emblems on the globe are drawn.
 const MARKER_SCALE = 1.3;
 
-function ProjectedCountry({ country, phone, onEnter, onClose }) {
-  const CARD = cardFor(phone);
-  const ui = CARD.ui;
+// The chosen country's outline, drawn in the side panel above the button
+// that enters its map, with its emblem where the globe's marker points.
+const PANEL_MAP = { w: 400, h: 230, pad: 14 };
+function CountryOutline({ country }) {
   const [shapes, setShapes] = useState(null);
 
   useEffect(() => {
@@ -77,70 +70,30 @@ function ProjectedCountry({ country, phone, onEnter, onClose }) {
     if (!shapes) return null;
     const [lon, lat] = country.focus;
     const parallels = country.id === "canada" ? [49, 77] : [lat - 5, lat + 5];
+    const { w, h, pad } = PANEL_MAP;
     const projection = geoConicConformal()
       .rotate([-lon, 0])
       .parallels(parallels)
-      .fitExtent([[CARD.x + 34 * ui, CARD.y + 56 * ui], [CARD.x + CARD.w - 34 * ui, CARD.y + CARD.h - 34 * ui]], shapes);
+      .fitExtent([[pad, pad], [w - pad, h - pad]], shapes);
     return { d: geoPath(projection)(shapes), focus: projection(country.focus) };
-  }, [shapes, country, CARD.x, CARD.y, CARD.w, CARD.h, ui]);
-
-  // Every country now has its own pages to enter.
-  const canEnter = true;
+  }, [shapes, country]);
 
   return (
-    <g className="projected-country" key={country.id}>
-      <path className="projector-beam" d={`M${CENTER[0]} ${CENTER[1]} L${CARD.x + 40} ${CARD.y + CARD.h} H${CARD.x + CARD.w - 40} Z`} />
-      <g className="projected-card">
-        <rect className="projected-card-bg" x={CARD.x} y={CARD.y} width={CARD.w} height={CARD.h} rx={26 * ui} />
-        {drawing ? (
+    <svg className="globe-panel-map" viewBox={`0 0 ${PANEL_MAP.w} ${PANEL_MAP.h}`} aria-hidden="true">
+      {drawing ? (
+        <>
           <path className="projected-land" d={drawing.d} />
-        ) : (
-          <text className="projected-loading" x={CENTER[0]} y={CARD.y + CARD.h / 2} textAnchor="middle" style={{ fontSize: 16 * ui }}>載入地圖中…</text>
-        )}
-        <g
-          className={`projected-emblem ${canEnter ? "can-enter" : ""}`}
-          transform={`translate(${drawing ? drawing.focus.join(" ") : `${CENTER[0]} ${CARD.y + CARD.h / 2}`})`}
-          data-action="enter"
-          role="button"
-          tabIndex="0"
-          aria-label={`進入${country.name}地圖`}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              onEnter();
-            }
-          }}
-        >
-          <g transform={`scale(${phone ? 1.25 : 1})`}>
+          <g transform={`translate(${drawing.focus.join(" ")})`}>
             <g className="projected-emblem-pop">
-              <circle className="projected-emblem-halo" r="34" />
+              <circle className="projected-emblem-halo" r="30" />
               <CountryEmblem type={country.id} />
             </g>
           </g>
-        </g>
-        <text className="projected-name" x={CARD.x + 26 * ui} y={CARD.y + 40 * ui} style={{ fontSize: 30 * ui }}>{country.name}</text>
-        <text className="projected-hint" x={CARD.x + CARD.w / 2} y={CARD.y + CARD.h - 16 * ui} textAnchor="middle" style={{ fontSize: 14 * ui }}>
-          {country.id === "japan" ? "點擊代表物，進入日本雪場地圖" : `點擊代表物，進入${country.name}地圖`}
-        </text>
-        <g
-          className="projected-close"
-          transform={`translate(${CARD.x + CARD.w - 30 * ui} ${CARD.y + 30 * ui}) scale(${ui})`}
-          data-action="close"
-          role="button"
-          tabIndex="0"
-          aria-label="關閉"
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              onClose();
-            }
-          }}
-        >
-          <circle r="15" />
-          <path d="m-5-5 10 10m0-10-10 10" />
-        </g>
-      </g>
-    </g>
+        </>
+      ) : (
+        <text className="projected-loading" x={PANEL_MAP.w / 2} y={PANEL_MAP.h / 2} textAnchor="middle">載入地圖中…</text>
+      )}
+    </svg>
   );
 }
 
@@ -212,9 +165,10 @@ function GlobeHome() {
     const country = globeCountries.find((item) => item.id === id);
     setSelectedId(id);
     turnTo(country.focus);
-    // The card sits at the top of the globe; on a phone scrolled down it
-    // would slide under the floating header, so the page goes back up.
-    if (phone && window.scrollY > 0) window.scrollTo({ top: 0, behavior: "smooth" });
+    // On a phone the panel sits below the globe; bring it into view.
+    if (phone) {
+      requestAnimationFrame(() => document.querySelector(".globe-panel")?.scrollIntoView({ behavior: "smooth", block: "nearest" }));
+    }
   };
 
   const enter = () => {
@@ -242,13 +196,12 @@ function GlobeHome() {
 
   const onPointerDown = (event) => {
     if (event.button !== 0) return;
-    const target = event.target.closest?.("[data-action], [data-country]");
+    const target = event.target.closest?.("[data-country]");
     drag.current = {
       start: toSvg(event),
       client: [event.clientX, event.clientY],
       view: viewRef.current,
       moved: false,
-      action: target?.dataset.action ?? null,
       country: target?.dataset.country ?? null,
       onGlobe: Boolean(event.target.closest?.(".globe")),
     };
@@ -274,8 +227,6 @@ function GlobeHome() {
     const state = drag.current;
     drag.current = null;
     if (!state || state.moved) return;
-    if (state.action === "enter") return enter();
-    if (state.action === "close") return select(null);
     if (state.country) return select(state.country);
     if (state.onGlobe) {
       // A click on the globe picks the featured country under it, if any.
@@ -283,7 +234,7 @@ function GlobeHome() {
       const hit = point && world.find((shape) => featured.has(shape.id) && geoContains(shape, point));
       if (hit) return select(featured.get(hit.id).id);
     }
-    if (selected && !event.target.closest?.(".projected-card")) select(null);
+    if (selected) select(null);
   };
 
   const isVisible = (lonLat) => geoDistance(lonLat, view) < Math.PI / 2 - 0.08;
@@ -323,10 +274,6 @@ function GlobeHome() {
                 <stop offset=".78" stopColor="#8fc4ff" stopOpacity=".28" />
                 <stop offset="1" stopColor="#8fc4ff" stopOpacity="0" />
               </radialGradient>
-              <linearGradient id="projector-beam" x1="0" y1="1" x2="0" y2="0">
-                <stop offset="0" stopColor="#fff" stopOpacity=".7" />
-                <stop offset="1" stopColor="#fff" stopOpacity=".08" />
-              </linearGradient>
             </defs>
 
             <circle className="globe-glow" cx={CENTER[0]} cy={CENTER[1]} r={RADIUS + 46} />
@@ -401,9 +348,6 @@ function GlobeHome() {
               })}
             </g>
 
-            {selected && (
-              <ProjectedCountry key={selected.id} country={selected} phone={phone} onEnter={enter} onClose={() => select(null)} />
-            )}
           </svg>
           {notice && <p className="globe-notice" role="status">{notice}</p>}
         </div>
@@ -413,11 +357,9 @@ function GlobeHome() {
             <>
               <div className="panel-topline"><span>{selected.region}</span><span>{selected.en}</span></div>
               <div className="town-heading">
-                <div className="town-illustration">
-                  <svg viewBox="-24 -24 48 48" width="56" height="56"><CountryEmblem type={selected.id} /></svg>
-                </div>
                 <div><h2>{selected.name}</h2><p>{selected.note}</p></div>
               </div>
+              <CountryOutline key={selected.id} country={selected} />
               <button type="button" className="globe-enter" onClick={enter}>
                 {selected.id === "japan" ? "進入日本雪場地圖 →" : `進入${selected.name}地圖 →`}
               </button>
