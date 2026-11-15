@@ -369,9 +369,9 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
         source: ROUTE_SOURCE_ID,
         layout: { "line-cap": "round", "line-join": "round" },
         paint: {
-          "line-color": "#3f4a4f",
+          "line-color": "#1f2629",
           "line-width": 3,
-          "line-opacity": 0.85,
+          "line-opacity": 1,
           "line-dasharray": [1.2, 3],
         },
       });
