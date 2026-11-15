@@ -80,7 +80,7 @@ function Deer({ name, className }) {
 
 function HotelScene() {
   return (
-    <SnowScene>
+    <SnowScene snow={false}>
       <SnowScenePiece corner="bottom-left" width={835} src={hotelLeft}>
         <Deer name="stag" className="is-stag" />
         <Deer name="fawnLeft" className="is-fawn-left" />
