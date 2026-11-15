@@ -254,9 +254,10 @@ function Header() {
             }}
           >
             <span aria-hidden="true">
-              <svg className="header-login-icon" viewBox="0 0 24 24">
-                <circle cx="10.5" cy="10.5" r="6.5" />
-                <path d="m15.5 15.5 5 5" />
+              <svg className="header-login-icon is-notepad" viewBox="0 0 24 24">
+                <path d="M8 22H5.6Q3 22 3 19.4V6.4Q3 3.8 5.6 3.8h12.3q2.6 0 2.6 2.6V11" />
+                <path d="M6.6 2v3.6M11.7 2v3.6M16.8 2v3.6M7.2 10.4h8M7.2 14.6h4.2" />
+                <path d="M12.2 22v-3.2l6.6-6.6a1.95 1.95 0 0 1 2.8 2.8L15 21.6z" />
               </svg>
             </span>
             <strong>
