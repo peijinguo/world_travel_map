@@ -53,6 +53,9 @@ const usePhoneLayout = () => {
   return phone;
 };
 
+// How big the country emblems on the globe are drawn.
+const MARKER_SCALE = 1.3;
+
 function ProjectedCountry({ country, phone, onEnter, onClose }) {
   const CARD = cardFor(phone);
   const ui = CARD.ui;
@@ -383,7 +386,7 @@ function GlobeHome() {
                     }}
                   >
                     <line className="marker-leader" x1={x} y1={y} x2={x + ox} y2={y + oy} />
-                    <g transform={`translate(${x + ox} ${y + oy})`}>
+                    <g transform={`translate(${x + ox} ${y + oy}) scale(${MARKER_SCALE})`}>
                       <g className="globe-marker-pop">
                         <circle className="globe-marker-halo" r="27" />
                         <CountryEmblem type={country.id} />
