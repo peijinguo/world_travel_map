@@ -43,7 +43,7 @@ const SCENES = {
     hotel: { aurora: [50, 110, 440, 210], smoke: [[410, 222]] },
   },
   netherlands: {
-    prep: { sails: { src: dutchSail, at: [28, 116], size: [57, 74], hub: [86, 182], seconds: 14 }, water: [200, 290, 503, 330], drift: { kind: "petal", from: [[470, 170], [420, 190], [500, 210], [380, 180]] } },
+    prep: { sails: { src: dutchSail, at: [27, 118], size: [70, 63], hub: [86, 181], tips: [[30, 130], [126, 133], [146, 232], [44, 246]], seconds: 14 }, water: [200, 290, 503, 330], drift: { kind: "petal", from: [[470, 170], [420, 190], [500, 210], [380, 180]] } },
     hotel: { water: [0, 268, 330, 330], drift: { kind: "petal", from: [[480, 130], [440, 150], [500, 170], [400, 160]] } },
   },
   france: {
@@ -53,7 +53,8 @@ const SCENES = {
   switzerland: {
     // The train is cut from the picture (the picture has it painted out).
     prep: { train: { src: swissTrain, at: [264, 230], size: [172, 49], from: 250, to: -240, slope: -0.11, hideLeft: [190, 215], seconds: 20 } },
-    hotel: { smoke: [[20, 122]] },
+    // The cow grazing: its head lifts a little to chew, then dips again.
+    hotel: { smoke: [[20, 122]], graze: { box: [361, 279, 405, 323], pivot: [399, 283] } },
   },
   newZealand: {
     prep: { water: [160, 256, 503, 292] },
@@ -285,18 +286,33 @@ function Steam({ id, k, from }) {
 
 // A windmill's sails turning: one sail cut from the picture (which has its
 // own sails painted out), set four times round the hub and turned slowly.
-function Sails({ src, at: [x, y], size: [sw, sh], hub: [hx, hy], seconds }) {
+// The mill is drawn three-quarter on, so the sails turn in a tilted plane:
+// the picture's four sail tips give that plane (sail one along its x axis,
+// sail two along its y axis), and the sails turn in it, seen foreshortened.
+const PLAIN = { transformBox: "view-box", transformOrigin: "0 0" };
+function Sails({ src, at: [x, y], size: [sw, sh], hub: [hx, hy], tips: [t1, t2, t3, t4], seconds }) {
+  const a = ((t1[0] - hx) + (hx - t3[0])) / 2;
+  const b = ((t1[1] - hy) + (hy - t3[1])) / 2;
+  const c = ((t2[0] - hx) + (hx - t4[0])) / 2;
+  const d = ((t2[1] - hy) + (hy - t4[1])) / 2;
+  const det = a * d - b * c;
+  const plane = `matrix(${a} ${b} ${c} ${d} ${hx} ${hy})`;
+  const flat = `matrix(${d / det} ${-b / det} ${-c / det} ${a / det} 0 0) translate(${-hx} ${-hy})`;
   return (
     <g>
-      {/* Turn about the hub in picture pixels, not the group's own centre. */}
-      <g style={{ transformBox: "view-box", transformOrigin: "0 0" }}>
-        {[0, 90, 180, 270].map((angle) => (
-          <image key={angle} href={src} x={x} y={y} width={sw} height={sh} transform={`rotate(${angle} ${hx} ${hy})`} />
-        ))}
-        <animateTransform attributeName="transform" type="rotate" dur={`${seconds}s`} repeatCount="indefinite"
-          values={`0 ${hx} ${hy};360 ${hx} ${hy}`} />
+      <g style={PLAIN} transform={plane}>
+        <g style={PLAIN}>
+          {[0, 90, 180, 270].map((angle) => (
+            <g key={angle} style={PLAIN} transform={`rotate(${angle}) ${flat}`}>
+              <image href={src} x={x} y={y} width={sw} height={sh} />
+            </g>
+          ))}
+          {/* Turn backwards in the plane: anticlockwise, as Dutch mills turn. */}
+          <animateTransform attributeName="transform" type="rotate" dur={`${seconds}s`} repeatCount="indefinite"
+            values="0;-360" />
+        </g>
       </g>
-      <circle cx={hx} cy={hy} r="2.5" fill="#6e5f50" />
+      <circle cx={hx} cy={hy} r="3" fill="#7a6a5a" />
     </g>
   );
 }
@@ -420,6 +436,7 @@ function CountryScene({ country, page }) {
           {scene.steam && <Steam id={id} k={k} from={scene.steam} />}
           {scene.sway && <Nod id={`${id}-sway`} src={src} w={w} h={h} {...scene.sway} className="cs-sway" round={12} />}
           {scene.nod && <Nod id={id} src={src} w={w} h={h} {...scene.nod} />}
+          {scene.graze && <Nod id={`${id}-graze`} src={src} w={w} h={h} {...scene.graze} className="cs-graze" round={14} />}
           {scene.bob && <Bob id={id} src={src} w={w} h={h} box={scene.bob} />}
           {scene.maple && <Maple id={id} {...scene.maple} />}
           {scene.sails && <Sails {...scene.sails} />}

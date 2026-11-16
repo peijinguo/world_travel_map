@@ -44,6 +44,20 @@
   82%, 100% { transform: rotate(0deg) scale(1); }
 }
 
+// A cow grazing: head down in the grass, now and then lifting a little to
+// chew, then down again. It grows a touch while lifted to cover the head
+// drawn beneath it.
+.cs-graze { animation: cs-graze 9s ease-in-out infinite; }
+@keyframes cs-graze {
+  0%, 30% { transform: rotate(0deg) scale(1); }
+  42% { transform: rotate(10deg) scale(1.05); }
+  47% { transform: rotate(8deg) scale(1.045); }
+  52% { transform: rotate(10deg) scale(1.05); }
+  57% { transform: rotate(8deg) scale(1.045); }
+  62% { transform: rotate(10deg) scale(1.05); }
+  76%, 100% { transform: rotate(0deg) scale(1); }
+}
+
 // Hot-spring steam rising, swelling and fading.
 .country-scene-motion .cs-steam { opacity: 0; transform-box: fill-box; transform-origin: center bottom; animation: cs-steam 7.5s ease-out infinite; }
 @keyframes cs-steam {
