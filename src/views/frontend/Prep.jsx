@@ -54,8 +54,9 @@ function Prep() {
   const [status, setStatus] = useState("");
   const cloudReadyRef = useRef(false);
   const sheetRef = useRef(null);
-  // No snow on 行前準備: nothing piles up on the notebook.
-  const snow = usePrepSnowfall(sheetRef, false);
+  // Snow piles up on the notebook only for Japan (the ski trip); other
+  // countries' notebooks stay clear.
+  const snow = usePrepSnowfall(sheetRef, country === "japan");
 
   // Follow the trip's list; a trip with no list yet starts from this device's.
   useEffect(() => {

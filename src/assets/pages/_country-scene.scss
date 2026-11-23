@@ -96,11 +96,30 @@
 
 // Things drifting across the sky.
 .cs-drift { opacity: 0; }
-.cs-drift.is-lantern { animation: cs-lantern 12s linear infinite; }
-@keyframes cs-lantern {
-  from { opacity: 0; transform: translate(0, 20px); }
-  15%, 80% { opacity: 1; }
-  to { opacity: 0; transform: translate(14px, -110px); }
+
+// Lantern light: a flame flickering, and a hanging lantern's glow swelling
+// and dimming (bright, a flutter, then low for a while).
+.country-scene-motion .cs-flicker { animation: cs-flicker 2.3s ease-in-out infinite; }
+@keyframes cs-flicker {
+  0%, 100% { opacity: .75; }
+  20% { opacity: 1; }
+  35% { opacity: .6; }
+  55% { opacity: .95; }
+  75% { opacity: .7; }
+}
+.country-scene-motion .cs-glow { animation: cs-glow 4.2s ease-in-out infinite; }
+@keyframes cs-glow {
+  0%, 100% { opacity: .2; }
+  40% { opacity: .95; }
+  50% { opacity: .75; }
+  58% { opacity: .9; }
+  80% { opacity: .35; }
+}
+// A sky lantern swaying as it climbs.
+.country-scene-motion .cs-lantern-sway { transform-origin: center top; animation: cs-lantern-sway 5s ease-in-out infinite; }
+@keyframes cs-lantern-sway {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
 }
 .cs-drift.is-petal, .cs-drift.is-leaf { animation: cs-fall-leaf 7s linear infinite; }
 @keyframes cs-fall-leaf {
