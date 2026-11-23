@@ -14,17 +14,17 @@ const PICTURES = import.meta.glob("../assets/country-bg/*-{prep,hotel}.webp", {
 });
 
 // It moves a little, from an SVG laid exactly over the picture, in the
-// picture's own pixels: water ripples (the picture's own water redrawn through
-// a swaying ripple), the northern lights shimmer, a waterfall streams,
-// chimneys smoke, and lanterns, leaves or petals drift across.
-// water: [x0, y0, x1, y1]; aurora and fall: the same; smoke: [x, y] of each
+// picture's own pixels: water flows (the picture's own water redrawn through
+// a drifting ripple, see Sea), the northern lights shimmer, a waterfall
+// streams, chimneys smoke, and lanterns, leaves or petals drift across.
+// sea: the water's outline or matte; aurora and fall: [x0, y0, x1, y1]; smoke: [x, y] of each
 // chimney top; drift: what drifts, where each one starts, and how big it is.
 const SCENES = {
   japan: {
     size: [1200, 675],
-    prep: { water: [0, 632, 1200, 675], drift: { kind: "petal", from: [[200, 420], [160, 455], [250, 440], [130, 400], [290, 470]] } },
+    prep: { sea: { outline: [[0, 641], [120, 639], [260, 633], [330, 629], [640, 629], [760, 633], [980, 635], [1200, 641], [1200, 675], [0, 675]], bands: [[629, 648, 0.5], [648, 675, 0.8]] }, drift: { kind: "petal", from: [[200, 420], [160, 455], [250, 440], [130, 400], [290, 470]] } },
     // Hot-spring steam, the pool rippling, and the red lantern swaying.
-    hotel: { water: [110, 578, 380, 628], steam: [[150, 600], [190, 596], [232, 602], [275, 598], [320, 604]], sway: { box: [884, 490, 918, 536], pivot: [901, 491] } },
+    hotel: { sea: { outline: [[105, 592], [140, 590], [150, 583], [285, 584], [300, 591], [370, 591], [382, 597], [380, 622], [360, 628], [160, 628], [130, 620], [105, 612]], bands: [[583, 628, 0.55]], seconds: 40 }, steam: [[150, 600], [190, 596], [232, 602], [275, 598], [320, 604]], sway: { box: [884, 490, 918, 536], pivot: [901, 491] } },
   },
   taiwan: {
     size: [1200, 675],
@@ -71,9 +71,9 @@ const SCENES = {
   },
   netherlands: {
     // The hub sits on the front of the cap; the picture's leftover sail is painted out.
-    prep: { sails: { src: dutchSail, at: [15, 130], size: [70, 63], hub: [74, 193], tips: [[18, 142], [114, 145], [134, 244], [32, 258]], seconds: 14 }, water: [200, 290, 503, 330], drift: { kind: "petal", from: [[470, 170], [420, 190], [500, 210], [380, 180]] } },
+    prep: { sails: { src: dutchSail, at: [15, 130], size: [70, 63], hub: [74, 193], tips: [[18, 142], [114, 145], [134, 244], [32, 258]], seconds: 14 }, sea: { outline: [[215, 289], [300, 293], [400, 298], [503, 303], [503, 330], [235, 330], [230, 302], [215, 296]], bands: [[289, 305, 0.5], [305, 330, 0.75]], seconds: 40 }, drift: { kind: "petal", from: [[470, 170], [420, 190], [500, 210], [380, 180]] } },
     // The canal only: below the quay wall and the moored boat, left of the tulips.
-    hotel: { water: [[0, 304], [108, 302], [113, 285], [150, 280], [198, 278], [226, 278], [245, 271], [330, 269], [330, 281], [300, 285], [276, 291], [256, 303], [241, 316], [233, 330], [0, 330]], drift: { kind: "petal", from: [[480, 130], [440, 150], [500, 170], [400, 160]] } },
+    hotel: { sea: { outline: [[0, 304], [108, 302], [113, 285], [150, 280], [198, 278], [226, 278], [245, 271], [330, 269], [330, 281], [300, 285], [276, 291], [256, 303], [241, 316], [233, 330], [0, 330]], bands: [[269, 295, 0.5], [295, 330, 0.75]], seconds: 40 }, drift: { kind: "petal", from: [[480, 130], [440, 150], [500, 170], [400, 160]] } },
   },
   france: {
     prep: {},
@@ -93,7 +93,7 @@ const SCENES = {
     hotel: { smoke: [[34, 156]] },
   },
   canada: {
-    prep: { size: [1200, 788], water: [330, 605, 1200, 728], bob: [852, 668, 1110, 724], nod: { box: [188, 508, 344, 638], pivot: [250, 600] } },
+    prep: { size: [1200, 788], sea: { outline: [[322, 605], [1200, 605], [1200, 650], [1150, 656], [1120, 700], [1112, 738], [980, 742], [980, 726], [1100, 722], [1110, 690], [1105, 667], [860, 671], [854, 690], [860, 723], [980, 726], [980, 742], [760, 742], [700, 738], [560, 729], [470, 723], [330, 719], [318, 690], [320, 640]], bands: [[605, 640, 0.55], [640, 742, 0.85]] }, bob: [852, 668, 1110, 724], nod: { box: [188, 508, 344, 638], pivot: [250, 600] } },
     // The picture's maple is bare; its leaves sit on top in patches that drop.
     hotel: { smoke: [[423, 174]], maple: { src: mapleLeaves, ...mapleCells, ground: 292, seconds: 20 } },
   },
@@ -105,39 +105,6 @@ const EASE = ".45 0 .55 1;.45 0 .55 1";
 // Sizes below are for a picture 503px wide; `k` scales them to the picture's
 // own width so a larger picture moves just as much on screen.
 const BASE_WIDTH = 503;
-
-// The picture's water redrawn through a ripple that sways and bobs.
-// `box` is either [x0, y0, x1, y1] or the water's outline as [[x, y], ...],
-// so walls, boats and banks inside its bounds stay still.
-function Water({ id, src, w, h, k, box }) {
-  const outline = Array.isArray(box[0]) ? box : null;
-  const xs = outline ? outline.map((p) => p[0]) : [box[0], box[2]];
-  const ys = outline ? outline.map((p) => p[1]) : [box[1], box[3]];
-  const [x0, y0, x1, y1] = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
-  const region = { x: x0 - 40 * k, y: y0 - 20 * k, width: x1 - x0 + 80 * k, height: y1 - y0 + 40 * k };
-  return (
-    <g>
-      <defs>
-        <filter id={`${id}-ripple`} {...region} filterUnits="userSpaceOnUse">
-          <feTurbulence {...region} type="fractalNoise" baseFrequency={`${0.012 / k} ${0.18 / k}`} numOctaves="2" seed="4" result="noise" />
-          <feOffset in="noise" result="swell">
-            <animate attributeName="dx" dur="9s" repeatCount="indefinite" values={`0;${-40 * k};0`} calcMode="spline" keyTimes="0;.5;1" keySplines={EASE} />
-            <animate attributeName="dy" dur="3.5s" repeatCount="indefinite" values={`0;${8 * k};0`} calcMode="spline" keyTimes="0;.5;1" keySplines={EASE} />
-          </feOffset>
-          <feDisplacementMap in="SourceGraphic" in2="swell" scale={6 * k} xChannelSelector="R" yChannelSelector="G" />
-        </filter>
-        <clipPath id={`${id}-water`}>
-          {outline
-            ? <polygon points={outline.map((p) => p.join(",")).join(" ")} />
-            : <rect x={x0} y={y0} width={x1 - x0} height={y1 - y0} />}
-        </clipPath>
-      </defs>
-      <g clipPath={`url(#${id}-water)`}>
-        <image href={src} width={w} height={h} filter={`url(#${id}-ripple)`} />
-      </g>
-    </g>
-  );
-}
 
 // Open sea: the picture's water redrawn through ripples that flow steadily
 // one way (a seamless strip of noise sliding along) and lift a little, rather
@@ -648,7 +615,6 @@ function CountryScene({ country, page }) {
       <div className="country-scene" style={{ aspectRatio: `${w} / ${h}` }}>
         <img className="country-scene-art" src={src} alt="" />
         <svg className="country-scene-motion" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
-          {scene.water && <Water id={id} src={src} w={w} h={h} k={k} box={scene.water} />}
           {scene.sea && <Sea id={id} src={src} w={w} h={h} k={k} {...scene.sea} />}
           {scene.skyLanterns && <SkyLanterns id={id} {...scene.skyLanterns} />}
           {scene.lanterns && <Lanterns id={id} src={src} w={w} h={h} items={scene.lanterns} />}

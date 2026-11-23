@@ -1236,7 +1236,8 @@ function formatItineraryDate(dateString, weekdayOnly = false) {
   return `${date.getMonth() + 1} 月 ${date.getDate()} 日（${weekday}）`;
 }
 
-const makeDay = (index, items = [makeItem()]) => ({
+// A new day starts with no stops (add them with 增加行程), not a blank one.
+const makeDay = (index, items = []) => ({
   id: `day-${index}`,
   label: `第 ${index} 天`,
   date: "",
@@ -2816,7 +2817,7 @@ function Planner() {
         const nextVersion = {
           id: makeVersionId(),
           label: versionLabel(versions.length),
-          items: nextItems.length ? nextItems : [makeItem()],
+          items: nextItems,
         };
         return {
           ...day,
