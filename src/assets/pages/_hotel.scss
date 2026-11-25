@@ -65,7 +65,16 @@ html:has(.hotel-page), html:has(.hotel-page) body { background: #fff; }
 .hotel-list .hotel-stay-date-links a:hover { background: transparent; color: #9c7272; }
 // Each night: its date, then 早餐 / 晚餐 chips, filled in when the meal is
 // included (a ✓), left as a faint outline with a + when not.
-.hotel-stay-date { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+// The nights line up as a table: dates in one column (same-width digits),
+// their 早餐 / 晚餐 chips in the next. On a narrow phone the chips go under
+// each date instead.
+.hotel-list .hotel-stay-date-links { display: grid; grid-template-columns: max-content max-content; align-items: center; gap: 6px 12px; }
+.hotel-stay-date { display: contents; }
+.hotel-list .hotel-stay-date-links a, .hotel-list .hotel-checkout-date { font-variant-numeric: tabular-nums; justify-self: start; }
+@media (max-width: 420px) {
+  .hotel-list .hotel-stay-date-links { grid-template-columns: max-content; gap: 2px; }
+  .hotel-list .lodging-meals { margin-bottom: 6px; }
+}
 .lodging-meals { display: inline-flex; gap: 6px; }
 .hotel-list .hotel-checkout-date { color: #8ba0ac; font-size: 17px; font-weight: 800; }
 .hotel-list .lodging-meal { display: inline-flex; align-items: center; gap: 3px; height: 28px; padding: 0 10px 0 7px; border: 1.5px dashed #c5d5db; border-radius: 999px; background: transparent; color: #8ba0ac; font: inherit; font-size: 14px; font-weight: 800; line-height: 1; cursor: pointer; transition: background-color .2s, border-color .2s, color .2s; }
