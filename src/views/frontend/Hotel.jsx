@@ -52,14 +52,8 @@ const getLodgingWebsite = (lodging) =>
   lodging.website ||
   "";
 
-// The font's digits differ in width, so each digit sits in a box of its own
-// fixed width, and DAY n is always two digits (DAY05): every stay date then
-// lines up under the one above while reading as one string.
-const Digits = ({ text }) =>
-  [...String(text)].map((char, index) =>
-    /\d/.test(char) ? <span key={index} className="stay-digit">{char}</span> : char,
-  );
-
+// A stay date as one string; DAY n is always two digits (DAY05) so, with the
+// even-width digits of its font (see _hotel.scss), every date lines up.
 function StayDate({ date: dateString, dayNumber, action = "入住" }) {
   const date = new Date(`${dateString}T00:00:00`);
   const valid = dateString && !Number.isNaN(date.getTime());
@@ -72,10 +66,10 @@ function StayDate({ date: dateString, dayNumber, action = "入住" }) {
     : dateString || "入住日期尚未設定";
   return (
     <span className="stay-text">
-      <Digits text={ymd} />
+      {ymd}
       {valid && <span className="stay-cjk"> ({"日一二三四五六"[date.getDay()]})</span>}
       {" DAY"}
-      <span className="stay-num"><Digits text={dayNumber == null ? "?" : String(dayNumber).padStart(2, "0")} /></span>
+      {dayNumber == null ? "?" : String(dayNumber).padStart(2, "0")}
       <span className="stay-cjk"> {action}</span>
     </span>
   );

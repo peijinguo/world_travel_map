@@ -63,8 +63,8 @@ html:has(.hotel-page), html:has(.hotel-page) body { background: #fff; }
 .hotel-stay-date-links { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
 .hotel-list .hotel-stay-date-links a { padding: 0; border: 0; border-radius: 0; background: transparent; color: #b88f8f; font-size: 17px; font-weight: 800; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .hotel-list .hotel-stay-date-links a:hover { background: transparent; color: #9c7272; }
-// The nights line up as a table: each date as one string (its
-// digits in fixed-width boxes, see StayDate), then the 早餐 / 晚餐 chips in a
+// The nights line up as a table: each date as one string (even-width
+// digits, DAY always two of them), then the 早餐 / 晚餐 chips in a
 // column of their own. On a narrow phone the chips go under each date.
 .hotel-list .hotel-stay-date-links { display: grid; grid-template-columns: max-content max-content; align-items: center; gap: 6px 12px; }
 .hotel-stay-date { display: contents; }
@@ -73,8 +73,9 @@ html:has(.hotel-page), html:has(.hotel-page) body { background: #fff; }
 .hotel-list .hotel-stay-date-links a:hover .stay-text { color: #9c7272; }
 .hotel-list .hotel-checkout-date .stay-text { color: #8ba0ac; }
 .hotel-list .stay-text span { color: inherit; font-size: inherit; line-height: inherit; }
-.hotel-list .stay-text .stay-digit { display: inline-block; width: .6em; text-align: center; }
-.hotel-list .stay-text .stay-num { display: inline-block; min-width: 1.2em; }
+// DM Sans has narrow ones and no even-width digits, so dates use the Chinese
+// font, whose digits are all one width and look it.
+.hotel-list .hotel-stay-date-links .stay-text { font-family: "Noto Sans TC", sans-serif; font-variant-numeric: tabular-nums; }
 // Chinese characters stand taller than digits of the same size, so the
 // weekday and 入住/退房 are a touch smaller to read as one size.
 .hotel-list .stay-text .stay-cjk { margin-left: .2em; font-size: 15px; }
