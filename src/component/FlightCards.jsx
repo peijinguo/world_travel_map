@@ -169,7 +169,13 @@ const flightDuration = (flight) => {
 const formatFlightDate = (dateString) => {
   const date = new Date(`${dateString}T00:00:00`);
   if (!dateString || Number.isNaN(date.getTime())) return "日期未定";
-  return `${dateString.replaceAll("-", "/")}（${"日一二三四五六"[date.getDay()]}）`;
+  // Written like the 住宿 dates below it: 2027/01/05 (二).
+  return (
+    <>
+      {dateString.replaceAll("-", "/")}
+      <span className="flight-date-weekday"> ({"日一二三四五六"[date.getDay()]})</span>
+    </>
+  );
 };
 
 const editKey = (flight) => `${flight.id}:${flight.flightNo}:${flight.date}`;

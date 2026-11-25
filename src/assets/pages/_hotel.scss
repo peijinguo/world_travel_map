@@ -76,6 +76,10 @@ html:has(.hotel-page), html:has(.hotel-page) body { background: #fff; }
 // DM Sans has narrow ones and no even-width digits, so dates use the Chinese
 // font, whose digits are all one width and look it.
 .hotel-list .hotel-stay-date-links .stay-text { font-family: "Noto Sans TC", sans-serif; font-variant-numeric: tabular-nums; }
+// Every date on the page (flights, stays, free cancellation) in that one
+// font, size and weight, its weekday a touch smaller like the stays'.
+.flight-date, .hotel-list .lodging-cancel-calendar .planner-calendar-trigger > span:first-child { font-family: "Noto Sans TC", sans-serif; font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.flight-date .flight-date-weekday { margin-left: .2em; font-size: 15px; }
 // Chinese characters stand taller than digits of the same size, so the
 // weekday and 入住/退房 are a touch smaller to read as one size.
 .hotel-list .stay-text .stay-cjk { margin-left: .2em; font-size: 15px; }
@@ -176,7 +180,7 @@ html:has(.hotel-page), html:has(.hotel-page) body { background: #fff; }
 .hotel-list .lodging-cancel-calendar .planner-calendar-trigger { width: auto; padding: 0; border: 0; border-radius: 0; background: transparent; }
 .hotel-list .lodging-cancel-calendar .planner-calendar-trigger > span:first-child { color: #2f6487; font-size: 17px; font-weight: 800; line-height: 1.5; text-decoration: underline dotted; text-decoration-thickness: 1.5px; text-underline-offset: 4px; }
 .hotel-list .lodging-cancel-calendar .planner-calendar-trigger:hover > span:first-child { color: #1f4a66; }
-.hotel-list .lodging-cancel-calendar .planner-calendar-weekday { margin-left: .3em; color: inherit; font: inherit; font-size: 15px; }
+.hotel-list .lodging-cancel-calendar .planner-calendar-weekday { margin-left: .2em; color: inherit; font: inherit; font-size: 15px; }
 .hotel-list .lodging-cancel-calendar .planner-calendar-icon { display: none; }
 .lodging-cancel-calendar .planner-calendar-popover { width: 300px; }
 .hotel-list .lodging-cancel-calendar .planner-calendar-popover span { color: #657b87; font-size: 15px; line-height: normal; }
