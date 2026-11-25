@@ -117,7 +117,7 @@ function Prep() {
 
   return (
     <section className="prep-page">
-      {/* Each country shows its own picture; Japan's also has snow falling. */}
+      {/* Each country shows its own picture. */}
       <CountryScene country={country} page="prep" />
       <div className="prep-notebook" {...snow.swipeHandlers}>
         {snow.cap}
