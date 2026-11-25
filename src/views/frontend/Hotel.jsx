@@ -52,18 +52,34 @@ const getLodgingWebsite = (lodging) =>
   lodging.website ||
   "";
 
-const formatStayDate = (dateString, dayNumber, action = "入住") => {
-  if (!dateString) return `入住日期尚未設定 DAY ${dayNumber ?? "?"}`;
+// A stay date in four parts (date, weekday, DAY n, 入住/退房), each in its
+// own column of the card's date grid so every row lines up.
+function StayDate({ date: dateString, dayNumber, action = "入住" }) {
   const date = new Date(`${dateString}T00:00:00`);
-  if (Number.isNaN(date.getTime())) return `${dateString} DAY ${dayNumber ?? "?"}`;
-  const weekday = "日一二三四五六"[date.getDay()];
+  const day = `DAY ${dayNumber ?? "?"}`;
+  if (!dateString || Number.isNaN(date.getTime())) {
+    return (
+      <>
+        <span className="stay-ymd is-wide">{dateString || "入住日期尚未設定"}</span>
+        <span className="stay-day">{day}</span>
+        <span className="stay-act">{action}</span>
+      </>
+    );
+  }
   const ymd = [
     date.getFullYear(),
     String(date.getMonth() + 1).padStart(2, "0"),
     String(date.getDate()).padStart(2, "0"),
   ].join("/");
-  return `${ymd} (${weekday}) DAY ${dayNumber ?? "?"} ${action}`;
-};
+  return (
+    <>
+      <span className="stay-ymd">{ymd}</span>
+      <span className="stay-wd">({"日一二三四五六"[date.getDay()]})</span>
+      <span className="stay-day">{day}</span>
+      <span className="stay-act">{action}</span>
+    </>
+  );
+}
 
 // The day after a stay date (YYYY-MM-DD), or "" when it has none.
 const dayAfter = (dateString) => {
@@ -302,12 +318,12 @@ function Hotel() {
                   {stayRows(lodging.stayEntries).map((entry) => (
                     <div key={entry.key} className={`hotel-stay-date ${entry.checkout ? "is-checkout" : ""}`}>
                       {entry.checkout ? (
-                        <span className="hotel-checkout-date">{formatStayDate(entry.date, entry.dayNumber, "退房")}</span>
+                        <span className="hotel-checkout-date"><StayDate date={entry.date} dayNumber={entry.dayNumber} action="退房" /></span>
                       ) : (
                         <Link
                           to={`${base}/planner?day=${encodeURIComponent(entry.dayId)}&version=${encodeURIComponent(entry.versionId)}`}
                         >
-                          {formatStayDate(entry.date, entry.dayNumber)}
+                          <StayDate date={entry.date} dayNumber={entry.dayNumber} />
                         </Link>
                       )}
                       <LodgingMeals
