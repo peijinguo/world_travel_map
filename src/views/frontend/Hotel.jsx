@@ -53,7 +53,7 @@ const getLodgingWebsite = (lodging) =>
   "";
 
 // The font's digits differ in width, so each digit sits in a box of its own
-// fixed width, and DAY n is always two digits (DAY 05): every stay date then
+// fixed width, and DAY n is always two digits (DAY05): every stay date then
 // lines up under the one above while reading as one string.
 const Digits = ({ text }) =>
   [...String(text)].map((char, index) =>
@@ -74,7 +74,7 @@ function StayDate({ date: dateString, dayNumber, action = "入住" }) {
     <span className="stay-text">
       <Digits text={ymd} />
       {valid && <span className="stay-cjk"> ({"日一二三四五六"[date.getDay()]})</span>}
-      {" DAY "}
+      {" DAY"}
       <span className="stay-num"><Digits text={dayNumber == null ? "?" : String(dayNumber).padStart(2, "0")} /></span>
       <span className="stay-cjk"> {action}</span>
     </span>
