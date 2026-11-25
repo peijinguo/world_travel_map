@@ -180,7 +180,7 @@ html:has(.hotel-page), html:has(.hotel-page) body { background: #fff; }
 .hotel-list .lodging-cancel-calendar .planner-calendar-trigger { width: auto; padding: 0; border: 0; border-radius: 0; background: transparent; }
 .hotel-list .lodging-cancel-calendar .planner-calendar-trigger > span:first-child { color: #8ba0ac; font-size: 17px; font-weight: 800; line-height: 1.5; text-decoration: underline dotted; text-decoration-thickness: 1.5px; text-underline-offset: 4px; }
 .hotel-list .lodging-cancel-calendar .planner-calendar-trigger:hover > span:first-child { color: #5d7785; }
-.hotel-list .lodging-cancel-calendar .planner-calendar-weekday { margin-left: .2em; color: inherit; font: inherit; font-size: 15px; }
+.hotel-list .lodging-cancel-calendar .planner-calendar-weekday { margin-left: .45em; color: inherit; font: inherit; font-size: 15px; }
 .hotel-list .lodging-cancel-calendar .planner-calendar-icon { display: none; }
 .lodging-cancel-calendar .planner-calendar-popover { width: 300px; }
 .hotel-list .lodging-cancel-calendar .planner-calendar-popover span { color: #657b87; font-size: 15px; line-height: normal; }
@@ -191,8 +191,10 @@ html:has(.hotel-page), html:has(.hotel-page) body { background: #fff; }
 .lodging-price-result small { color: #8ba0ac; font-size: 13px; font-weight: 700; }
 .hotel-list .lodging-rate { position: absolute; top: 10px; right: 16px; margin: 0; color: #8ba0ac; font-size: 13px; font-weight: 700; }
 .hotel-list li:has(.lodging-rate) { padding-top: 34px; }
-// NT$ a night sits in the card's bottom-right corner.
-.hotel-list .lodging-price-result { position: absolute; right: 22px; bottom: 33px; flex-wrap: nowrap; white-space: nowrap; }
+// NT$ a night sits in the card's bottom-right corner, on the line of the
+// free-cancellation date (on a phone, on the line of the ↗ button below it).
+.hotel-list .lodging-price-result { position: absolute; right: 22px; bottom: 23px; flex-wrap: nowrap; white-space: nowrap; }
+@media (max-width: 600px) { .hotel-list .lodging-price-result { bottom: 33px; } }
 
 @media (max-width: 600px) {
   .flight-card { padding: 18px 16px; }
