@@ -52,7 +52,7 @@ const getLodgingWebsite = (lodging) =>
   lodging.website ||
   "";
 
-const formatStayDate = (dateString, dayNumber) => {
+const formatStayDate = (dateString, dayNumber, action = "入住") => {
   if (!dateString) return `入住日期尚未設定 DAY ${dayNumber ?? "?"}`;
   const date = new Date(`${dateString}T00:00:00`);
   if (Number.isNaN(date.getTime())) return `${dateString} DAY ${dayNumber ?? "?"}`;
@@ -62,7 +62,34 @@ const formatStayDate = (dateString, dayNumber) => {
     String(date.getMonth() + 1).padStart(2, "0"),
     String(date.getDate()).padStart(2, "0"),
   ].join("/");
-  return `${ymd} (${weekday}) DAY ${dayNumber ?? "?"} 入住`;
+  return `${ymd} (${weekday}) DAY ${dayNumber ?? "?"} ${action}`;
+};
+
+// The day after a stay date (YYYY-MM-DD), or "" when it has none.
+const dayAfter = (dateString) => {
+  const date = new Date(`${dateString}T00:00:00`);
+  if (!dateString || Number.isNaN(date.getTime())) return "";
+  date.setDate(date.getDate() + 1);
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
+};
+
+// A lodging's nights in date order, each run of nights in a row followed by
+// its 退房 the morning after.
+const stayRows = (entries) => {
+  const nights = [...new Map(entries.map((entry) => [entry.key, entry])).values()].sort(
+    (first, second) => (first.date || "9999-12-31").localeCompare(second.date || "9999-12-31"),
+  );
+  const dates = new Set(nights.map((entry) => entry.date).filter(Boolean));
+  return nights.flatMap((entry) => {
+    const checkout = dayAfter(entry.date);
+    return checkout && !dates.has(checkout)
+      ? [entry, { key: `${entry.key}:checkout`, date: checkout, dayNumber: entry.dayNumber + 1, checkout: true }]
+      : [entry];
+  });
 };
 
 // The lodgings of a trip, from its 行程規劃 days: the synced trip's days when
@@ -272,24 +299,22 @@ function Hotel() {
                 <strong>{lodging.name}</strong>
                 <span>{lodging.displayName}</span>
                 <div className="hotel-stay-date-links">
-                  {[...new Map(
-                    lodging.stayEntries.map((entry) => [entry.key, entry]),
-                  ).values()]
-                    .sort((first, second) =>
-                      (first.date || "9999-12-31").localeCompare(
-                        second.date || "9999-12-31",
-                      ),
-                    )
-                    .map((entry) => (
-                      <div key={entry.key} className="hotel-stay-date">
+                  {stayRows(lodging.stayEntries).map((entry) => (
+                    <div key={entry.key} className={`hotel-stay-date ${entry.checkout ? "is-checkout" : ""}`}>
+                      {entry.checkout ? (
+                        <span className="hotel-checkout-date">{formatStayDate(entry.date, entry.dayNumber, "退房")}</span>
+                      ) : (
                         <Link
                           to={`${base}/planner?day=${encodeURIComponent(entry.dayId)}&version=${encodeURIComponent(entry.versionId)}`}
                         >
                           {formatStayDate(entry.date, entry.dayNumber)}
                         </Link>
-                        <LodgingMeals stayKey={`${selectedVersion}:${lodging.id || lodging.name}:${entry.dayId}`} />
-                      </div>
-                    ))}
+                      )}
+                      <LodgingMeals
+                        stayKey={`${selectedVersion}:${lodging.id || lodging.name}:${entry.checkout ? `checkout-${entry.date}` : entry.dayId}`}
+                      />
+                    </div>
+                  ))}
                 </div>
                 <LodgingPrice
                   priceKey={`${selectedVersion}:${lodging.id || lodging.name}`}

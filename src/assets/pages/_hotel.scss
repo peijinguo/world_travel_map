@@ -67,6 +67,7 @@ html:has(.hotel-page), html:has(.hotel-page) body { background: #fff; }
 // included (a ✓), left as a faint outline with a + when not.
 .hotel-stay-date { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
 .lodging-meals { display: inline-flex; gap: 6px; }
+.hotel-list .hotel-checkout-date { color: #8ba0ac; font-size: 17px; font-weight: 800; }
 .hotel-list .lodging-meal { display: inline-flex; align-items: center; gap: 3px; height: 28px; padding: 0 10px 0 7px; border: 1.5px dashed #c5d5db; border-radius: 999px; background: transparent; color: #8ba0ac; font: inherit; font-size: 14px; font-weight: 800; line-height: 1; cursor: pointer; transition: background-color .2s, border-color .2s, color .2s; }
 .hotel-list .lodging-meal:hover { border-color: #8fa9b4; color: #5d7785; }
 .hotel-list .lodging-meal.is-checked { border: 1.5px solid #c99a2e; background: #fbf1d3; color: #8a6514; }
