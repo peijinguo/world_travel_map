@@ -3,7 +3,6 @@ import { useAuth } from "../../context/AuthContext";
 import { savePrepCloud, subscribePrepCloud } from "../../services/firebase";
 import "../../assets/pages/_prep.scss";
 import CountryScene from "../../component/CountryScene";
-import PrepScene from "../../component/PrepScene";
 import { prepStarterFor } from "../../data/prepStarters";
 import usePrepSnowfall from "../../component/PrepSnowfall";
 import { storageKeyFor } from "../../services/syncCode";
@@ -118,9 +117,8 @@ function Prep() {
 
   return (
     <section className="prep-page">
-      {/* Japan keeps its snowy ski-slope scene (snowfall, gondolas, chimney
-          smoke); other countries show their own picture. */}
-      {country === "japan" ? <PrepScene /> : <CountryScene country={country} page="prep" />}
+      {/* Each country shows its own picture; Japan's also has snow falling. */}
+      <CountryScene country={country} page="prep" />
       <div className="prep-notebook" {...snow.swipeHandlers}>
         {snow.cap}
         <div className="prep-sheet" ref={sheetRef}>

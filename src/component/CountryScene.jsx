@@ -17,12 +17,12 @@ const PICTURES = import.meta.glob("../assets/country-bg/*-{prep,hotel}.webp", {
 // picture's own pixels: water flows (the picture's own water redrawn through
 // a drifting ripple, see Sea), the northern lights shimmer, a waterfall
 // streams, chimneys smoke, and lanterns, leaves or petals drift across.
-// sea: the water's outline or matte; aurora and fall: [x0, y0, x1, y1]; smoke: [x, y] of each
+// snow: snow falls over the picture; sea: the water's outline or matte; aurora and fall: [x0, y0, x1, y1]; smoke: [x, y] of each
 // chimney top; drift: what drifts, where each one starts, and how big it is.
 const SCENES = {
   japan: {
     size: [1200, 675],
-    prep: { sea: { outline: [[0, 641], [120, 639], [260, 633], [330, 629], [640, 629], [760, 633], [980, 635], [1200, 641], [1200, 675], [0, 675]], bands: [[629, 648, 0.5], [648, 675, 0.8]] }, drift: { kind: "petal", from: [[200, 420], [160, 455], [250, 440], [130, 400], [290, 470]] } },
+    prep: { snow: true, sea: { outline: [[0, 641], [120, 639], [260, 633], [330, 629], [640, 629], [760, 633], [980, 635], [1200, 641], [1200, 675], [0, 675]], bands: [[629, 648, 0.5], [648, 675, 0.8]] }, drift: { kind: "petal", from: [[200, 420], [160, 455], [250, 440], [130, 400], [290, 470]] } },
     // Hot-spring steam, the pool rippling, and the red lantern swaying.
     hotel: { sea: { outline: [[105, 592], [140, 590], [150, 583], [285, 584], [300, 591], [370, 591], [382, 597], [380, 622], [360, 628], [160, 628], [130, 620], [105, 612]], bands: [[583, 628, 0.55]], seconds: 40 }, steam: [[150, 600], [190, 596], [232, 602], [275, 598], [320, 604]], sway: { box: [884, 490, 918, 536], pivot: [901, 491] } },
   },
@@ -611,7 +611,7 @@ function CountryScene({ country, page }) {
   const k = w / BASE_WIDTH;
   const id = `country-scene-${country}-${page}`;
   return (
-    <SnowScene snow={false}>
+    <SnowScene snow={Boolean(scene.snow)}>
       <div className="country-scene" style={{ aspectRatio: `${w} / ${h}` }}>
         <img className="country-scene-art" src={src} alt="" />
         <svg className="country-scene-motion" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">

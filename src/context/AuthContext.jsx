@@ -15,6 +15,10 @@ const AuthContext = createContext(null);
 const SYNC_CODE_STORAGE_KEY = "travel-map-sync-code";
 const SYNC_CODE_HISTORY_STORAGE_KEY = "travel-map-sync-code-history";
 const TRIP_NAMES_STORAGE_KEY = "travel-map-trip-names";
+// The code this device made up on its own for a country with no trip yet. It
+// keeps the pages working but is not a trip the user added, so it is never
+// listed or shared; adding or choosing a trip replaces it.
+const AUTO_CODE_STORAGE_KEY = "travel-map-sync-code-auto";
 const MAX_TRIP_NAME_LENGTH = 24;
 
 function getSavedTripNames(country) {
@@ -51,14 +55,36 @@ function getSavedSyncCodes(currentCode, country) {
 }
 
 // A country's current trip on this device; a country opened for the first
-// time starts with a new trip of its own.
+// time gets a hidden placeholder code (see AUTO_CODE_STORAGE_KEY).
 function getSavedSyncCode(country) {
   const key = storageKeyFor(SYNC_CODE_STORAGE_KEY, country);
   const saved = normalizeSyncCode(localStorage.getItem(key) ?? "");
   if (saved.length >= 8) return saved;
   const next = createSyncCode();
   localStorage.setItem(key, next);
+  localStorage.setItem(storageKeyFor(AUTO_CODE_STORAGE_KEY, country), next);
   return next;
+}
+
+// The placeholder code, if this device still has one for the country. Codes
+// made before this was recorded are recognised by their look: the only trip,
+// unnamed, twelve characters from createSyncCode's alphabet.
+function getAutoCode(country) {
+  try {
+    const key = storageKeyFor(AUTO_CODE_STORAGE_KEY, country);
+    const saved = normalizeSyncCode(localStorage.getItem(key) ?? "");
+    if (saved) return saved;
+    const current = normalizeSyncCode(localStorage.getItem(storageKeyFor(SYNC_CODE_STORAGE_KEY, country)) ?? "");
+    const history = JSON.parse(localStorage.getItem(storageKeyFor(SYNC_CODE_HISTORY_STORAGE_KEY, country)) ?? "[]");
+    const others = (Array.isArray(history) ? history : []).map(normalizeSyncCode).filter((code) => code && code !== current);
+    if (/^[A-HJ-NP-Z2-9]{12}$/.test(current) && !others.length && !getSavedTripNames(country)[current]) {
+      localStorage.setItem(key, current);
+      return current;
+    }
+  } catch {
+    // Storage blocked: nothing is hidden.
+  }
+  return null;
 }
 
 export function AuthProvider({ children }) {
@@ -73,6 +99,7 @@ export function AuthProvider({ children }) {
   const [localSyncCodes, setSyncCodes] = useState(() => getSavedSyncCodes(syncCode, country));
   const [sharedSyncCodes, setSharedSyncCodes] = useState([]);
   const [localTripNames, setLocalTripNames] = useState(() => getSavedTripNames(country));
+  const [autoCode, setAutoCode] = useState(() => getAutoCode(country));
   const [sharedTripNames, setSharedTripNames] = useState({});
   // Names from the cloud win; this device's copy covers offline use.
   const tripNames = useMemo(
@@ -81,14 +108,15 @@ export function AuthProvider({ children }) {
   );
   const [tripDirectoryId, setTripDirectoryId] = useState(null);
   // Trips added on any device are listed everywhere, after this device's own.
+  // The placeholder code is left out unless someone has named or shared it.
+  const sharedCodes = useMemo(
+    () => sharedSyncCodes.map(normalizeSyncCode).filter((code) => code.length >= 8),
+    [sharedSyncCodes],
+  );
+  const draftCode = autoCode && !tripNames[autoCode] && !sharedCodes.includes(autoCode) ? autoCode : null;
   const syncCodes = useMemo(
-    () => [
-      ...new Set([
-        ...localSyncCodes,
-        ...sharedSyncCodes.map(normalizeSyncCode).filter((code) => code.length >= 8),
-      ]),
-    ],
-    [localSyncCodes, sharedSyncCodes],
+    () => [...new Set([...localSyncCodes, ...sharedCodes])].filter((code) => code !== draftCode),
+    [localSyncCodes, sharedCodes, draftCode],
   );
   const [syncSpaceId, setSyncSpaceId] = useState(null);
   const [syncVersion, setSyncVersion] = useState(0);
@@ -102,6 +130,7 @@ export function AuthProvider({ children }) {
     setSyncCodeState(code);
     setSyncCodes(getSavedSyncCodes(code, next));
     setLocalTripNames(getSavedTripNames(next));
+    setAutoCode(getAutoCode(next));
     setSharedSyncCodes([]);
     setSharedTripNames({});
     setTripDirectoryId(null);
@@ -171,8 +200,13 @@ export function AuthProvider({ children }) {
     const next = normalizeSyncCode(value);
     if (next.length < 8) return false;
     localStorage.setItem(storageKeyFor(SYNC_CODE_STORAGE_KEY, country), next);
+    if (draftCode) {
+      // A real trip replaces the placeholder, which is dropped for good.
+      localStorage.removeItem(storageKeyFor(AUTO_CODE_STORAGE_KEY, country));
+      setAutoCode(null);
+    }
     setSyncCodes((codes) => {
-      const updatedCodes = [...new Set([next, ...codes])].slice(0, 8);
+      const updatedCodes = [...new Set([next, ...codes.filter((code) => code !== draftCode)])].slice(0, 8);
       localStorage.setItem(
         storageKeyFor(SYNC_CODE_HISTORY_STORAGE_KEY, country),
         JSON.stringify(updatedCodes),
@@ -186,6 +220,14 @@ export function AuthProvider({ children }) {
     shareTripCode(next);
     return true;
   };
+
+  // On the placeholder while real trips exist (shared from another device, or
+  // added here before): open the first of them instead.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- moving off the placeholder once the trips are known
+    if (draftCode && draftCode === syncCode && syncCodes.length) setSyncCode(syncCodes[0]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftCode, syncCode, syncCodes]);
 
   const removeSyncCode = (value) => {
     const codeToRemove = normalizeSyncCode(value);
@@ -268,6 +310,8 @@ export function AuthProvider({ children }) {
       deleteTrip,
       tripNames,
       tripName: tripNames[syncCode] ?? "",
+      // The current code when it is only the hidden placeholder, else null.
+      draftCode: draftCode === syncCode ? draftCode : null,
       tripDirectoryId,
       country,
       setCountry,
@@ -275,7 +319,7 @@ export function AuthProvider({ children }) {
     }),
     // The setters read these too, so a new list or directory id must reach them.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [user, authReady, authError, syncCode, syncCodes, localSyncCodes, tripDirectoryId, syncSpaceId, syncVersion, tripNames, country],
+    [user, authReady, authError, syncCode, syncCodes, localSyncCodes, tripDirectoryId, syncSpaceId, syncVersion, tripNames, country, draftCode],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

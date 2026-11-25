@@ -20,6 +20,7 @@ function Header() {
     deleteTrip,
     tripNames,
     renameTrip,
+    draftCode,
   } = useAuth();
   // The open country's pages: Japan at /prep…, the others at /c/<id>/prep….
   // Read from the route itself so the header is right on the first render.
@@ -47,6 +48,13 @@ function Header() {
   const syncRef = useRef(null);
   const [isSyncCodeSelectOpen, setIsSyncCodeSelectOpen] = useState(false);
   const [syncCodeDraft, setSyncCodeDraft] = useState(syncCode);
+  // Follow the current trip when it changes elsewhere (another country, or
+  // moving off the placeholder code).
+  const [shownSyncCode, setShownSyncCode] = useState(syncCode);
+  if (shownSyncCode !== syncCode) {
+    setShownSyncCode(syncCode);
+    setSyncCodeDraft(syncCode);
+  }
   const [newSyncCode, setNewSyncCode] = useState("");
   const [syncMessage, setSyncMessage] = useState("");
   const [codePendingRemoval, setCodePendingRemoval] = useState(null);
@@ -309,7 +317,9 @@ function Header() {
                         setIsSyncCodeSelectOpen((isOpen) => !isOpen)
                       }
                     >
-                      <span title={syncCodeDraft}>{tripNames[syncCodeDraft] || syncCodeDraft}</span>
+                      <span title={syncCodeDraft}>
+                        {tripNames[syncCodeDraft] || (syncCodeDraft === draftCode ? "尚未選擇行程" : syncCodeDraft)}
+                      </span>
                       <span aria-hidden="true">⌄</span>
                     </button>
                     {isSyncCodeSelectOpen && (
