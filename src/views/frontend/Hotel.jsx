@@ -52,32 +52,32 @@ const getLodgingWebsite = (lodging) =>
   lodging.website ||
   "";
 
-// A stay date in four parts (date, weekday, DAY n, 入住/退房), each in its
-// own column of the card's date grid so every row lines up.
+// The font's digits differ in width, so each digit sits in a box of its own
+// fixed width (and DAY n keeps room for two digits): every stay date then
+// lines up under the one above while reading as one string.
+const Digits = ({ text }) =>
+  [...String(text)].map((char, index) =>
+    /\d/.test(char) ? <span key={index} className="stay-digit">{char}</span> : char,
+  );
+
 function StayDate({ date: dateString, dayNumber, action = "入住" }) {
   const date = new Date(`${dateString}T00:00:00`);
-  const day = `DAY ${dayNumber ?? "?"}`;
-  if (!dateString || Number.isNaN(date.getTime())) {
-    return (
-      <>
-        <span className="stay-ymd is-wide">{dateString || "入住日期尚未設定"}</span>
-        <span className="stay-day">{day}</span>
-        <span className="stay-act">{action}</span>
-      </>
-    );
-  }
-  const ymd = [
-    date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, "0"),
-    String(date.getDate()).padStart(2, "0"),
-  ].join("/");
+  const valid = dateString && !Number.isNaN(date.getTime());
+  const ymd = valid
+    ? [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, "0"),
+        String(date.getDate()).padStart(2, "0"),
+      ].join("/")
+    : dateString || "入住日期尚未設定";
   return (
-    <>
-      <span className="stay-ymd">{ymd}</span>
-      <span className="stay-wd">({"日一二三四五六"[date.getDay()]})</span>
-      <span className="stay-day">{day}</span>
-      <span className="stay-act">{action}</span>
-    </>
+    <span className="stay-text">
+      <Digits text={ymd} />
+      {valid && <span className="stay-cjk"> ({"日一二三四五六"[date.getDay()]})</span>}
+      {" DAY "}
+      <span className="stay-num"><Digits text={dayNumber ?? "?"} /></span>
+      <span className="stay-cjk"> {action}</span>
+    </span>
   );
 }
 
