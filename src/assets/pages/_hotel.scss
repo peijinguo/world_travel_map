@@ -180,7 +180,10 @@ html:has(.hotel-page), html:has(.hotel-page) body { background: #fff; }
 .hotel-list .lodging-cancel-calendar .planner-calendar-trigger { width: auto; padding: 0; border: 0; border-radius: 0; background: transparent; }
 .hotel-list .lodging-cancel-calendar .planner-calendar-trigger > span:first-child { color: #8ba0ac; font-size: 17px; font-weight: 800; line-height: 1.5; text-decoration: underline dotted; text-decoration-thickness: 1.5px; text-underline-offset: 4px; }
 .hotel-list .lodging-cancel-calendar .planner-calendar-trigger:hover > span:first-child { color: #5d7785; }
-.hotel-list .lodging-cancel-calendar .planner-calendar-weekday { margin-left: .45em; color: inherit; font: inherit; font-size: 15px; }
+// The gap before the weekday is text, so the dotted line runs under it unbroken
+// and the weekday sits right under the stays' weekdays.
+.hotel-list .lodging-cancel-calendar .planner-calendar-weekday { margin-left: 0; color: inherit; font: inherit; font-size: 15px; }
+.hotel-list .lodging-cancel-calendar .planner-calendar-weekday::before { content: "\2002"; font-size: 12.8px; }
 .hotel-list .lodging-cancel-calendar .planner-calendar-icon { display: none; }
 .lodging-cancel-calendar .planner-calendar-popover { width: 300px; }
 .hotel-list .lodging-cancel-calendar .planner-calendar-popover span { color: #657b87; font-size: 15px; line-height: normal; }
