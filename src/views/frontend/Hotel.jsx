@@ -7,7 +7,7 @@ import { isLodgingName } from "../../services/freeMaps";
 import "../../assets/pages/_hotel.scss";
 import CountryScene from "../../component/CountryScene";
 import FlightCards from "../../component/FlightCards";
-import LodgingPrice from "../../component/LodgingPrice";
+import LodgingPrice, { LodgingMeals } from "../../component/LodgingPrice";
 
 // Itinerary versions are labelled A, B, C… by position; older saved data
 // still says "版本 1", "版本 2", so convert those on read.
@@ -281,12 +281,14 @@ function Hotel() {
                       ),
                     )
                     .map((entry) => (
-                      <Link
-                        key={entry.key}
-                        to={`${base}/planner?day=${encodeURIComponent(entry.dayId)}&version=${encodeURIComponent(entry.versionId)}`}
-                      >
-                        {formatStayDate(entry.date, entry.dayNumber)}
-                      </Link>
+                      <div key={entry.key} className="hotel-stay-date">
+                        <Link
+                          to={`${base}/planner?day=${encodeURIComponent(entry.dayId)}&version=${encodeURIComponent(entry.versionId)}`}
+                        >
+                          {formatStayDate(entry.date, entry.dayNumber)}
+                        </Link>
+                        <LodgingMeals stayKey={`${selectedVersion}:${lodging.id || lodging.name}:${entry.dayId}`} />
+                      </div>
                     ))}
                 </div>
                 <LodgingPrice

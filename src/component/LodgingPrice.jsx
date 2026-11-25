@@ -130,6 +130,41 @@ function useLodgingValue(key) {
   return [value, save];
 }
 
+// 早餐 / 晚餐 boxes for one night of a stay: tick whether the booking includes
+// the meal. Kept with the stay's price, so a synced trip shares them too.
+const MEALS = [
+  ["breakfast", "早餐"],
+  ["dinner", "晚餐"],
+];
+function MealCheck({ valueKey, label }) {
+  const [value, save] = useLodgingValue(valueKey);
+  const checked = value === "1";
+  return (
+    <button
+      type="button"
+      className={`lodging-meal ${checked ? "is-checked" : ""}`}
+      aria-pressed={checked}
+      onClick={() => save(checked ? "" : "1")}
+    >
+      <svg viewBox="0 0 28 28" aria-hidden="true">
+        <path className="lodging-meal-frame" d="M4.6 5.2c6.2-.9 12.7-.6 18.6-.3.6 6 .4 12.3.1 18.4-6.3.6-12.4.4-18.5.1-.5-6-.6-12.1-.2-18.2z" />
+        {checked && <path className="lodging-meal-tick" d="M7.5 14.6c2 1.6 3.4 3.4 4.6 5.4 3-6.2 7-11.2 12.6-15.6" />}
+      </svg>
+      {label}
+    </button>
+  );
+}
+
+export function LodgingMeals({ stayKey }) {
+  return (
+    <span className="lodging-meals">
+      {MEALS.map(([meal, label]) => (
+        <MealCheck key={meal} valueKey={`${stayKey}|${meal}`} label={label} />
+      ))}
+    </span>
+  );
+}
+
 function LodgingPrice({ priceKey, nights }) {
   const rate = useJpyRate();
   const [total, saveTotal] = useLodgingValue(priceKey);
