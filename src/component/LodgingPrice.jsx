@@ -146,9 +146,8 @@ function MealCheck({ valueKey, label }) {
       aria-pressed={checked}
       onClick={() => save(checked ? "" : "1")}
     >
-      <svg viewBox="0 0 28 28" aria-hidden="true">
-        <path className="lodging-meal-frame" d="M4.6 5.2c6.2-.9 12.7-.6 18.6-.3.6 6 .4 12.3.1 18.4-6.3.6-12.4.4-18.5.1-.5-6-.6-12.1-.2-18.2z" />
-        {checked && <path className="lodging-meal-tick" d="M7.5 14.6c2 1.6 3.4 3.4 4.6 5.4 3-6.2 7-11.2 12.6-15.6" />}
+      <svg viewBox="0 0 16 16" aria-hidden="true">
+        {checked ? <path d="M3.5 8.4 6.6 11.4 12.6 4.8" /> : <path d="M8 3.5v9M3.5 8h9" />}
       </svg>
       {label}
     </button>
