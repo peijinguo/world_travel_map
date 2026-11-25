@@ -69,7 +69,7 @@ html:has(.hotel-page), html:has(.hotel-page) body { background: #fff; }
 .hotel-list .hotel-stay-date-links { display: grid; grid-template-columns: max-content max-content; align-items: center; gap: 6px 12px; }
 .hotel-stay-date { display: contents; }
 .hotel-list .hotel-stay-date-links a { justify-self: start; text-decoration: none; }
-.hotel-list .hotel-stay-date-links .stay-text { display: inline-block; color: #b88f8f; font-size: 17px; font-weight: 800; line-height: 1.4; white-space: nowrap; }
+.hotel-list .hotel-stay-date-links .stay-text { display: inline-block; color: #b88f8f; font-size: 17px; font-weight: 500; line-height: 1.4; white-space: nowrap; }
 .hotel-list .hotel-stay-date-links a:hover .stay-text { color: #9c7272; }
 .hotel-list .hotel-checkout-date .stay-text { color: #8ba0ac; }
 .hotel-list .stay-text span { color: inherit; font-size: inherit; line-height: inherit; }
@@ -78,7 +78,7 @@ html:has(.hotel-page), html:has(.hotel-page) body { background: #fff; }
 .hotel-list .hotel-stay-date-links .stay-text { font-family: "Noto Sans TC", sans-serif; font-variant-numeric: tabular-nums; }
 // Every date on the page (flights, stays, free cancellation) in that one
 // font, size and weight, its weekday a touch smaller like the stays'.
-.flight-date, .hotel-list .lodging-cancel-calendar .planner-calendar-trigger > span:first-child { font-family: "Noto Sans TC", sans-serif; font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.flight-date, .hotel-list .lodging-cancel-calendar .planner-calendar-trigger > span:first-child { font-family: "Noto Sans TC", sans-serif; font-size: 17px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .flight-date .flight-date-weekday { margin-left: .2em; font-size: 15px; }
 // Chinese characters stand taller than digits of the same size, so the
 // weekday and 入住/退房 are a touch smaller to read as one size.
@@ -121,7 +121,7 @@ html:has(.hotel-page), html:has(.hotel-page) body { background: #fff; }
 .flight-card-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
 .flight-kind { padding: 3px 12px; border-radius: 999px; background: #6c7675; color: #fff; font-size: 15px; font-weight: 900; }
 .flight-no { font-size: 24px; font-weight: 900; }
-.flight-date { color: #b88f8f; font-size: 17px; font-weight: 800; }
+.flight-date { color: #b88f8f; font-size: 17px; font-weight: 500; }
 .flight-route { display: grid; grid-template-columns: auto minmax(60px, 1fr) auto; align-items: center; gap: 14px; }
 .flight-end { display: grid; gap: 2px; }
 .flight-end.is-arrive { text-align: right; }
@@ -178,7 +178,7 @@ html:has(.hotel-page), html:has(.hotel-page) body { background: #fff; }
 .hotel-list .lodging-cancel > span { color: inherit; font-size: inherit; }
 .lodging-cancel .lodging-cancel-calendar { width: auto; }
 .hotel-list .lodging-cancel-calendar .planner-calendar-trigger { width: auto; padding: 0; border: 0; border-radius: 0; background: transparent; }
-.hotel-list .lodging-cancel-calendar .planner-calendar-trigger > span:first-child { color: #8ba0ac; font-size: 17px; font-weight: 800; line-height: 1.5; text-decoration: underline dotted; text-decoration-thickness: 1.5px; text-underline-offset: 4px; }
+.hotel-list .lodging-cancel-calendar .planner-calendar-trigger > span:first-child { color: #8ba0ac; font-size: 17px; font-weight: 500; line-height: 1.5; text-decoration: underline dotted; text-decoration-thickness: 1.5px; text-underline-offset: 4px; }
 .hotel-list .lodging-cancel-calendar .planner-calendar-trigger:hover > span:first-child { color: #5d7785; }
 // The gap before the weekday is text, so the dotted line runs under it unbroken
 // and the weekday sits right under the stays' weekdays.
