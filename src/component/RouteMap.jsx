@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import girlAvatar from "../assets/route-avatar-girl.webp";
+import boyAvatar from "../assets/route-avatar-boy.webp";
 
 // Transitous requires a source link and contact details beside its transit times.
 const TRANSIT_ATTRIBUTION =
@@ -352,6 +354,62 @@ function makeStopMarker(map, stop, index, coordinate, offset, allCoordinates = [
   return new maplibregl.Marker({ element: marker, anchor: "bottom", offset }).setLngLat(coordinate);
 }
 
+// The two travellers standing on the map. A click anywhere on the map sends
+// them walking there side by side, the second a step behind the first.
+const AVATARS = [
+  { src: boyAvatar, name: "男生", offset: [-26, 0], delay: 0 },
+  { src: girlAvatar, name: "女生", offset: [26, 0], delay: 180 },
+];
+const AVATAR_SPEED_PX = 220; // screen pixels a second
+const AVATAR_MIN_MS = 450;
+const AVATAR_MAX_MS = 2600;
+
+function makeAvatarMarker({ src, name, offset }) {
+  const element = document.createElement("div");
+  element.className = "planner-route-avatar";
+  const image = document.createElement("img");
+  image.src = src;
+  image.alt = name;
+  image.draggable = false;
+  element.append(image);
+  return new maplibregl.Marker({ element, anchor: "bottom", offset });
+}
+
+// Walk a marker from where it stands to `target`, easing in and out; returns
+// a function that stops the walk where it is.
+function walkAvatar(map, marker, target, delay) {
+  const from = marker.getLngLat();
+  const start = map.project(from);
+  const end = map.project(target);
+  const distance = Math.hypot(end.x - start.x, end.y - start.y);
+  const duration = Math.min(Math.max((distance / AVATAR_SPEED_PX) * 1000, AVATAR_MIN_MS), AVATAR_MAX_MS);
+  const element = marker.getElement();
+  let frame = 0;
+  let begun = 0;
+  const step = (now) => {
+    if (!begun) {
+      begun = now;
+      element.classList.add("is-walking");
+    }
+    const t = Math.min((now - begun) / duration, 1);
+    const eased = t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
+    marker.setLngLat([
+      from.lng + (target.lng - from.lng) * eased,
+      from.lat + (target.lat - from.lat) * eased,
+    ]);
+    if (t < 1) frame = requestAnimationFrame(step);
+    else element.classList.remove("is-walking");
+  };
+  const timer = window.setTimeout(() => {
+    frame = requestAnimationFrame(step);
+  }, delay);
+  return () => {
+    window.clearTimeout(timer);
+    cancelAnimationFrame(frame);
+    element.classList.remove("is-walking");
+  };
+}
+
 // `home` is where the map starts before any stop is placed: the country of
 // the open planner (Japan unless told otherwise).
 const JAPAN_HOME = { center: JAPAN_CENTER, zoom: JAPAN_ZOOM };
@@ -366,6 +424,7 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
   const footprintsRef = useRef([]);
   const visibleStepsRef = useRef([]);
   const tickRef = useRef(0);
+  const avatarsRef = useRef([]);
   const [mapReady, setMapReady] = useState(false);
   const [webglSupported] = useState(() =>
     Boolean(document.createElement("canvas").getContext("webgl2")),
@@ -536,6 +595,50 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
     visibleStepsRef.current = visibleShownSteps(map, footprints.features);
     tickRef.current = 0;
   }, [stopsKey, pathsKey, mapReady]);
+
+  // The two travellers: they start in the middle of the view and walk to
+  // wherever the map is clicked (a click on a pin only opens its card). A
+  // new set of stops puts them back in the middle if they are out of sight.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady) return undefined;
+    const center = map.getCenter();
+    const avatars = AVATARS.map((avatar) => ({
+      ...avatar,
+      marker: makeAvatarMarker(avatar).setLngLat(center).addTo(map),
+      stop: () => {},
+    }));
+    avatarsRef.current = avatars;
+    const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const walkTo = (event) => {
+      avatars.forEach((avatar) => {
+        avatar.stop();
+        if (still) avatar.marker.setLngLat(event.lngLat);
+        else avatar.stop = walkAvatar(map, avatar.marker, event.lngLat, avatar.delay);
+      });
+    };
+    map.on("click", walkTo);
+    return () => {
+      map.off("click", walkTo);
+      avatars.forEach((avatar) => {
+        avatar.stop();
+        avatar.marker.remove();
+      });
+      avatarsRef.current = [];
+    };
+  }, [mapReady]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady) return;
+    const bounds = map.getBounds();
+    const center = map.getCenter();
+    avatarsRef.current.forEach((avatar) => {
+      if (bounds.contains(avatar.marker.getLngLat())) return;
+      avatar.stop();
+      avatar.marker.setLngLat(center);
+    });
+  }, [stopsKey, mapReady]);
 
   // Walk the footprints forward through the stretch on screen, in stop order,
   // then start that stretch again; panning or zooming picks the new stretch.
