@@ -357,16 +357,20 @@ function makeStopMarker(map, stop, index, coordinate, offset, allCoordinates = [
 // The two travellers standing on the map. A click anywhere on the map sends
 // them walking there side by side, the second a step behind the first.
 const AVATARS = [
-  { src: boyAvatar, name: "男生", offset: [-19, 0], delay: 0 },
-  { src: girlAvatar, name: "女生", offset: [19, 0], delay: 180 },
+  // The girl's picture is drawn smaller inside its frame, so it is shown
+  // larger to make the two faces the same size.
+  { src: boyAvatar, name: "男生", size: 50, offset: [-18, 0], delay: 0 },
+  { src: girlAvatar, name: "女生", size: 62, offset: [21, 0], delay: 180 },
 ];
 const AVATAR_SPEED_PX = 220; // screen pixels a second
 const AVATAR_MIN_MS = 450;
 const AVATAR_MAX_MS = 2600;
 
-function makeAvatarMarker({ src, name, offset }) {
+function makeAvatarMarker({ src, name, size, offset }) {
   const element = document.createElement("div");
   element.className = "planner-route-avatar";
+  element.style.width = `${size}px`;
+  element.style.height = `${size}px`;
   const image = document.createElement("img");
   image.src = src;
   image.alt = name;
