@@ -1032,6 +1032,7 @@ span.planner-walking-icon { position: relative; display: block; width: 34px; hei
 // The two travellers on the route map (RouteMap.jsx): they bob along while
 // walking to a clicked spot, and stay under the pins so pins stay clickable.
 .planner-route-avatar { width: 50px; height: 50px; pointer-events: none; z-index: 0; }
+.planner-route-avatar.is-front { z-index: 1; }
 .planner-route-avatar img { display: block; width: 100%; height: 100%; filter: drop-shadow(0 2px 2px rgba(31, 38, 41, .25)); transform-origin: center bottom; }
 .planner-route-avatar.is-walking img { animation: planner-avatar-walk .36s ease-in-out infinite; }
 @keyframes planner-avatar-walk {
