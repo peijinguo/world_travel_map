@@ -13,6 +13,9 @@ function PlannerDatePicker({ value, onChange, className = "", placeholder = "選
   const rootRef = useRef(null);
   const selectedDate = value ? new Date(`${value}T00:00:00`) : null;
   const [open, setOpen] = useState(false);
+  // What the calendar shows: the days of a month, or a grid of years or
+  // months to jump to (tap the year or month in its heading).
+  const [view, setView] = useState("days");
   const [visibleMonth, setVisibleMonth] = useState(
     () => selectedDate ?? new Date(),
   );
@@ -37,12 +40,20 @@ function PlannerDatePicker({ value, onChange, className = "", placeholder = "選
   });
   const moveMonth = (offset) =>
     setVisibleMonth(new Date(year, month + offset, 1));
-  // The year and month can also be picked straight from a list: a few years
-  // back and ahead of this one, and always the year on show.
-  const thisYear = new Date().getFullYear();
-  const years = [...new Set([...Array.from({ length: 9 }, (_, index) => thisYear - 3 + index), year])].sort(
-    (first, second) => first - second,
-  );
+  // Twelve years at a time, the one on show among them; the arrows page
+  // through them.
+  const [yearPage, setYearPage] = useState(0);
+  const firstYear = year - 4 + yearPage * 12;
+  const years = Array.from({ length: 12 }, (_, index) => firstYear + index);
+  const showView = (next) => {
+    setYearPage(0);
+    setView((current) => (current === next ? "days" : next));
+  };
+  const step = (offset) => {
+    if (view === "years") setYearPage((page) => page + offset);
+    else if (view === "months") setVisibleMonth(new Date(year + offset, month, 1));
+    else moveMonth(offset);
+  };
   const selectDate = (day) => {
     onChange(toDateInputValue(new Date(year, month, day)));
     setOpen(false);
@@ -63,6 +74,7 @@ function PlannerDatePicker({ value, onChange, className = "", placeholder = "選
         aria-expanded={open}
         onClick={() => {
           setVisibleMonth(selectedDate ?? new Date());
+          setView("days");
           setOpen((current) => !current);
         }}
       >
@@ -82,48 +94,82 @@ function PlannerDatePicker({ value, onChange, className = "", placeholder = "選
         >
           <div className="planner-calendar-head">
             <strong className="planner-calendar-pick">
-              <select
-                aria-label="年"
-                value={year}
-                onChange={(event) => setVisibleMonth(new Date(Number(event.target.value), month, 1))}
+              <button
+                type="button"
+                className={view === "years" ? "is-open" : undefined}
+                aria-expanded={view === "years"}
+                onClick={() => showView("years")}
               >
-                {years.map((option) => (
-                  <option key={option} value={option}>{option} 年</option>
-                ))}
-              </select>
-              <select
-                aria-label="月"
-                value={month}
-                onChange={(event) => setVisibleMonth(new Date(year, Number(event.target.value), 1))}
+                {year} 年
+              </button>
+              <button
+                type="button"
+                className={view === "months" ? "is-open" : undefined}
+                aria-expanded={view === "months"}
+                onClick={() => showView("months")}
               >
-                {Array.from({ length: 12 }, (_, index) => (
-                  <option key={index} value={index}>{index + 1} 月</option>
-                ))}
-              </select>
+                {month + 1} 月
+              </button>
             </strong>
             <div>
               <button
                 type="button"
-                onClick={() => moveMonth(-1)}
-                aria-label="上個月"
+                onClick={() => step(-1)}
+                aria-label={view === "years" ? "前幾年" : view === "months" ? "前一年" : "上個月"}
               >
                 ↑
               </button>
               <button
                 type="button"
-                onClick={() => moveMonth(1)}
-                aria-label="下個月"
+                onClick={() => step(1)}
+                aria-label={view === "years" ? "後幾年" : view === "months" ? "後一年" : "下個月"}
               >
                 ↓
               </button>
             </div>
           </div>
+          {view === "years" && (
+            <div className="planner-calendar-grid">
+              {years.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  className={option === year ? "is-selected" : undefined}
+                  onClick={() => {
+                    setVisibleMonth(new Date(option, month, 1));
+                    setView("months");
+                  }}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          )}
+          {view === "months" && (
+            <div className="planner-calendar-grid">
+              {Array.from({ length: 12 }, (_, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  className={index === month ? "is-selected" : undefined}
+                  onClick={() => {
+                    setVisibleMonth(new Date(year, index, 1));
+                    setView("days");
+                  }}
+                >
+                  {index + 1} 月
+                </button>
+              ))}
+            </div>
+          )}
+          {view === "days" && (
+            <>
           <div className="planner-calendar-weekdays" aria-hidden="true">
             {["日", "一", "二", "三", "四", "五", "六"].map((day) => (
               <span key={day}>{day}</span>
             ))}
-          </div>
-          <div className="planner-calendar-days">
+            </div>
+            <div className="planner-calendar-days">
             {calendarDays.map((day, index) =>
               day ? (
                 <button
@@ -142,7 +188,9 @@ function PlannerDatePicker({ value, onChange, className = "", placeholder = "選
                 <span key={`empty-${index}`} />
               ),
             )}
-          </div>
+            </div>
+            </>
+          )}
           <div className="planner-calendar-actions">
             <button type="button" onClick={chooseToday}>
               今天
