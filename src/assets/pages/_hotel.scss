@@ -167,7 +167,10 @@ html:has(.hotel-page), html:has(.hotel-page) body { background: #fff; }
 .lodging-price { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 8px; padding-top: 12px; border-top: 1px dashed #d5e0e5; }
 .lodging-price label { display: flex; align-items: center; gap: 8px; }
 .hotel-list .lodging-price label > span:first-child { color: #526875; font-size: 16px; font-weight: 700; }
-.lodging-price-input { display: inline-flex; align-items: center; gap: 3px; padding: 4px 10px; border: 1.5px solid #a8c1c9; border-radius: 10px; background: #fff; }
+// The total reads as plain text after 「n 晚總價」 but is still typed into: no
+// box, only a faint line under it while it is being edited.
+.lodging-price-input { display: inline-flex; align-items: center; gap: 3px; padding: 0 0 1px; border: 0; border-bottom: 1px dashed transparent; border-radius: 0; background: transparent; cursor: text; }
+.lodging-price-input:focus-within { border-bottom-color: #a8c1c9; }
 .lodging-price-input i { color: #526875; font-size: 16px; font-style: normal; font-weight: 700; }
 .lodging-price-input input { width: 64px; min-width: 56px; field-sizing: content; border: 0; outline: 0; background: transparent; color: #526875; font-size: 16px; font-weight: 700; }
 @supports (field-sizing: content) { .lodging-price-input input { width: auto; } }
