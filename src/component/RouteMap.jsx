@@ -357,8 +357,8 @@ function makeStopMarker(map, stop, index, coordinate, offset, allCoordinates = [
 // The two travellers standing on the map. A click anywhere on the map sends
 // them walking there side by side, the second a step behind the first.
 const AVATARS = [
-  { src: boyAvatar, name: "男生", offset: [-26, 0], delay: 0 },
-  { src: girlAvatar, name: "女生", offset: [26, 0], delay: 180 },
+  { src: boyAvatar, name: "男生", offset: [-19, 0], delay: 0 },
+  { src: girlAvatar, name: "女生", offset: [19, 0], delay: 180 },
 ];
 const AVATAR_SPEED_PX = 220; // screen pixels a second
 const AVATAR_MIN_MS = 450;
