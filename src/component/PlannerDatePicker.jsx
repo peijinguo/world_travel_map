@@ -37,6 +37,12 @@ function PlannerDatePicker({ value, onChange, className = "", placeholder = "選
   });
   const moveMonth = (offset) =>
     setVisibleMonth(new Date(year, month + offset, 1));
+  // The year and month can also be picked straight from a list: a few years
+  // back and ahead of this one, and always the year on show.
+  const thisYear = new Date().getFullYear();
+  const years = [...new Set([...Array.from({ length: 9 }, (_, index) => thisYear - 3 + index), year])].sort(
+    (first, second) => first - second,
+  );
   const selectDate = (day) => {
     onChange(toDateInputValue(new Date(year, month, day)));
     setOpen(false);
@@ -75,8 +81,25 @@ function PlannerDatePicker({ value, onChange, className = "", placeholder = "選
           aria-label="選擇日期"
         >
           <div className="planner-calendar-head">
-            <strong>
-              {year} 年 {month + 1} 月
+            <strong className="planner-calendar-pick">
+              <select
+                aria-label="年"
+                value={year}
+                onChange={(event) => setVisibleMonth(new Date(Number(event.target.value), month, 1))}
+              >
+                {years.map((option) => (
+                  <option key={option} value={option}>{option} 年</option>
+                ))}
+              </select>
+              <select
+                aria-label="月"
+                value={month}
+                onChange={(event) => setVisibleMonth(new Date(year, Number(event.target.value), 1))}
+              >
+                {Array.from({ length: 12 }, (_, index) => (
+                  <option key={index} value={index}>{index + 1} 月</option>
+                ))}
+              </select>
             </strong>
             <div>
               <button

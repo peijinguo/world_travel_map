@@ -444,6 +444,10 @@
 .planner-calendar-popover { box-sizing: border-box; position: absolute; top: calc(100% + 7px); left: 0; z-index: 30; width: 100%; padding: 14px; border: 1.7px solid #80929c; border-radius: 10px 13px 9px 12px; background: #fff; color: #123653; box-shadow: 0 16px 35px rgba(31,55,68,.22); }
 .planner-calendar-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .planner-calendar-head strong { font-size: 18px; }
+// Year and month as small drop-downs that read like the heading they replace.
+.planner-calendar-pick { display: flex; align-items: center; gap: 4px; }
+.planner-calendar-pick select { appearance: none; padding: 2px 18px 2px 6px; border: 1px solid transparent; border-radius: 7px; background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23274d61' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 5px center / 9px 6px; color: #123653; font: inherit; font-weight: 800; cursor: pointer; }
+.planner-calendar-pick select:hover, .planner-calendar-pick select:focus-visible { border-color: #9aa9b1; background-color: #f7f9fa; outline: 0; }
 .planner-calendar-head div { display: flex; gap: 7px; }
 .planner-calendar-head button { width: 34px; height: 34px; border: 1px solid #9aa9b1; border-radius: 8px; background: #f7f9fa; color: #274d61; font-size: 19px; cursor: pointer; }
 .planner-calendar-weekdays, .planner-calendar-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; place-items: center; text-align: center; }
