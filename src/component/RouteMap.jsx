@@ -366,7 +366,7 @@ const AVATARS = [
 ];
 // On the trip day they follow the clock; on any other day the day plays
 // through quickly, over and over: an hour of the plan in this many ms.
-const REPLAY_HOUR_MS = 1500;
+const REPLAY_HOUR_MS = 3000;
 const REPLAY_REST_MS = 2000;
 const TRAVEL_KMH = 40; // to guess when they set off when a stop has one time
 const FLIGHT_KMH = 750;
