@@ -2936,9 +2936,10 @@ function Planner() {
       items
         .map((item, index) => {
           const town = resolveItemLocation(item);
-          return town
-            ? { item, town, order: index + 1, flight: getTravelMode(item.text) === "flight" }
-            : null;
+          if (!town) return null;
+          // How they leave this stop, for the travellers on the route map.
+          const mode = getTravelMode(item.text);
+          return { item, town, order: index + 1, flight: mode === "flight", walking: mode === "walking" };
         })
         .filter(Boolean),
     [items],

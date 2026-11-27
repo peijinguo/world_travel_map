@@ -368,9 +368,12 @@ const AVATARS = [
 // through quickly, over and over: an hour of the plan in this many ms.
 const REPLAY_HOUR_MS = 3000;
 const REPLAY_REST_MS = 2000;
-const TRAVEL_KMH = 40; // to guess when they set off when a stop has one time
+// Speeds to guess how long a leg takes inside the times written.
+const TRAVEL_KMH = 40;
+const WALKING_KMH = 4.5;
 const FLIGHT_KMH = 750;
-const MIN_LEG_MINUTES = 20; // a second of replay at the least
+const MIN_LEG_MINUTES = 5;
+const SHORT_GAP_MINUTES = 30;
 const TIME_PATTERN = /(\d{1,2})\s*[:：]\s*(\d{2})/g;
 
 const stopTimes = (text = "") =>
@@ -471,20 +474,24 @@ function makeSchedule(stops, paths) {
     const points = path?.length > 1 ? [start, ...path, end] : [start, end];
     let arrive = stays[index + 1][0];
     let leave = stays[index][1];
-    const speed = stops[index].flight ? FLIGHT_KMH : TRAVEL_KMH;
+    const speed = stops[index].flight ? FLIGHT_KMH : stops[index].walking ? WALKING_KMH : TRAVEL_KMH;
     const travel = Math.max((legLength(points) / speed) * 60, MIN_LEG_MINUTES);
-    // A stop with an end time (「15:30-16:00」): set off then and wait at the
-    // next stop. Only one time: stay there and set off just in time to reach
-    // the next one. Either way they travel at the road's pace, not crawling
-    // through a long gap.
+    // The written times come first: up to half an hour between two stops is
+    // all spent on the way. In a longer gap a stop with an end time
+    // (「15:30-16:00」) sets off then and waits at the next stop, and one with
+    // only one time stays and sets off just in time to reach the next one. A
+    // next stop with no time is reached at the road's pace.
     if (flights.has(index)) {
       // The flight keeps its own times.
-    } else if (times[index].length >= 2) arrive = Math.min(arrive, leave + travel);
+    } else if (!times[index + 1].length) arrive = leave + travel;
+    else if (arrive - leave <= SHORT_GAP_MINUTES) {
+      // Leave and arrive as written.
+    }
+    else if (times[index].length >= 2) arrive = Math.min(arrive, leave + travel);
     else leave = Math.max(leave, arrive - travel);
     leave = Math.max(leave, cursor);
-    // A leg written shorter than the road takes would race across the map:
-    // it takes the road's time instead (a flight keeps its own times).
-    arrive = Math.max(arrive, leave + (flights.has(index) ? MIN_LEG_MINUTES : travel));
+    // Never less than a few minutes on the road, so they are seen to go.
+    arrive = Math.max(arrive, leave + MIN_LEG_MINUTES);
     cursor = arrive;
     return { points, leave, arrive };
   });
@@ -555,7 +562,7 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
     )
     .join("|");
   const timesKey = stops
-    .map(({ item, flight }) => `${flight ? "✈" : ""}${stopTimes(item.text).join(",")}`)
+    .map(({ item, flight, walking }) => `${flight ? "✈" : walking ? "w" : ""}${stopTimes(item.text).join(",")}`)
     .join("|");
   const pathsKey = paths
     .map((path) => (path ? `${path.length}:${path[0]}:${path.at(-1)}` : "-"))
