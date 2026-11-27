@@ -368,6 +368,8 @@ const AVATARS = [
 // through quickly, over and over: an hour of the plan in this many ms.
 const REPLAY_HOUR_MS = 3000;
 const REPLAY_REST_MS = 2000;
+// In the replay even the shortest trip on the road takes this long to watch.
+const MIN_LEG_PLAY_MS = 2000;
 // Speeds to guess how long a leg takes inside the times written.
 const TRAVEL_KMH = 40;
 const WALKING_KMH = 4.5;
@@ -746,13 +748,16 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
       .setLngLat(first);
     if (schedule) clockMarker.addTo(map);
 
-    const place = (minute, live) => {
+    // minuteOf(lag) is the plan's minute for a traveller that many minutes
+    // behind the first one.
+    const place = (minuteOf, live) => {
       avatars.forEach(({ marker, lag }) => {
-        const { at, moving } = placeAt(schedule, live ? minute : minute - lag);
+        const { at, moving } = placeAt(schedule, minuteOf(live ? 0 : lag));
         marker.setLngLat(at);
         marker.getElement().classList.toggle("is-walking", moving);
       });
       clockMarker.setLngLat(avatars[0].marker.getLngLat());
+      const minute = minuteOf(0);
       clock.textContent = live ? `現在 ${clockLabel(minute)}` : clockLabel(minute);
     };
 
@@ -762,22 +767,46 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
       // The trip day: where the plan says they are right now.
       const tick = () => {
         const now = new Date();
-        place(now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60, true);
+        const minute = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+        place(() => minute, true);
       };
       tick();
       timer = window.setInterval(tick, 20000);
     } else if (schedule) {
       const from = schedule.start - 15;
       const to = schedule.end + 15;
-      const playMs = ((to - from) / 60) * REPLAY_HOUR_MS;
+      // The replay in pieces: the time at stops runs at the usual pace, but
+      // every trip on the road plays for at least MIN_LEG_PLAY_MS, so a short
+      // walk is not over in a blink.
+      const pace = (minutes) => (minutes / 60) * REPLAY_HOUR_MS;
+      const pieces = [];
+      let cursor = from;
+      let playMs = 0;
+      const addPiece = (until, ms) => {
+        if (until <= cursor) return;
+        pieces.push({ from: cursor, to: until, startMs: playMs, ms });
+        playMs += ms;
+        cursor = until;
+      };
+      schedule.legs.forEach(({ leave, arrive }) => {
+        addPiece(leave, pace(leave - cursor));
+        addPiece(arrive, Math.max(pace(arrive - Math.max(leave, cursor)), MIN_LEG_PLAY_MS));
+      });
+      addPiece(to, pace(to - cursor));
+      const minuteAt = (ms) => {
+        if (ms <= 0) return from;
+        const piece = pieces.find((each) => ms < each.startMs + each.ms);
+        if (!piece) return to;
+        return piece.from + ((ms - piece.startMs) / piece.ms) * (piece.to - piece.from);
+      };
       let begun = 0;
       const step = (now) => {
         if (!begun) begun = now;
-        const elapsed = (now - begun) % (playMs + REPLAY_REST_MS);
-        place(from + (Math.min(elapsed, playMs) / playMs) * (to - from), false);
+        const elapsed = Math.min((now - begun) % (playMs + REPLAY_REST_MS), playMs);
+        place((lag) => minuteAt(elapsed - pace(lag)), false);
         frame = requestAnimationFrame(step);
       };
-      if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) place(from, false);
+      if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) place(() => from, false);
       else frame = requestAnimationFrame(step);
     }
     return () => {
