@@ -3342,7 +3342,7 @@ function Planner() {
             </div>
           </div>
           <div className="planner-map-stage has-route-map">
-            <RouteMap stops={plannedStops} paths={routePaths} label={routeMapTitle} focus={mapFocus} home={mapHome} />
+            <RouteMap stops={plannedStops} paths={routePaths} label={routeMapTitle} focus={mapFocus} home={mapHome} date={activeDay?.date} />
           </div>
           <p className="planner-map-hint">
           </p>

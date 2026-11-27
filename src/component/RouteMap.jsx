@@ -354,18 +354,129 @@ function makeStopMarker(map, stop, index, coordinate, offset, allCoordinates = [
   return new maplibregl.Marker({ element: marker, anchor: "bottom", offset }).setLngLat(coordinate);
 }
 
-// The two travellers standing on the map. A click anywhere on the map sends
-// them walking there side by side, the second a step behind the first.
+// The two travellers on the map, following the day's plan by the times
+// written in each stop (「9:00-15:30」, 「16:40 開車去吃晚餐」): they stay at a
+// stop from its first to its last time and travel the route to the next.
 const AVATARS = [
   // The girl's picture is drawn smaller inside its frame, so it is shown
   // larger to make the two faces the same size. The boy stands in front, so
-  // her hair falls behind him.
-  { src: boyAvatar, name: "男生", size: 50, offset: [-18, 0], delay: 0, front: true },
-  { src: girlAvatar, name: "女生", size: 62, offset: [21, 0], delay: 180 },
+  // her hair falls behind him, and on the road she keeps a step behind.
+  { src: boyAvatar, name: "男生", size: 50, offset: [-18, 0], lag: 0, front: true },
+  { src: girlAvatar, name: "女生", size: 62, offset: [21, 0], lag: 4 },
 ];
-const AVATAR_SPEED_PX = 220; // screen pixels a second
-const AVATAR_MIN_MS = 450;
-const AVATAR_MAX_MS = 2600;
+// On the trip day they follow the clock; on any other day the day plays
+// through quickly, over and over: an hour of the plan in this many ms.
+const REPLAY_HOUR_MS = 1500;
+const REPLAY_REST_MS = 2000;
+const TRAVEL_KMH = 40; // to guess when they set off when a stop has one time
+const TIME_PATTERN = /(\d{1,2})\s*[:：]\s*(\d{2})/g;
+
+const stopTimes = (text = "") =>
+  [...text.matchAll(TIME_PATTERN)]
+    .filter(([, hours, minutes]) => Number(hours) < 30 && Number(minutes) < 60)
+    .map(([, hours, minutes]) => Number(hours) * 60 + Number(minutes));
+
+const legLength = (points) => {
+  let total = 0;
+  for (let index = 1; index < points.length; index += 1) {
+    const [lng1, lat1] = points[index - 1];
+    const [lng2, lat2] = points[index];
+    const latScale = Math.cos((((lat1 + lat2) / 2) * Math.PI) / 180);
+    total += Math.hypot((lng2 - lng1) * latScale * 111.32, (lat2 - lat1) * 110.54);
+  }
+  return total;
+};
+
+// The point a share of the way along a leg, measured by distance.
+const pointAlong = (points, share) => {
+  const target = legLength(points) * share;
+  let walked = 0;
+  for (let index = 1; index < points.length; index += 1) {
+    const piece = legLength([points[index - 1], points[index]]);
+    if (piece > 0 && walked + piece >= target) {
+      const t = (target - walked) / piece;
+      const [lng1, lat1] = points[index - 1];
+      const [lng2, lat2] = points[index];
+      return [lng1 + (lng2 - lng1) * t, lat1 + (lat2 - lat1) * t];
+    }
+    walked += piece;
+  }
+  return points.at(-1);
+};
+
+// The day as stays and legs in minutes after midnight, or null when no stop
+// has a time. A stop without a time takes its place evenly between the timed
+// stops around it.
+function makeSchedule(stops, paths) {
+  const times = stops.map(({ item }) => stopTimes(item.text));
+  const timed = times.flatMap((list, index) => (list.length ? [index] : []));
+  if (!timed.length) return null;
+  const coordinates = stops.map(({ town }) => [town.longitude, town.latitude]);
+  const stays = times.map((list) => (list.length ? [list[0], list.at(-1)] : null));
+  stays.forEach((stay, index) => {
+    if (stay) return;
+    const before = timed.filter((other) => other < index).at(-1);
+    const after = timed.find((other) => other > index);
+    if (before === undefined) stays[index] = [stays[after][0], stays[after][0]];
+    else if (after === undefined) stays[index] = [stays[before][1], stays[before][1]];
+    else {
+      const from = stays[before][1];
+      const to = stays[after][0];
+      const minute = from + ((to - from) * (index - before)) / (after - before);
+      stays[index] = [minute, minute];
+    }
+  });
+  // Times run on through the night: a time earlier than the one before it
+  // is the next day.
+  let shift = 0;
+  stays.forEach((stay, index) => {
+    if (index && stay[0] + shift < stays[index - 1][1]) shift += 24 * 60;
+    stay[0] += shift;
+    stay[1] += shift;
+    if (stay[1] < stay[0]) stay[1] += 24 * 60;
+  });
+  const legs = coordinates.slice(0, -1).map((start, index) => {
+    const end = coordinates[index + 1];
+    const path = paths[index];
+    const points = path?.length > 1 ? [start, ...path, end] : [start, end];
+    const arrive = stays[index + 1][0];
+    let leave = stays[index][1];
+    // Only one time at this stop: set off just in time to reach the next one.
+    if (times[index].length < 2) {
+      const travel = Math.max((legLength(points) / TRAVEL_KMH) * 60, 10);
+      leave = Math.max(leave, arrive - travel);
+    }
+    return { points, leave: Math.min(leave, arrive), arrive };
+  });
+  return { coordinates, legs, start: stays[0][0], end: stays.at(-1)[1] };
+}
+
+// Where the travellers are at a minute of the day, and whether on the road.
+function placeAt(schedule, minute) {
+  const { coordinates, legs } = schedule;
+  for (let index = 0; index < legs.length; index += 1) {
+    const { points, leave, arrive } = legs[index];
+    if (minute <= leave) return { at: coordinates[index], moving: false };
+    if (minute < arrive) {
+      return { at: pointAlong(points, (minute - leave) / Math.max(arrive - leave, 1)), moving: true };
+    }
+  }
+  return { at: coordinates.at(-1), moving: false };
+}
+
+const clockLabel = (minute) => {
+  const whole = ((Math.floor(minute) % (24 * 60)) + 24 * 60) % (24 * 60);
+  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, "0")}`;
+};
+
+const localToday = () => {
+  const now = new Date();
+  return [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0"),
+  ].join("-");
+};
 
 function makeAvatarMarker({ src, name, size, offset, front }) {
   const element = document.createElement("div");
@@ -380,46 +491,11 @@ function makeAvatarMarker({ src, name, size, offset, front }) {
   return new maplibregl.Marker({ element, anchor: "bottom", offset });
 }
 
-// Walk a marker from where it stands to `target`, easing in and out; returns
-// a function that stops the walk where it is.
-function walkAvatar(map, marker, target, delay) {
-  const from = marker.getLngLat();
-  const start = map.project(from);
-  const end = map.project(target);
-  const distance = Math.hypot(end.x - start.x, end.y - start.y);
-  const duration = Math.min(Math.max((distance / AVATAR_SPEED_PX) * 1000, AVATAR_MIN_MS), AVATAR_MAX_MS);
-  const element = marker.getElement();
-  let frame = 0;
-  let begun = 0;
-  const step = (now) => {
-    if (!begun) {
-      begun = now;
-      element.classList.add("is-walking");
-    }
-    const t = Math.min((now - begun) / duration, 1);
-    const eased = t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
-    marker.setLngLat([
-      from.lng + (target.lng - from.lng) * eased,
-      from.lat + (target.lat - from.lat) * eased,
-    ]);
-    if (t < 1) frame = requestAnimationFrame(step);
-    else element.classList.remove("is-walking");
-  };
-  const timer = window.setTimeout(() => {
-    frame = requestAnimationFrame(step);
-  }, delay);
-  return () => {
-    window.clearTimeout(timer);
-    cancelAnimationFrame(frame);
-    element.classList.remove("is-walking");
-  };
-}
-
 // `home` is where the map starts before any stop is placed: the country of
 // the open planner (Japan unless told otherwise).
 const JAPAN_HOME = { center: JAPAN_CENTER, zoom: JAPAN_ZOOM };
 
-function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = null, home = JAPAN_HOME }) {
+function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = null, home = JAPAN_HOME, date = "" }) {
   const canvasRef = useRef(null);
   const homeRef = useRef(home);
   const mapRef = useRef(null);
@@ -429,7 +505,6 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
   const footprintsRef = useRef([]);
   const visibleStepsRef = useRef([]);
   const tickRef = useRef(0);
-  const avatarsRef = useRef([]);
   const [mapReady, setMapReady] = useState(false);
   const [webglSupported] = useState(() =>
     Boolean(document.createElement("canvas").getContext("webgl2")),
@@ -439,6 +514,7 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
       [item.id, order, town.id, town.latitude, town.longitude, town.name].join(":"),
     )
     .join("|");
+  const timesKey = stops.map(({ item }) => stopTimes(item.text).join(",")).join("|");
   const pathsKey = paths
     .map((path) => (path ? `${path.length}:${path[0]}:${path.at(-1)}` : "-"))
     .join("|");
@@ -601,49 +677,67 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
     tickRef.current = 0;
   }, [stopsKey, pathsKey, mapReady]);
 
-  // The two travellers: they start in the middle of the view and walk to
-  // wherever the map is clicked (a click on a pin only opens its card). A
-  // new set of stops puts them back in the middle if they are out of sight.
+  // The two travellers follow the day's times: on the trip day by the clock,
+  // on other days by a quick replay of the whole day, with the plan's time
+  // shown above them. With no times written they wait at the first stop.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReady) return undefined;
-    const center = map.getCenter();
+    const currentStops = stopsRef.current;
+    if (!currentStops.length) return undefined;
+    const schedule = makeSchedule(currentStops, pathsRef.current);
+    const first = [currentStops[0].town.longitude, currentStops[0].town.latitude];
     const avatars = AVATARS.map((avatar) => ({
       ...avatar,
-      marker: makeAvatarMarker(avatar).setLngLat(center).addTo(map),
-      stop: () => {},
+      marker: makeAvatarMarker(avatar).setLngLat(first).addTo(map),
     }));
-    avatarsRef.current = avatars;
-    const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    const walkTo = (event) => {
-      avatars.forEach((avatar) => {
-        avatar.stop();
-        if (still) avatar.marker.setLngLat(event.lngLat);
-        else avatar.stop = walkAvatar(map, avatar.marker, event.lngLat, avatar.delay);
-      });
-    };
-    map.on("click", walkTo);
-    return () => {
-      map.off("click", walkTo);
-      avatars.forEach((avatar) => {
-        avatar.stop();
-        avatar.marker.remove();
-      });
-      avatarsRef.current = [];
-    };
-  }, [mapReady]);
+    const clock = document.createElement("div");
+    clock.className = "planner-route-clock";
+    const clockMarker = new maplibregl.Marker({ element: clock, anchor: "bottom", offset: [0, -60] })
+      .setLngLat(first);
+    if (schedule) clockMarker.addTo(map);
 
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !mapReady) return;
-    const bounds = map.getBounds();
-    const center = map.getCenter();
-    avatarsRef.current.forEach((avatar) => {
-      if (bounds.contains(avatar.marker.getLngLat())) return;
-      avatar.stop();
-      avatar.marker.setLngLat(center);
-    });
-  }, [stopsKey, mapReady]);
+    const place = (minute, live) => {
+      avatars.forEach(({ marker, lag }) => {
+        const { at, moving } = placeAt(schedule, live ? minute : minute - lag);
+        marker.setLngLat(at);
+        marker.getElement().classList.toggle("is-walking", moving);
+      });
+      clockMarker.setLngLat(avatars[0].marker.getLngLat());
+      clock.textContent = live ? `現在 ${clockLabel(minute)}` : clockLabel(minute);
+    };
+
+    let frame = 0;
+    let timer = 0;
+    if (schedule && date === localToday()) {
+      // The trip day: where the plan says they are right now.
+      const tick = () => {
+        const now = new Date();
+        place(now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60, true);
+      };
+      tick();
+      timer = window.setInterval(tick, 20000);
+    } else if (schedule) {
+      const from = schedule.start - 15;
+      const to = schedule.end + 15;
+      const playMs = ((to - from) / 60) * REPLAY_HOUR_MS;
+      let begun = 0;
+      const step = (now) => {
+        if (!begun) begun = now;
+        const elapsed = (now - begun) % (playMs + REPLAY_REST_MS);
+        place(from + (Math.min(elapsed, playMs) / playMs) * (to - from), false);
+        frame = requestAnimationFrame(step);
+      };
+      if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) place(from, false);
+      else frame = requestAnimationFrame(step);
+    }
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearInterval(timer);
+      avatars.forEach(({ marker }) => marker.remove());
+      clockMarker.remove();
+    };
+  }, [stopsKey, pathsKey, timesKey, date, mapReady]);
 
   // Walk the footprints forward through the stretch on screen, in stop order,
   // then start that stretch again; panning or zooming picks the new stretch.
