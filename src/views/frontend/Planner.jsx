@@ -873,6 +873,72 @@ const namedPlaces = [
       "Lucky Pierrot Goryokaku Koen Mae",
     ],
   },
+  {
+    id: "gather-cafe-yuanshan",
+    name: "Gather食聚咖啡",
+    // 地址與座標取自 Google 地圖（員山鄉尚深路60巷29號）。
+    latitude: 24.7159928,
+    longitude: 121.7278666,
+    displayName: "宜蘭縣員山鄉七賢村尚深路60巷29號 Gather食聚咖啡",
+    types: ["cafe", "food", "point_of_interest", "establishment"],
+    cuisine: "咖啡・甜點",
+    aliases: [
+      "Gather食聚咖啡",
+      "Gather 食聚咖啡",
+      "Gather食聚",
+      "食聚咖啡",
+      "Gather Cafe",
+      "Gather咖啡",
+    ],
+  },
+  {
+    id: "paoma-historic-trail-park-parking-jiaoxi",
+    name: "跑馬古道公園停車場",
+    // 地址與座標取自 Google 地圖（德陽路174-1號），評論稱免費停車。
+    latitude: 24.827839,
+    longitude: 121.765548,
+    displayName: "宜蘭縣礁溪鄉德陽村德陽路174-1號 跑馬古道公園停車場（免費）",
+    types: ["parking", "point_of_interest", "establishment"],
+    aliases: [
+      "跑馬古道公園免費停車場",
+      "跑馬古道公園停車場",
+      "跑馬古道公園 停車場",
+      "跑馬古道免費停車場",
+    ],
+  },
+  {
+    id: "yutian-grilled-sausage-jiaoxi",
+    name: "玉田炭烤香腸",
+    // 地址取自 bunnyann.tw（玉民路一段229-1號，全家旁）；座標取自 Google 地圖。
+    latitude: 24.7980541,
+    longitude: 121.7871967,
+    displayName: "宜蘭縣礁溪鄉玉民路一段229-1號 玉田炭烤香腸（全家礁溪玉田店旁）",
+    types: ["restaurant", "food", "point_of_interest", "establishment"],
+    cuisine: "炭烤香腸",
+    aliases: [
+      "玉田炭烤香腸",
+      "玉田碳烤香腸",
+      "玉田烤香腸",
+      "礁溪玉田炭烤香腸",
+      "玉田香腸",
+    ],
+  },
+  {
+    id: "jiaoxi-sausage-uncle",
+    name: "礁溪香腸伯",
+    // 食尚玩家：五峰路跑馬古道口的路邊攤；座標取自 Google 地圖。
+    latitude: 24.8273793,
+    longitude: 121.7628529,
+    displayName: "宜蘭縣礁溪鄉大忠村五峰路（跑馬古道口）礁溪香腸伯",
+    types: ["restaurant", "food", "point_of_interest", "establishment"],
+    cuisine: "烤香腸",
+    aliases: [
+      "礁溪香腸伯",
+      "香腸伯",
+      "跑馬古道香腸伯",
+      "五峰路香腸伯",
+    ],
+  },
 ];
 
 const initialItems = [
