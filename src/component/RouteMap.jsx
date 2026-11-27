@@ -368,8 +368,9 @@ const AVATARS = [
 // through quickly, over and over: an hour of the plan in this many ms.
 const REPLAY_HOUR_MS = 3000;
 const REPLAY_REST_MS = 2000;
-// In the replay even the shortest trip on the road takes this long to watch.
-const MIN_LEG_PLAY_MS = 2000;
+// In the replay a leg of the day's average length takes this long to watch;
+// the others take longer or shorter by their length, all at one speed.
+const LEG_PLAY_MS = 2000;
 // Speeds to guess how long a leg takes inside the times written.
 const TRAVEL_KMH = 40;
 const WALKING_KMH = 4.5;
@@ -775,10 +776,14 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
     } else if (schedule) {
       const from = schedule.start - 15;
       const to = schedule.end + 15;
-      // The replay in pieces: the time at stops runs at the usual pace, but
-      // every trip on the road plays for at least MIN_LEG_PLAY_MS, so a short
-      // walk is not over in a blink.
+      // The replay in pieces: the time at stops runs at the usual pace, and
+      // on the road they move at one speed on every leg, long or short, so
+      // each leg plays for a time by its length (LEG_PLAY_MS for a leg of
+      // the day's average length).
       const pace = (minutes) => (minutes / 60) * REPLAY_HOUR_MS;
+      const lengths = schedule.legs.map(({ points }) => legLength(points));
+      const averageKm = lengths.reduce((sum, km) => sum + km, 0) / Math.max(lengths.length, 1);
+      const legMs = (index) => (averageKm > 0 ? (lengths[index] / averageKm) * LEG_PLAY_MS : 0);
       const pieces = [];
       let cursor = from;
       let playMs = 0;
@@ -788,9 +793,9 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
         playMs += ms;
         cursor = until;
       };
-      schedule.legs.forEach(({ leave, arrive }) => {
+      schedule.legs.forEach(({ leave, arrive }, index) => {
         addPiece(leave, pace(leave - cursor));
-        addPiece(arrive, Math.max(pace(arrive - Math.max(leave, cursor)), MIN_LEG_PLAY_MS));
+        addPiece(arrive, legMs(index));
       });
       addPiece(to, pace(to - cursor));
       const minuteAt = (ms) => {
