@@ -158,8 +158,13 @@ function GlobeHome() {
 
   const select = (id) => {
     spinning.current = false;
-    if (!id || id === selectedId) {
+    if (!id) {
       setSelectedId(null);
+      return;
+    }
+    // Tapping the chosen country again goes into its map.
+    if (id === selectedId) {
+      enter();
       return;
     }
     const country = globeCountries.find((item) => item.id === id);
@@ -349,6 +354,18 @@ function GlobeHome() {
           </svg>
           {notice && <p className="globe-notice" role="status">{notice}</p>}
         </div>
+
+        {/* On a phone the card sits below the globe; a bar at the bottom of
+            the screen lets them go in without scrolling down to it. */}
+        {phone && selected && (
+          <div className="globe-dock" key={selected.id}>
+            <div>
+              <strong>{selected.name}</strong>
+              <span>{selected.note}</span>
+            </div>
+            <button type="button" onClick={enter}>進入地圖 →</button>
+          </div>
+        )}
 
         <aside className="resort-panel globe-panel" aria-live="polite">
           {selected ? (

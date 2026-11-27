@@ -132,7 +132,40 @@
   .globe-notice { white-space: normal; text-align: center; width: max-content; max-width: calc(100% - 32px); }
 }
 
+.globe-dock {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 10px 10px 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .96);
+  box-shadow: 0 10px 30px rgba(6, 12, 24, .35);
+  animation: globe-dock-in .28s ease-out;
+  div { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  strong { color: #123653; font-size: 18px; line-height: 1.2; }
+  span { color: #6b8497; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  button {
+    flex: none;
+    padding: 12px 18px;
+    border: 0;
+    border-radius: 999px;
+    background: #123653;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+  }
+}
+@keyframes globe-dock-in { from { opacity: 0; transform: translateY(24px); } }
+// Room under the card so the bar never covers its end.
+@media (max-width: 760px) { .globe-home:has(.globe-dock) .globe-hero { padding-bottom: 96px; } }
+
 @media (prefers-reduced-motion: reduce) {
+  .globe-dock { animation: none; }
   .globe-panel-map, .projected-emblem-pop { animation: none; }
 }
 
