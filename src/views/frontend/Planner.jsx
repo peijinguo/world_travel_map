@@ -2936,7 +2936,9 @@ function Planner() {
       items
         .map((item, index) => {
           const town = resolveItemLocation(item);
-          return town ? { item, town, order: index + 1 } : null;
+          return town
+            ? { item, town, order: index + 1, flight: getTravelMode(item.text) === "flight" }
+            : null;
         })
         .filter(Boolean),
     [items],

@@ -369,6 +369,7 @@ const AVATARS = [
 const REPLAY_HOUR_MS = 1500;
 const REPLAY_REST_MS = 2000;
 const TRAVEL_KMH = 40; // to guess when they set off when a stop has one time
+const FLIGHT_KMH = 750;
 const TIME_PATTERN = /(\d{1,2})\s*[:：]\s*(\d{2})/g;
 
 const stopTimes = (text = "") =>
@@ -407,8 +408,18 @@ const pointAlong = (points, share) => {
 // The day as stays and legs in minutes after midnight, or null when no stop
 // has a time. A stop without a time takes its place evenly between the timed
 // stops around it.
+// A flight stop's 「12:00-16:30」 is the flight itself: they leave the airport
+// at the first time and land at the next stop at the last.
 function makeSchedule(stops, paths) {
   const times = stops.map(({ item }) => stopTimes(item.text));
+  const flights = new Set();
+  stops.forEach(({ flight }, index) => {
+    if (!flight || times[index].length < 2 || index === stops.length - 1) return;
+    const landing = times[index].at(-1);
+    times[index] = [times[index][0]];
+    times[index + 1] = [landing, ...times[index + 1]];
+    flights.add(index);
+  });
   const timed = times.flatMap((list, index) => (list.length ? [index] : []));
   if (!timed.length) return null;
   const coordinates = stops.map(({ town }) => [town.longitude, town.latitude]);
@@ -439,13 +450,15 @@ function makeSchedule(stops, paths) {
     const end = coordinates[index + 1];
     const path = paths[index];
     const points = path?.length > 1 ? [start, ...path, end] : [start, end];
-    const arrive = stays[index + 1][0];
+    let arrive = stays[index + 1][0];
     let leave = stays[index][1];
+    const speed = stops[index].flight ? FLIGHT_KMH : TRAVEL_KMH;
+    const travel = Math.max((legLength(points) / speed) * 60, 10);
+    // Heading for a flight: reach the airport as soon as the trip there takes,
+    // and wait there for the plane.
+    if (flights.has(index + 1)) arrive = Math.max(Math.min(arrive, leave + travel), leave);
     // Only one time at this stop: set off just in time to reach the next one.
-    if (times[index].length < 2) {
-      const travel = Math.max((legLength(points) / TRAVEL_KMH) * 60, 10);
-      leave = Math.max(leave, arrive - travel);
-    }
+    else if (times[index].length < 2 && !flights.has(index)) leave = Math.max(leave, arrive - travel);
     return { points, leave: Math.min(leave, arrive), arrive };
   });
   return { coordinates, legs, start: stays[0][0], end: stays.at(-1)[1] };
@@ -514,7 +527,9 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
       [item.id, order, town.id, town.latitude, town.longitude, town.name].join(":"),
     )
     .join("|");
-  const timesKey = stops.map(({ item }) => stopTimes(item.text).join(",")).join("|");
+  const timesKey = stops
+    .map(({ item, flight }) => `${flight ? "✈" : ""}${stopTimes(item.text).join(",")}`)
+    .join("|");
   const pathsKey = paths
     .map((path) => (path ? `${path.length}:${path[0]}:${path.at(-1)}` : "-"))
     .join("|");
