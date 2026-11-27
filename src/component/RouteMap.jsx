@@ -370,6 +370,7 @@ const REPLAY_HOUR_MS = 3000;
 const REPLAY_REST_MS = 2000;
 const TRAVEL_KMH = 40; // to guess when they set off when a stop has one time
 const FLIGHT_KMH = 750;
+const MIN_LEG_MINUTES = 20; // a second of replay at the least
 const TIME_PATTERN = /(\d{1,2})\s*[:：]\s*(\d{2})/g;
 
 const stopTimes = (text = "") =>
@@ -439,13 +440,31 @@ function makeSchedule(stops, paths) {
   });
   // Times run on through the night: a time earlier than the one before it
   // is the next day.
+  // A stop whose times reach back into the stop before (a car park's
+  // 「9:20-13:00」 written again on return) starts when they get there; one
+  // a little earlier is read as right after.
   let shift = 0;
   stays.forEach((stay, index) => {
-    if (index && stay[0] + shift < stays[index - 1][1]) shift += 24 * 60;
+    if (stay[1] < stay[0]) stay[1] += 24 * 60;
     stay[0] += shift;
     stay[1] += shift;
-    if (stay[1] < stay[0]) stay[1] += 24 * 60;
+    const previous = index ? stays[index - 1][1] : -Infinity;
+    if (stay[0] >= previous) return;
+    if (stay[1] >= previous) stay[0] = previous;
+    else if (previous - stay[0] > 12 * 60) {
+      shift += 24 * 60;
+      stay[0] += 24 * 60;
+      stay[1] += 24 * 60;
+    } else {
+      stay[0] = previous;
+      stay[1] = previous;
+    }
   });
+  // `cursor` is when they last arrived: no leg starts before it, and every
+  // leg takes at least as long as the road (MIN_LEG_MINUTES at the least),
+  // so they never jump between stops even when the times written leave no
+  // room for the trip; the rest of the day then runs that much later.
+  let cursor = -Infinity;
   const legs = coordinates.slice(0, -1).map((start, index) => {
     const end = coordinates[index + 1];
     const path = paths[index];
@@ -453,15 +472,23 @@ function makeSchedule(stops, paths) {
     let arrive = stays[index + 1][0];
     let leave = stays[index][1];
     const speed = stops[index].flight ? FLIGHT_KMH : TRAVEL_KMH;
-    const travel = Math.max((legLength(points) / speed) * 60, 10);
-    // Heading for a flight: reach the airport as soon as the trip there takes,
-    // and wait there for the plane.
-    if (flights.has(index + 1)) arrive = Math.max(Math.min(arrive, leave + travel), leave);
-    // Only one time at this stop: set off just in time to reach the next one.
-    else if (times[index].length < 2 && !flights.has(index)) leave = Math.max(leave, arrive - travel);
-    return { points, leave: Math.min(leave, arrive), arrive };
+    const travel = Math.max((legLength(points) / speed) * 60, MIN_LEG_MINUTES);
+    // A stop with an end time (「15:30-16:00」): set off then and wait at the
+    // next stop. Only one time: stay there and set off just in time to reach
+    // the next one. Either way they travel at the road's pace, not crawling
+    // through a long gap.
+    if (flights.has(index)) {
+      // The flight keeps its own times.
+    } else if (times[index].length >= 2) arrive = Math.min(arrive, leave + travel);
+    else leave = Math.max(leave, arrive - travel);
+    leave = Math.max(leave, cursor);
+    // A leg written shorter than the road takes would race across the map:
+    // it takes the road's time instead (a flight keeps its own times).
+    arrive = Math.max(arrive, leave + (flights.has(index) ? MIN_LEG_MINUTES : travel));
+    cursor = arrive;
+    return { points, leave, arrive };
   });
-  return { coordinates, legs, start: stays[0][0], end: stays.at(-1)[1] };
+  return { coordinates, legs, start: stays[0][0], end: Math.max(stays.at(-1)[1], cursor) };
 }
 
 // Where the travellers are at a minute of the day, and whether on the road.
