@@ -138,6 +138,8 @@ const getItineraryMotif = (location, itineraryText = "") => {
   // restaurant, e.g. a sushi fallback, does not override the store's icon.
   if (/沼の家|numa\s*no\s*ya/iu.test(placeName)) return "numanoyaDango";
   if (/サク男ともち子|saku\s*o\s*to\s*mochiko/iu.test(headline)) return "crepe";
+  // Gather食聚咖啡 (員山) is known for its sweet pies and mille crêpes.
+  if (/gather|食聚/iu.test(headline)) return "pie";
   if (/吉田商店|yoshida\s*shoten|湯咖哩|湯咖喱|汤咖喱|スープカレー|soup\s*curry/iu.test(headline)) return "curry";
   // Roadside stations (道の駅), before parking so 「道の駅 … 駐車場」 keeps this icon.
   if (/道の駅|道之驛|道之驿|公路休息站|michi[\s-]*no[\s-]*eki|road(?:side)?\s*station/iu.test(headline)) return "michiNoEki";
@@ -189,6 +191,7 @@ const FOOD_MOTIFS = new Set([
   "lamb",
   "steak",
   "curry",
+  "pie",
   "dango",
   "parfait",
   "ramen",
@@ -204,6 +207,7 @@ const getItineraryMotifLabel = (motif) =>
     parking: "停車場",
     michiNoEki: "道の駅",
     curry: "咖哩",
+    pie: "甜派",
     familymart: "FamilyMart",
     seveneleven: "7-Eleven",
     lamb: "烤羊肉",
@@ -937,6 +941,22 @@ const namedPlaces = [
       "香腸伯",
       "跑馬古道香腸伯",
       "五峰路香腸伯",
+    ],
+  },
+  {
+    id: "denggao-forest-road-parking-yuanshan",
+    name: "燈篙林道停車場",
+    // Google 地圖「燈篙林道停車場（有洗手間）」，標示免費停車場；林道在員山鄉湖西村。
+    latitude: 24.7630974,
+    longitude: 121.6739504,
+    displayName: "宜蘭縣員山鄉湖西村 燈篙林道停車場（免費，有洗手間）",
+    types: ["parking", "point_of_interest", "establishment"],
+    aliases: [
+      "燈篙林道停車場",
+      "燈篙林道停車場（有洗手間）",
+      "燈篙林道停車場(有洗手間)",
+      "燈篙林道 停車場",
+      "燈篙林道免費停車場",
     ],
   },
 ];
