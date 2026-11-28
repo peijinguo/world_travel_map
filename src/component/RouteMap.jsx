@@ -288,6 +288,18 @@ const PIN_SPREAD_PX = 56;
 const MAX_FOCUS_ZOOM = 18;
 // A clicked STOP tag lands at street level, close enough to read the blocks around it.
 const STOP_FOCUS_ZOOM = 16;
+// A card opened by the travellers' arrival clears their heads and clock.
+// Near the top of the map it opens below the pin instead, just under it.
+const ARRIVAL_CARD_OFFSET = {
+  top: [0, 10],
+  "top-left": [0, 10],
+  "top-right": [0, 10],
+  bottom: [0, -104],
+  "bottom-left": [0, -104],
+  "bottom-right": [0, -104],
+  left: [18, -30],
+  right: [-18, -30],
+};
 
 function zoomToSpreadPins(map, coordinate, allCoordinates, minZoom = 0, duration = 700) {
   const here = map.project(coordinate);
@@ -329,15 +341,18 @@ function makeStopMarker(map, stop, index, coordinate, offset, allCoordinates = [
   content.append(stopNumber, stopName);
 
   // Hovering shows the stop's card; a click keeps it open until it is closed.
-  const popup = new maplibregl.Popup({ offset: 35 }).setLngLat(coordinate).setDOMContent(content);
+  const popup = new maplibregl.Popup({ offset: 35, focusAfterOpen: false }).setLngLat(coordinate).setDOMContent(content);
   let pinned = false;
-  const show = () => {
-    if (!popup.isOpen()) popup.addTo(map);
+  // Opened by the travellers' arrival it sits above them and their clock.
+  const show = (above = false) => {
+    if (popup.isOpen()) return;
+    popup.setOffset(above ? ARRIVAL_CARD_OFFSET : 35);
+    popup.addTo(map);
   };
   popup.on("close", () => {
     pinned = false;
   });
-  marker.addEventListener("mouseenter", show);
+  marker.addEventListener("mouseenter", () => show());
   marker.addEventListener("mouseleave", () => {
     if (!pinned) popup.remove();
   });
@@ -351,7 +366,14 @@ function makeStopMarker(map, stop, index, coordinate, offset, allCoordinates = [
     } else popup.remove();
   });
 
-  return new maplibregl.Marker({ element: marker, anchor: "bottom", offset }).setLngLat(coordinate);
+  const stopMarker = new maplibregl.Marker({ element: marker, anchor: "bottom", offset }).setLngLat(coordinate);
+  // The travellers show the card when they arrive and hide it when they
+  // leave, unless it was clicked open.
+  stopMarker.showCard = () => show(true);
+  stopMarker.hideCard = () => {
+    if (!pinned) popup.remove();
+  };
+  return stopMarker;
 }
 
 // The two travellers on the map, following the day's plan by the times
@@ -574,6 +596,20 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
   const canvasRef = useRef(null);
   const onTravelRef = useRef(onTravel);
   onTravelRef.current = onTravel;
+  // Whether the replay of the day is playing (the play / pause button).
+  // With reduced motion it waits for the button.
+  const playingRef = useRef(!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
+  const playButtonRef = useRef(null);
+  const drawPlayButton = () => {
+    const button = playButtonRef.current;
+    if (!button) return;
+    const playing = playingRef.current;
+    button.setAttribute("aria-label", playing ? "暫停播放" : "播放");
+    button.title = playing ? "暫停" : "播放";
+    button.innerHTML = playing
+      ? '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="5" width="3.6" height="14" rx="1"/><rect x="13.9" y="5" width="3.6" height="14" rx="1"/></svg>'
+      : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6a.8.8 0 0 0 1.2.7l10.6-6.8a.8.8 0 0 0 0-1.4L9.2 4.5A.8.8 0 0 0 8 5.2z"/></svg>';
+  };
   const homeRef = useRef(home);
   const mapRef = useRef(null);
   const markersRef = useRef([]);
@@ -624,6 +660,32 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
     mapRef.current = map;
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
     map.addControl(new maplibregl.FullscreenControl(), "top-right");
+    // Play / pause for the replay of the day (hidden on the trip day itself,
+    // when the travellers follow the clock).
+    const playButton = document.createElement("button");
+    playButton.type = "button";
+    playButton.className = "planner-route-play";
+    playButton.hidden = true;
+    playButton.addEventListener("click", () => {
+      playingRef.current = !playingRef.current;
+      drawPlayButton();
+    });
+    playButtonRef.current = playButton;
+    drawPlayButton();
+    map.addControl(
+      {
+        onAdd() {
+          const group = document.createElement("div");
+          group.className = "maplibregl-ctrl maplibregl-ctrl-group";
+          group.append(playButton);
+          return group;
+        },
+        onRemove() {
+          playButton.parentElement?.remove();
+        },
+      },
+      "top-right",
+    );
     // The data licences require attribution, so keep it behind an info button.
     map.addControl(
       new maplibregl.AttributionControl({
@@ -777,12 +839,14 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
     const follow = !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     let cameraKey = "";
     const handOver = (event) => {
+      if (event?.type === "click" && event.target.closest?.(".planner-route-play")) return;
       if (event?.originalEvent || event?.type === "click") userCameraRef.current = Date.now() + USER_CAMERA_MS;
     };
     const container = map.getContainer();
     map.on("movestart", handOver);
     container.addEventListener("click", handOver, true);
     let travelId = null;
+    let shownCard = -1;
     // `soon` says whether they set off from where they wait shortly.
     const aim = (spot, soon) => {
       if (!follow || Date.now() < userCameraRef.current || !schedule) return;
@@ -813,6 +877,13 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
           if (stop && stop.item.id !== travelId) {
             travelId = stop.item.id;
             onTravelRef.current?.(travelId);
+          }
+          // At a stop, its pin's card (number and name) is shown.
+          const cardIndex = spot.moving ? -1 : Math.min(spot.leg, currentStops.length - 1);
+          if (cardIndex !== shownCard) {
+            markersRef.current[shownCard]?.hideCard?.();
+            shownCard = cardIndex;
+            markersRef.current[shownCard]?.showCard?.();
           }
         }
       });
@@ -864,22 +935,28 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
         if (!piece) return to;
         return piece.from + ((ms - piece.startMs) / piece.ms) * (piece.to - piece.from);
       };
-      let begun = 0;
+      // The replay's own clock only runs while it is playing, so pause holds
+      // them where they are and play carries on from there.
+      let played = 0;
+      let lastNow = 0;
       const step = (now) => {
-        if (!begun) begun = now;
-        const elapsed = Math.min((now - begun) % (playMs + REPLAY_REST_MS), playMs);
+        if (lastNow && playingRef.current) played += Math.min(now - lastNow, 100);
+        lastNow = now;
+        const elapsed = Math.min(played % (playMs + REPLAY_REST_MS), playMs);
         place((lag) => minuteAt(elapsed - pace(lag)), false);
         frame = requestAnimationFrame(step);
       };
-      if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) place(() => from, false);
-      else frame = requestAnimationFrame(step);
+      frame = requestAnimationFrame(step);
+      if (playButtonRef.current) playButtonRef.current.hidden = false;
     }
     return () => {
       cancelAnimationFrame(frame);
       window.clearInterval(timer);
+      if (playButtonRef.current) playButtonRef.current.hidden = true;
       map.off("movestart", handOver);
       container.removeEventListener("click", handOver, true);
       onTravelRef.current?.(null);
+      markersRef.current[shownCard]?.hideCard?.();
       avatars.forEach(({ marker }) => marker.remove());
       clockMarker.remove();
     };
