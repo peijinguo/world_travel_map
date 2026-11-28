@@ -294,11 +294,11 @@ const ARRIVAL_CARD_OFFSET = {
   top: [0, 10],
   "top-left": [0, 10],
   "top-right": [0, 10],
-  bottom: [0, -104],
-  "bottom-left": [0, -104],
-  "bottom-right": [0, -104],
-  left: [18, -30],
-  right: [-18, -30],
+  bottom: [0, -128],
+  "bottom-left": [0, -128],
+  "bottom-right": [0, -128],
+  left: [60, -60],
+  right: [-60, -60],
 };
 
 function zoomToSpreadPins(map, coordinate, allCoordinates, minZoom = 0, duration = 700) {
@@ -392,6 +392,9 @@ const REPLAY_HOUR_MS = 3000;
 const REPLAY_REST_MS = 2000;
 // In the replay every leg takes at least this long to watch.
 const LEG_PLAY_MS = 3000;
+// Every stop holds them at least this long, even one passed straight
+// through, so its card can be read (and the map can frame the next leg).
+const STOP_PAUSE_MS = 1600;
 // Plus this much for every tenfold of the leg's km (a 2,000 km flight ≈ 4.3 s).
 const LEG_PLAY_PER_DECADE_MS = 400;
 // Speeds to guess how long a leg takes inside the times written.
@@ -917,15 +920,17 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
       const pieces = [];
       let cursor = from;
       let playMs = 0;
-      const addPiece = (until, ms) => {
-        if (until <= cursor) return;
+      // `hold` keeps even a stop with no time between arriving and leaving,
+      // so the replay pauses there and its card can be read.
+      const addPiece = (until, ms, hold = false) => {
+        if (until < cursor || (until === cursor && !hold)) return;
         pieces.push({ from: cursor, to: until, startMs: playMs, ms });
         playMs += ms;
         cursor = until;
       };
       schedule.legs.forEach(({ leave, arrive }, index) => {
         // Time for the map to settle on the leg before they set off.
-        addPiece(leave, Math.max(pace(leave - cursor), FOLLOW_MS + 300));
+        addPiece(leave, Math.max(pace(leave - cursor), STOP_PAUSE_MS), true);
         addPiece(arrive, legMs(index));
       });
       addPiece(to, pace(to - cursor));
