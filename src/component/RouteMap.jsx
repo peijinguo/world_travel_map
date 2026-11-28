@@ -368,10 +368,10 @@ const AVATARS = [
 // through quickly, over and over: an hour of the plan in this many ms.
 const REPLAY_HOUR_MS = 3000;
 const REPLAY_REST_MS = 2000;
-// In the replay a leg of the day's average length takes this long to watch;
-// the others take longer or shorter by their length, all at one speed.
-const LEG_PLAY_MS = 2000;
-const MIN_LEG_PLAY_MS = 1800;
+// In the replay every leg takes at least this long to watch.
+const LEG_PLAY_MS = 3000;
+// Plus this much for every tenfold of the leg's km (a 2,000 km flight ≈ 4.3 s).
+const LEG_PLAY_PER_DECADE_MS = 400;
 // Speeds to guess how long a leg takes inside the times written.
 const TRAVEL_KMH = 40;
 const WALKING_KMH = 4.5;
@@ -814,15 +814,13 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
       const from = schedule.start - 15;
       const to = schedule.end + 15;
       // The replay in pieces: the time at stops runs at the usual pace, and
-      // on the road they move at one speed on every leg, long or short, so
-      // each leg plays for a time by its length (LEG_PLAY_MS for a leg of
-      // the day's average length).
+      // each leg on the road plays for its own time (legMs).
       const pace = (minutes) => (minutes / 60) * REPLAY_HOUR_MS;
       const lengths = schedule.legs.map(({ points }) => legLength(points));
-      const averageKm = lengths.reduce((sum, km) => sum + km, 0) / Math.max(lengths.length, 1);
-      // Even the shortest hop plays long enough to watch them travel it.
-      const legMs = (index) =>
-        Math.max(averageKm > 0 ? (lengths[index] / averageKm) * LEG_PLAY_MS : 0, MIN_LEG_PLAY_MS);
+      // The map frames each leg, so on screen every leg is about the same
+      // size: each plays for about the same time, a long one only a little
+      // longer, so a short hop is never a blink.
+      const legMs = (index) => LEG_PLAY_MS + LEG_PLAY_PER_DECADE_MS * Math.log10(1 + lengths[index]);
       const pieces = [];
       let cursor = from;
       let playMs = 0;
