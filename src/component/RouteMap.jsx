@@ -953,19 +953,43 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
         return { left: middle - half, right: middle + half, top: y - size * 0.9, bottom: y };
       });
     const overlaps = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+    // Both whole pictures stay inside the map's edges (when their spot is on
+    // the map at all), so a step aside never pushes a head off the map.
+    const insideMap = ({ x }, shift) => {
+      const width = map.getContainer().clientWidth;
+      if (x < 0 || x > width) return true;
+      return AVATARS.every(({ size, offset }) => {
+        const middle = x + offset[0] + shift;
+        return middle - size / 2 >= 4 && middle + size / 2 <= width - 4;
+      });
+    };
+    // The step that keeps them on the map when no clear one does: the
+    // smallest push back in from the edge.
+    const backInside = ({ x }) => {
+      const width = map.getContainer().clientWidth;
+      if (x < 0 || x > width) return 0;
+      const left = Math.min(...AVATARS.map(({ size, offset }) => x + offset[0] - size / 2));
+      const right = Math.max(...AVATARS.map(({ size, offset }) => x + offset[0] + size / 2));
+      if (left < 4) return 4 - left;
+      if (right > width - 4) return width - 4 - right;
+      return 0;
+    };
     const clearShift = (at) => {
       const here = map.project(at);
       const pins = pinBoxes();
       for (const shift of AVATAR_SHIFTS) {
-        if (!pairBoxes(here, shift).some((face) => pins.some((pin) => overlaps(face, pin)))) return shift;
+        if (insideMap(here, shift) && !pairBoxes(here, shift).some((face) => pins.some((pin) => overlaps(face, pin)))) return shift;
       }
-      return AVATAR_SHIFTS.at(-1);
+      return backInside(here);
     };
     let aside = 0;
     const place = (minuteOf, live) => {
       const lead = placeAt(schedule, minuteOf(0));
       const target = clearShift(lead.at);
       aside = Math.abs(target - aside) < 0.5 ? target : aside + (target - aside) * 0.25;
+      // Gliding over never takes them past the map's edge either.
+      const here = map.project(lead.at);
+      if (!insideMap(here, aside)) aside += backInside({ x: here.x + aside });
       clockMarker.setOffset([aside, -60]);
       avatars.forEach(({ marker, lag, offset }) => {
         const spot = placeAt(schedule, minuteOf(live ? 0 : lag));
