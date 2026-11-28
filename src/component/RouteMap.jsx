@@ -522,6 +522,11 @@ const FIT_PADDING = { top: 72, right: 48, bottom: 40, left: 48 };
 // show all of it. Never closer than this.
 const LEG_MAX_ZOOM = 15.5;
 const FOLLOW_MS = 900;
+// The day's first stop is shown this close while they are still there...
+const STOP_CLOSE_ZOOM = 15.5;
+// ...until this many plan minutes before they set off (in the replay about
+// 1.5 s, time for the map to pull back and frame the first leg).
+const LEAD_MINUTES = 30;
 // After the traveller pans, zooms or clicks a pin, the map stays where they
 // put it for this long before following again.
 const USER_CAMERA_MS = 12000;
@@ -773,15 +778,20 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
     const container = map.getContainer();
     map.on("movestart", handOver);
     container.addEventListener("click", handOver, true);
-    const aim = (spot) => {
+    // `soon` says whether they set off from where they wait shortly.
+    const aim = (spot, soon) => {
       if (!follow || Date.now() < userCameraRef.current || !schedule) return;
-      // While they wait at a stop the map already frames the leg ahead, so
-      // it is zoomed in before they set off and the whole trip is seen.
-      const { leg } = spot;
-      const key = leg < schedule.legs.length ? `leg${leg}` : "all";
+      // At the day's first stop the map starts close up on it; a little
+      // before they set off it frames the leg ahead, as it does at every
+      // other stop, so it is zoomed in before they go and the whole leg is
+      // seen.
+      const { leg, moving } = spot;
+      const key =
+        leg === 0 && !moving && !soon ? "start" : leg < schedule.legs.length ? `leg${leg}` : "all";
       if (key === cameraKey) return;
       cameraKey = key;
-      if (key === "all") fitPoints(map, schedule.coordinates, 17, FOLLOW_MS);
+      if (key === "start") map.easeTo({ center: schedule.coordinates[0], zoom: STOP_CLOSE_ZOOM, duration: FOLLOW_MS });
+      else if (key === "all") fitPoints(map, schedule.coordinates, 17, FOLLOW_MS);
       else fitPoints(map, schedule.legs[leg].points, LEG_MAX_ZOOM, FOLLOW_MS);
     };
 
@@ -792,7 +802,7 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
         const spot = placeAt(schedule, minuteOf(live ? 0 : lag));
         marker.setLngLat(spot.at);
         marker.getElement().classList.toggle("is-walking", spot.moving);
-        if (!lag || live) aim(spot);
+        if (!lag || live) aim(spot, minuteOf(0) >= schedule.legs[0]?.leave - (live ? 30 : LEAD_MINUTES));
       });
       clockMarker.setLngLat(avatars[0].marker.getLngLat());
       const minute = minuteOf(0);
