@@ -426,12 +426,10 @@ function makeStopMarker(map, stop, index, coordinate, offset, allCoordinates = [
   });
 
   const stopMarker = new maplibregl.Marker({ element: marker, anchor: "bottom", offset }).setLngLat(coordinate);
-  // The travellers show the card when they arrive and hide it when they
-  // leave, unless it was clicked open.
+  // The travellers show the card when they arrive and close it when they
+  // leave, even one clicked open.
   stopMarker.showCard = () => show(true);
-  stopMarker.hideCard = () => {
-    if (!pinned) popup.remove();
-  };
+  stopMarker.hideCard = closeThis;
   return stopMarker;
 }
 
