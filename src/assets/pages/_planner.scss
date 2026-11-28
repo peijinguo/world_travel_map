@@ -705,6 +705,9 @@ span.planner-walking-icon { position: relative; display: block; width: 34px; hei
 // The towed skier fills its whole square, so it is drawn a little smaller to match.
 .planner-item-category-icon.is-small .hand-motif { width: 36px; height: 36px; }
 .planner-item-category-icon.is-compact .hand-motif { width: 32px; height: 32px; }
+// The pie slice is a little wider than tall: a touch wider than the square box.
+.planner-item-category-icon.is-pie { width: 44px; flex-basis: 44px; }
+.planner-item-category-icon.is-pie .hand-motif { width: 44px; height: 40px; }
 .motif-familymart .brand-card, .motif-seveneleven .brand-card { fill: #fff; stroke: #d8e1e4; stroke-width: 1.5; }
 .motif-familymart .familymart-blue { fill: #0078bf; stroke: none; }
 .motif-familymart .familymart-green { fill: #00a26a; stroke: none; }
@@ -918,6 +921,8 @@ span.planner-walking-icon { position: relative; display: block; width: 34px; hei
   .planner-item-category-icon.is-wide .hand-motif { width: 46px; height: 34px; }
   .planner-item-category-icon.is-compact .hand-motif { width: 27px; height: 27px; }
   .planner-item-category-icon.is-small .hand-motif { width: 31px; height: 31px; }
+  .planner-item-category-icon.is-pie { width: 38px; flex-basis: 38px; }
+  .planner-item-category-icon.is-pie .hand-motif { width: 38px; height: 34px; }
   .planner-item-meta > .planner-meta-actions-group,
   .planner-item-meta > .planner-icon-locate {
     grid-column: 3;

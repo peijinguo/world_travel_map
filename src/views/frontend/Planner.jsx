@@ -1527,10 +1527,12 @@ const downloadBackupFile = (backup) => {
 
 // Prices are shown in whole yen; a price typed to the sen, e.g. ¥619.92,
 // is rounded to the nearest yen.
-const formatMenuPrice = (price) => {
+// Taiwan's planner shows prices in NT$; the others keep yen.
+const formatMenuPrice = (price, country = "japan") => {
   const digits = String(price ?? "").replace(/[^\d.]/g, "");
   const value = Math.round(Number(digits));
-  return digits && Number.isFinite(value) ? `¥${value.toLocaleString("ja-JP")}` : "";
+  if (!digits || !Number.isFinite(value)) return "";
+  return country === "taiwan" ? `NT$${value.toLocaleString("zh-TW")}` : `¥${value.toLocaleString("ja-JP")}`;
 };
 
 // Menus read from photos of the shop's own menu board, shown for any stop at
@@ -1562,6 +1564,35 @@ const makePresetMenu = (prefix, rows) => {
 };
 
 const PRESET_MENUS = [
+  {
+    // Gather食聚咖啡 (員山), from its 「留一個胃給甜點」 dessert board; prices in NT$.
+    // 🌿 copies the leaf the board draws beside some items.
+    pattern: /gather|食聚/iu,
+    menu: makePresetMenu("gather-cafe", [
+      "千層蛋糕 Mille Crepe",
+      ["水果千層 🌿", "", "230"],
+      ["抹茶千層", "", "190"],
+      ["栗秋千層 🌿", "", "190"],
+      ["巧克力千層", "", "190"],
+      ["芋泥千層 🌿", "", "175"],
+      ["提拉千層", "", "175"],
+      ["巧娜千層 🌿", "", "175"],
+      "甜派 Sweet Pie",
+      ["藍莓山山派", "", "160"],
+      ["蘋果奶酥派 🌿", "", "160"],
+      ["優果橙", "", "160"],
+      ["焦糖核桃派 🌿", "", "145"],
+      ["藍莓乳酪派 🌿", "", "135"],
+      ["蕾夢派 🌿", "", "145"],
+      "旅行蛋糕 Travel cake",
+      ["阿嬤的初戀 🌿", "", "100"],
+      ["經典布朗尼 🌿", "", "140"],
+      ["邪惡肉桂捲 🌿", "", "100"],
+      ["招牌司康 🌿", "", "45"],
+      ["1oz 抹醬加購（乳酪醬／果醬）", "", "10"],
+      ["冰淇淋加購（布朗尼必加）", "", "30"],
+    ]),
+  },
   {
     pattern: /サク男ともち子|saku\s*o\s*to\s*mochiko/iu,
     menu: makePresetMenu("sakuo-mochiko", [
@@ -2065,6 +2096,7 @@ const makeGoogleMenuUrl = (placeId) =>
   `https://www.google.com/maps/place/data=!4m3!3m2!1s${placeId}!10e9`;
 
 function MenuDishRow({ entry, liked = false, onToggleLike }) {
+  const { country } = useAuth();
   // Menus saved before the thumbs-up icon kept 👍 in the dish name.
   const marked = /^👍/u.test(entry.name ?? "");
   const popular = entry.popular || marked;
@@ -2099,7 +2131,7 @@ function MenuDishRow({ entry, liked = false, onToggleLike }) {
         <strong>{name || entry.original}</strong>
         {name && entry.original && <small lang="ja">{entry.original}</small>}
       </div>
-      <b>{formatMenuPrice(entry.price) || "—"}</b>
+      <b>{formatMenuPrice(entry.price, country) || "—"}</b>
     </>
   );
 }
@@ -3647,7 +3679,7 @@ function Planner() {
                                   <b>
                                     {itemMotif && (
                                       <span
-                                        className={`planner-item-category-icon ${["chairlift", "pie"].includes(itemMotif) ? "is-wide" : ""} ${["skiTow", "rental", "park"].includes(itemMotif) ? "is-small" : ""} ${["parking", "michiNoEki"].includes(itemMotif) ? "is-compact" : ""}`}
+                                        className={`planner-item-category-icon ${itemMotif === "chairlift" ? "is-wide" : ""} ${itemMotif === "pie" ? "is-pie" : ""} ${["skiTow", "rental", "park"].includes(itemMotif) ? "is-small" : ""} ${["parking", "michiNoEki"].includes(itemMotif) ? "is-compact" : ""}`}
                                         title={getItineraryMotifLabel(itemMotif)}
                                       >
                                         <HandDrawnMotif type={itemMotif} />
