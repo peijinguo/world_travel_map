@@ -314,6 +314,9 @@ function zoomToSpreadPins(map, coordinate, allCoordinates, minZoom = 0, duration
   });
 }
 
+// The card each map has open from a click on its pin (to close it).
+const openCards = new WeakMap();
+
 // `onPick(index)` hears a click on the pin (the travellers go there).
 function makeStopMarker(map, stop, index, coordinate, offset, allCoordinates = [], onPick) {
   const marker = document.createElement("div");
@@ -392,9 +395,14 @@ function makeStopMarker(map, stop, index, coordinate, offset, allCoordinates = [
     fit();
     map.on("move", fit);
   };
+  const closeThis = () => {
+    pinned = false;
+    popup.remove();
+  };
   popup.on("close", () => {
     pinned = false;
     map.off("move", fit);
+    if (openCards.get(map) === closeThis) openCards.delete(map);
   });
   marker.addEventListener("mouseenter", () => show());
   marker.addEventListener("mouseleave", () => {
@@ -407,6 +415,10 @@ function makeStopMarker(map, stop, index, coordinate, offset, allCoordinates = [
     const followed = onPick?.(index);
     pinned = !pinned;
     if (pinned) {
+      // One clicked card at a time: the one clicked before closes.
+      const closeOther = openCards.get(map);
+      if (closeOther && closeOther !== closeThis) closeOther();
+      openCards.set(map, closeThis);
       show();
       // Crowded pins: zoom into the area so the neighbours pull apart.
       if (!followed) zoomToSpreadPins(map, coordinate, allCoordinates);
