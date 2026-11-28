@@ -1046,8 +1046,10 @@ span.planner-walking-icon { position: relative; display: block; width: 34px; hei
 .planner-route-marker:has(.is-bouncing) { z-index: 3; }
 // The two travellers on the route map (RouteMap.jsx): they bob along while
 // on the road between stops, and let clicks through to the pins.
-.planner-route-avatar { width: 50px; height: 50px; pointer-events: none; z-index: 0; }
-.planner-route-avatar.is-front { z-index: 1; }
+// The travellers and their clock stay above every pin, even a bouncing or
+// pointed-at one (those rise to 2–3).
+.planner-route-avatar { width: 50px; height: 50px; pointer-events: none; z-index: 4; }
+.planner-route-avatar.is-front { z-index: 5; }
 .planner-route-avatar img { display: block; width: 100%; height: 100%; filter: drop-shadow(0 2px 2px rgba(31, 38, 41, .25)); transform-origin: center bottom; }
 .planner-route-avatar.is-walking img { animation: planner-avatar-walk .36s ease-in-out infinite; }
 @keyframes planner-avatar-walk {
@@ -1055,7 +1057,7 @@ span.planner-walking-icon { position: relative; display: block; width: 34px; hei
   50% { transform: translateY(-6px) rotate(5deg); }
 }
 // The plan's time, above them.
-.planner-route-clock { padding: 1px 8px; border: 1.5px solid #1f2629; border-radius: 999px; background: #fffdf8; color: #1f2629; font: 600 13px/1.4 "Noto Sans TC", sans-serif; font-variant-numeric: tabular-nums; white-space: nowrap; pointer-events: none; z-index: 1; }
+.planner-route-clock { padding: 1px 8px; border: 1.5px solid #1f2629; border-radius: 999px; background: #fffdf8; color: #1f2629; font: 600 13px/1.4 "Noto Sans TC", sans-serif; font-variant-numeric: tabular-nums; white-space: nowrap; pointer-events: none; z-index: 5; }
 @media (prefers-reduced-motion: reduce) {
   .planner-route-avatar.is-walking img { animation: none; }
 }
@@ -1066,6 +1068,8 @@ span.planner-walking-icon { position: relative; display: block; width: 34px; hei
 }
 .planner-route-pin { display: grid; width: 28px; height: 35px; padding-bottom: 8px; place-items: center; background: #4a5459; clip-path: path("M14 0C6.3 0 0 6.3 0 14c0 10.3 14 21 14 21s14-10.7 14-21C28 6.3 21.7 0 14 0z"); color: #fff; font-size: 13px; font-weight: 800; line-height: 1; cursor: pointer; }
 .has-route-map .maplibregl-popup-content { border-radius: 10px; padding: 8px 12px; }
+// Stop cards sit above the travellers and their clock.
+.has-route-map .maplibregl-popup { z-index: 6; }
 // A card slid aside to stay inside the map no longer points at its stop.
 .has-route-map .maplibregl-popup.is-slid .maplibregl-popup-tip { visibility: hidden; }
 // The replay's play / pause button, under the zoom and full-screen buttons.
