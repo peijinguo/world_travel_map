@@ -449,6 +449,8 @@ const AVATARS = [
 // On the trip day they follow the clock; on any other day the day plays
 // through quickly, over and over: an hour of the plan in this many ms.
 const REPLAY_HOUR_MS = 3000;
+// The sideways steps (px) the pair tries, in order, to stand clear of pins.
+const AVATAR_SHIFTS = [0, 30, -30, 55, -60, 70, -80, 95, -105, 125, -135, 160, -170];
 const REPLAY_REST_MS = 2000;
 // In the replay every leg takes at least this long to watch.
 const LEG_PLAY_MS = 3000;
@@ -935,10 +937,40 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
 
     // minuteOf(lag) is the plan's minute for a traveller that many minutes
     // behind the first one.
+    // The pair stands beside the pins, never on one: they step sideways
+    // (right first, then left, a little further each try) to the nearest
+    // place where neither head covers a pin, and glide there.
+    const pinBoxes = () =>
+      markersRef.current.map((pin) => {
+        const { x, y } = map.project(pin.getLngLat()).add(pin.getOffset());
+        return { left: x - 15, right: x + 15, top: y - 36, bottom: y };
+      });
+    const pairBoxes = ({ x, y }, shift) =>
+      AVATARS.map(({ size, offset }) => {
+        // The faces, a little inside each picture's frame.
+        const middle = x + offset[0] + shift;
+        const half = size * 0.38;
+        return { left: middle - half, right: middle + half, top: y - size * 0.9, bottom: y };
+      });
+    const overlaps = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+    const clearShift = (at) => {
+      const here = map.project(at);
+      const pins = pinBoxes();
+      for (const shift of AVATAR_SHIFTS) {
+        if (!pairBoxes(here, shift).some((face) => pins.some((pin) => overlaps(face, pin)))) return shift;
+      }
+      return AVATAR_SHIFTS.at(-1);
+    };
+    let aside = 0;
     const place = (minuteOf, live) => {
-      avatars.forEach(({ marker, lag }) => {
+      const lead = placeAt(schedule, minuteOf(0));
+      const target = clearShift(lead.at);
+      aside = Math.abs(target - aside) < 0.5 ? target : aside + (target - aside) * 0.25;
+      clockMarker.setOffset([aside, -60]);
+      avatars.forEach(({ marker, lag, offset }) => {
         const spot = placeAt(schedule, minuteOf(live ? 0 : lag));
         marker.setLngLat(spot.at);
+        marker.setOffset([offset[0] + aside, offset[1]]);
         marker.getElement().classList.toggle("is-walking", spot.moving);
         if (!lag || live) {
           aim(spot, minuteOf(0) >= schedule.legs[0]?.leave - (live ? 30 : LEAD_MINUTES));
