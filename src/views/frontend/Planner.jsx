@@ -140,8 +140,8 @@ const getItineraryMotif = (location, itineraryText = "") => {
   if (/サク男ともち子|saku\s*o\s*to\s*mochiko/iu.test(headline)) return "crepe";
   // Gather食聚咖啡 (員山) is known for its sweet pies and mille crêpes.
   if (/gather|食聚/iu.test(headline)) return "pie";
-  // 礁溪香腸伯: a charcoal-grill sausage stall.
-  if (/香腸伯/u.test(headline)) return "sausageGrill";
+  // 礁溪香腸伯 and 玉田炭烤香腸: charcoal-grill sausage stalls.
+  if (/香腸伯|玉田[炭碳]?烤香腸|玉田香腸/u.test(headline)) return "sausageGrill";
   if (/吉田商店|yoshida\s*shoten|湯咖哩|湯咖喱|汤咖喱|スープカレー|soup\s*curry/iu.test(headline)) return "curry";
   // Roadside stations (道の駅), before parking so 「道の駅 … 駐車場」 keeps this icon.
   if (/道の駅|道之驛|道之驿|公路休息站|michi[\s-]*no[\s-]*eki|road(?:side)?\s*station/iu.test(headline)) return "michiNoEki";
@@ -1603,6 +1603,19 @@ const PRESET_MENUS = [
       ["招牌司康", "", "45"],
       ["1oz 抹醬加購（乳酪醬／果醬）", "", "10"],
       ["冰淇淋加購（布朗尼必加）", "", "30"],
+    ]),
+  },
+  {
+    // 玉田炭烤香腸 (礁溪玉民路), from the stall's own board; prices in NT$.
+    // Not plain 「玉田」, which would also catch 全家礁溪玉田店.
+    pattern: /玉田[炭碳]?烤香腸|玉田香腸/u,
+    menu: makePresetMenu("yutian-grilled-sausage", [
+      ["👍 碳烤香腸（1 支）", "", "35"],
+      ["碳烤香腸（3 支）", "", "100"],
+      ["生香腸（1 斤）", "", "210"],
+      ["辣椒醬（大瓶）", "", "140"],
+      ["辣椒醬（中瓶）", "", "100"],
+      ["辣椒醬（小瓶）", "", "80"],
     ]),
   },
   {
