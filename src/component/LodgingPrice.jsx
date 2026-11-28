@@ -3,13 +3,29 @@ import { useAuth } from "../context/AuthContext";
 import PlannerDatePicker from "./PlannerDatePicker";
 import { saveLodgingPriceCloud, subscribeLodgingPricesCloud } from "../services/firebase";
 
-// The price row on a 機票住宿 lodging card: type the stay's total in yen and
-// it shows NT$ a night at the live exchange rate (shown in the card's corner). On a synced trip the prices
+// The price row on a 機票住宿 lodging card: type the stay's total in the
+// country's own currency and it shows NT$ a night at the live exchange rate (shown in the card's corner). On a synced trip the prices
 // are shared with everyone on it (any phone or computer); without one they are
 // kept on this device.
 const PRICE_STORAGE_KEY = "yuki-tabi-lodging-prices-v1";
 const RATE_STORAGE_KEY = "yuki-tabi-jpy-twd-rate-v1";
 const RATE_URL = "https://open.er-api.com/v6/latest/JPY";
+
+// Each country's currency: lodging cards and shop menus are priced in it,
+// and its live rate to NT$ is shown beside them.
+export const COUNTRY_CURRENCY = {
+  japan: { code: "JPY", name: "日圓", prefix: "¥", locale: "ja-JP" },
+  taiwan: { code: "TWD", name: "新臺幣", prefix: "NT$", locale: "zh-TW" },
+  iceland: { code: "ISK", name: "冰島克朗", suffix: " kr", locale: "is-IS" },
+  norway: { code: "NOK", name: "挪威克朗", suffix: " kr", locale: "nb-NO" },
+  finland: { code: "EUR", name: "歐元", prefix: "€", locale: "fi-FI" },
+  netherlands: { code: "EUR", name: "歐元", prefix: "€", locale: "nl-NL" },
+  france: { code: "EUR", name: "歐元", prefix: "€", locale: "fr-FR" },
+  switzerland: { code: "CHF", name: "瑞士法郎", prefix: "CHF ", locale: "de-CH" },
+  newZealand: { code: "NZD", name: "紐西蘭元", prefix: "NZ$", locale: "en-NZ" },
+  canada: { code: "CAD", name: "加拿大元", prefix: "C$", locale: "en-CA" },
+};
+export const countryCurrency = (country) => COUNTRY_CURRENCY[country] ?? COUNTRY_CURRENCY.japan;
 
 const readJson = (key, fallback) => {
   try {
@@ -87,7 +103,6 @@ export function useTwdRate(code) {
   return rate;
 }
 
-const useJpyRate = () => useTwdRate("JPY");
 
 const formatRateTime = (at) =>
   new Date(at).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", hour12: false });
@@ -176,13 +191,18 @@ export function LodgingMeals({ stayKey }) {
 }
 
 function LodgingPrice({ priceKey, nights }) {
-  const rate = useJpyRate();
+  const { country } = useAuth();
+  const currency = countryCurrency(country);
+  const isTwd = currency.code === "TWD";
+  const rate = useTwdRate(currency.code);
+  const symbol = currency.prefix?.trim() ?? currency.suffix.trim();
   const [total, saveTotal] = useLodgingValue(priceKey);
   const [cancelBy, saveCancelBy] = useLodgingValue(`${priceKey}|cancel`);
   const update = (value) => saveTotal(value.replace(/[^\d]/g, ""));
 
-  const yen = Number(total);
-  const perNight = yen && nights && rate?.rate ? (yen * rate.rate) / nights : null;
+  const amount = Number(total);
+  const twdRate = isTwd ? 1 : rate?.rate;
+  const perNight = amount && nights && twdRate ? (amount * twdRate) / nights : null;
 
   return (
     <div className="lodging-price">
@@ -194,13 +214,13 @@ function LodgingPrice({ priceKey, nights }) {
       <label>
         <span>{nights} 晚總價</span>
         <span className="lodging-price-input">
-          <i aria-hidden="true">¥</i>
+          <i aria-hidden="true">{symbol}</i>
           <input
             inputMode="numeric"
             placeholder="總價"
             value={total ? Number(total).toLocaleString("en-US") : ""}
             onChange={(event) => update(event.target.value)}
-            aria-label="住宿總價（日圓）"
+            aria-label={`住宿總價（${currency.name}）`}
           />
         </span>
       </label>
@@ -214,7 +234,7 @@ function LodgingPrice({ priceKey, nights }) {
             <b>NT${formatNumber(perNight)}</b> / 晚
           </>
         ) : (
-          <small>{yen && !rate ? "匯率讀取中…" : "輸入總價換算台幣/晚"}</small>
+          <small>{amount && !twdRate ? "匯率讀取中…" : "輸入總價換算台幣/晚"}</small>
         )}
       </p>
     </div>

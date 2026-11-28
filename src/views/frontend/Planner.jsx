@@ -4,7 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { snowTowns } from "./Home";
 import HandDrawnMotif from "../../component/HandDrawnMotif";
 import RouteMap from "../../component/RouteMap";
-import { useTwdRate } from "../../component/LodgingPrice";
+import { countryCurrency, useTwdRate } from "../../component/LodgingPrice";
 import walkingStepsIcon from "../../assets/walking-steps-icon.png?inline";
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -1547,19 +1547,7 @@ const MENU_ORIGINAL_LANG = {
 };
 
 // Each country's menu shows prices in its own currency.
-const MENU_CURRENCY = {
-  japan: { code: "JPY", prefix: "¥", locale: "ja-JP" },
-  taiwan: { code: "TWD", prefix: "NT$", locale: "zh-TW" },
-  iceland: { code: "ISK", suffix: " kr", locale: "is-IS" },
-  norway: { code: "NOK", suffix: " kr", locale: "nb-NO" },
-  finland: { code: "EUR", prefix: "€", locale: "fi-FI" },
-  netherlands: { code: "EUR", prefix: "€", locale: "nl-NL" },
-  france: { code: "EUR", prefix: "€", locale: "fr-FR" },
-  switzerland: { code: "CHF", prefix: "CHF ", locale: "de-CH" },
-  newZealand: { code: "NZD", prefix: "NZ$", locale: "en-NZ" },
-  canada: { code: "CAD", prefix: "C$", locale: "en-CA" },
-};
-const menuCurrency = (country) => MENU_CURRENCY[country] ?? MENU_CURRENCY.japan;
+const menuCurrency = countryCurrency;
 const formatMenuPrice = (price, country = "japan") => {
   const digits = String(price ?? "").replace(/[^\d.]/g, "");
   const value = Math.round(Number(digits));
