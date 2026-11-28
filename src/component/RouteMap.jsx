@@ -402,12 +402,14 @@ function makeStopMarker(map, stop, index, coordinate, offset, allCoordinates = [
   });
   marker.addEventListener("click", (event) => {
     event.stopPropagation();
+    // Every tap sends the travellers here, even one that closes the card;
+    // the map then follows them on from this stop.
+    const followed = onPick?.(index);
     pinned = !pinned;
     if (pinned) {
-      onPick?.(index);
       show();
       // Crowded pins: zoom into the area so the neighbours pull apart.
-      zoomToSpreadPins(map, coordinate, allCoordinates);
+      if (!followed) zoomToSpreadPins(map, coordinate, allCoordinates);
     } else popup.remove();
   });
 
@@ -834,7 +836,7 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
     markersRef.current.forEach((marker) => marker.remove());
     markersRef.current = currentStops.map((stop, index) =>
       makeStopMarker(map, stop, index, coordinates[index], markerOffsets[index], coordinates, (picked) =>
-        seekRef.current?.(picked),
+        Boolean(seekRef.current?.(picked)),
       ).addTo(map),
     );
 
@@ -891,7 +893,9 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
     const follow = !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     let cameraKey = "";
     const handOver = (event) => {
-      if (event?.type === "click" && event.target.closest?.(".planner-route-play")) return;
+      // The play button and the pins (which send the travellers) keep the
+      // map following them.
+      if (event?.type === "click" && event.target.closest?.(".planner-route-play, .planner-route-marker")) return;
       if (event?.originalEvent || event?.type === "click") userCameraRef.current = Date.now() + USER_CAMERA_MS;
     };
     const container = map.getContainer();
@@ -997,7 +1001,9 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
       let played = 0;
       let lastNow = 0;
       const step = (now) => {
-        if (lastNow && playingRef.current) played += Math.min(now - lastNow, 100);
+        // A frame long after the last (the tab was in the background) does
+        // not jump ahead; a slow device still plays at the right pace.
+        if (lastNow && playingRef.current) played += Math.min(now - lastNow, 1000);
         lastNow = now;
         const elapsed = Math.min(played % (playMs + REPLAY_REST_MS), playMs);
         place((lag) => minuteAt(elapsed - pace(lag)), false);
@@ -1006,10 +1012,17 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
       frame = requestAnimationFrame(step);
       if (playButtonRef.current) playButtonRef.current.hidden = false;
       // A clicked pin: both travellers are there (the second one a moment
-      // behind has arrived too), and the replay carries on from there.
+      // behind has arrived too), and the replay plays on from there, even
+      // if it was paused.
       seekRef.current = (index) => {
-        if (arrivalMs[index] === undefined) return;
+        if (arrivalMs[index] === undefined) return false;
         played = arrivalMs[index] + pace(Math.max(...AVATARS.map(({ lag }) => lag))) + 50;
+        playingRef.current = true;
+        drawPlayButton();
+        // The camera picks them up here at once.
+        userCameraRef.current = 0;
+        cameraKey = "";
+        return true;
       };
     }
     return () => {
