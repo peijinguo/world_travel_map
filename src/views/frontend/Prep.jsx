@@ -113,6 +113,57 @@ function Prep() {
     setDraft("");
   };
 
+  // Reordering: drag a row's grip (mouse or finger) up or down; the rows move
+  // as it passes them and the new order is saved on release. With the
+  // keyboard, the grip's ↑ / ↓ keys move the item one place.
+  const listRef = useRef(null);
+  const [draggingId, setDraggingId] = useState(null);
+  // Read by the pointer handlers, which can run before the next render.
+  const draggingRef = useRef(null);
+  const moveTo = (list, id, target) => {
+    const from = list.findIndex((item) => item.id === id);
+    if (from < 0 || target === from || target < 0 || target >= list.length) return list;
+    const next = [...list];
+    const [moved] = next.splice(from, 1);
+    next.splice(target, 0, moved);
+    return next;
+  };
+  const startDrag = (event, id) => {
+    if (event.button > 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    draggingRef.current = id;
+    setDraggingId(id);
+  };
+  const dragMove = (event, id) => {
+    if (draggingRef.current !== id) return;
+    const rows = [...(listRef.current?.children ?? [])];
+    // The row the finger is over (by the rows' middles) is where it goes.
+    let target = rows.findIndex((row) => {
+      const { top, height } = row.getBoundingClientRect();
+      return event.clientY < top + height / 2;
+    });
+    if (target < 0) target = rows.length;
+    const from = latestRef.current.findIndex((item) => item.id === id);
+    if (target > from) target -= 1;
+    if (target === from) return;
+    latestRef.current = moveTo(latestRef.current, id, target);
+    setItems(latestRef.current);
+  };
+  const endDrag = (id) => {
+    if (draggingRef.current !== id) return;
+    draggingRef.current = null;
+    setDraggingId(null);
+    commit((list) => list);
+  };
+  const stepMove = (event, id) => {
+    const delta = { ArrowUp: -1, ArrowDown: 1 }[event.key];
+    if (!delta) return;
+    event.preventDefault();
+    commit((list) => moveTo(list, id, list.findIndex((item) => item.id === id) + delta));
+  };
+
   const doneCount = items.filter((item) => item.done).length;
 
   return (
@@ -146,9 +197,29 @@ function Prep() {
             {status && <span className="prep-status"> · {status}</span>}
           </p>
         </header>
-        <ul className="prep-list">
+        <ul className="prep-list" ref={listRef}>
           {items.map((item) => (
-            <li key={item.id} className={item.done ? "is-done" : undefined}>
+            <li
+              key={item.id}
+              className={[item.done && "is-done", draggingId === item.id && "is-dragging"].filter(Boolean).join(" ") || undefined}
+            >
+              <button
+                type="button"
+                className="prep-grip"
+                aria-label={`移動「${item.text}」（拖曳，或按上下鍵）`}
+                title="拖曳調整順序"
+                onPointerDown={(event) => startDrag(event, item.id)}
+                onPointerMove={(event) => dragMove(event, item.id)}
+                onPointerUp={() => endDrag(item.id)}
+                onPointerCancel={() => endDrag(item.id)}
+                onKeyDown={(event) => stepMove(event, item.id)}
+              >
+                <svg viewBox="0 0 12 20" aria-hidden="true">
+                  <circle cx="3.5" cy="4" r="1.6" /><circle cx="8.5" cy="4" r="1.6" />
+                  <circle cx="3.5" cy="10" r="1.6" /><circle cx="8.5" cy="10" r="1.6" />
+                  <circle cx="3.5" cy="16" r="1.6" /><circle cx="8.5" cy="16" r="1.6" />
+                </svg>
+              </button>
               <button
                 type="button"
                 className="prep-check"

@@ -196,3 +196,14 @@ html:has(.prep-page), html:has(.prep-page) body { background: #fff; }
 .prep-list li, .prep-add { box-sizing: border-box; min-height: $prep-line; align-items: flex-end; padding-bottom: 9px; }
 .prep-check { min-height: 0; align-items: flex-end; }
 .prep-remove { height: 26px; }
+
+// The grip at the start of each row: drag it to move the item.
+.prep-grip { flex: 0 0 auto; display: grid; place-items: center; width: 22px; height: 30px; margin: 0 2px 0 -8px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: $prep-red; opacity: .35; cursor: grab; touch-action: none; transition: opacity .15s ease, background .15s ease; }
+.prep-grip svg { width: 10px; height: 17px; fill: currentColor; }
+.prep-list li:hover .prep-grip, .prep-grip:focus-visible { opacity: 1; }
+.prep-grip:active { cursor: grabbing; }
+.prep-list li.is-dragging { z-index: 2; border-radius: 10px; background: rgba(108, 118, 117, .08); box-shadow: 0 6px 14px rgba(52, 67, 74, .12); }
+.prep-list li.is-dragging .prep-grip { opacity: 1; }
+@media (max-width: 600px) {
+  .prep-grip { opacity: .55; }
+}
