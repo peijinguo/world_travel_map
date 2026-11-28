@@ -506,12 +506,29 @@ function placeAt(schedule, minute) {
   const { coordinates, legs } = schedule;
   for (let index = 0; index < legs.length; index += 1) {
     const { points, leave, arrive } = legs[index];
-    if (minute <= leave) return { at: coordinates[index], moving: false };
+    if (minute <= leave) return { at: coordinates[index], moving: false, leg: index };
     if (minute < arrive) {
-      return { at: pointAlong(points, (minute - leave) / Math.max(arrive - leave, 1)), moving: true };
+      return { at: pointAlong(points, (minute - leave) / Math.max(arrive - leave, 1)), moving: true, leg: index };
     }
   }
-  return { at: coordinates.at(-1), moving: false };
+  return { at: coordinates.at(-1), moving: false, leg: legs.length };
+}
+
+// Pins rise above their point, so the top of a fitted view keeps extra room.
+const FIT_PADDING = { top: 72, right: 48, bottom: 40, left: 48 };
+// While the travellers are on the road the map follows the leg they are on:
+// a short hop fills the map close up, a long drive or flight zooms out to
+// show all of it. Never closer than this.
+const LEG_MAX_ZOOM = 15.5;
+const FOLLOW_MS = 900;
+// After the traveller pans, zooms or clicks a pin, the map stays where they
+// put it for this long before following again.
+const USER_CAMERA_MS = 12000;
+
+function fitPoints(map, points, maxZoom, duration = 0) {
+  const bounds = new maplibregl.LngLatBounds();
+  points.forEach((point) => bounds.extend(point));
+  map.fitBounds(bounds, { padding: FIT_PADDING, maxZoom, duration, animate: duration > 0 });
 }
 
 const clockLabel = (minute) => {
@@ -555,6 +572,8 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
   const footprintsRef = useRef([]);
   const visibleStepsRef = useRef([]);
   const tickRef = useRef(0);
+  // Until when the traveller holds the camera (see USER_CAMERA_MS).
+  const userCameraRef = useRef(0);
   const [mapReady, setMapReady] = useState(false);
   const [webglSupported] = useState(() =>
     Boolean(document.createElement("canvas").getContext("webgl2")),
@@ -700,16 +719,9 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
     } else if (coordinates.length === 1) {
       map.jumpTo({ center: coordinates[0], zoom: 12 });
     } else {
-      const bounds = new maplibregl.LngLatBounds();
-      coordinates.forEach((coordinate) => bounds.extend(coordinate));
       // Zoom in as far as street level so stops a short walk apart are
-      // spread out instead of piled up; pins rise above their point, so the
-      // top keeps extra room.
-      map.fitBounds(bounds, {
-        padding: { top: 72, right: 48, bottom: 40, left: 48 },
-        maxZoom: 17,
-        animate: false,
-      });
+      // spread out instead of piled up.
+      fitPoints(map, coordinates, 17);
     }
   }, [stopsKey, mapReady]);
 
@@ -749,13 +761,35 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
       .setLngLat(first);
     if (schedule) clockMarker.addTo(map);
 
+    // The camera: on the road it fits the leg being travelled; before the
+    // day starts and after it ends it shows every stop. Panning, zooming or
+    // clicking a pin hands the map to the traveller for a while.
+    const follow = !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    let cameraKey = "";
+    const handOver = (event) => {
+      if (event?.originalEvent || event?.type === "click") userCameraRef.current = Date.now() + USER_CAMERA_MS;
+    };
+    const container = map.getContainer();
+    map.on("movestart", handOver);
+    container.addEventListener("click", handOver, true);
+    const aim = (spot) => {
+      if (!follow || Date.now() < userCameraRef.current || !schedule) return;
+      const { moving, leg } = spot;
+      const key = moving ? `leg${leg}` : leg === 0 || leg >= schedule.legs.length ? "all" : cameraKey;
+      if (key === cameraKey) return;
+      cameraKey = key;
+      if (key === "all") fitPoints(map, schedule.coordinates, 17, FOLLOW_MS);
+      else fitPoints(map, schedule.legs[leg].points, LEG_MAX_ZOOM, FOLLOW_MS);
+    };
+
     // minuteOf(lag) is the plan's minute for a traveller that many minutes
     // behind the first one.
     const place = (minuteOf, live) => {
       avatars.forEach(({ marker, lag }) => {
-        const { at, moving } = placeAt(schedule, minuteOf(live ? 0 : lag));
-        marker.setLngLat(at);
-        marker.getElement().classList.toggle("is-walking", moving);
+        const spot = placeAt(schedule, minuteOf(live ? 0 : lag));
+        marker.setLngLat(spot.at);
+        marker.getElement().classList.toggle("is-walking", spot.moving);
+        if (!lag || live) aim(spot);
       });
       clockMarker.setLngLat(avatars[0].marker.getLngLat());
       const minute = minuteOf(0);
@@ -817,6 +851,8 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
     return () => {
       cancelAnimationFrame(frame);
       window.clearInterval(timer);
+      map.off("movestart", handOver);
+      container.removeEventListener("click", handOver, true);
       avatars.forEach(({ marker }) => marker.remove());
       clockMarker.remove();
     };
@@ -867,6 +903,7 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
     }
     // Zoom into the area too, so pins crowded around this one pull apart.
     const coordinates = stopsRef.current.map(({ town }) => [town.longitude, town.latitude]);
+    userCameraRef.current = Date.now() + USER_CAMERA_MS;
     zoomToSpreadPins(map, coordinates[index], coordinates, STOP_FOCUS_ZOOM, 900);
     const pin = marker.getElement().querySelector(".planner-route-pin");
     pin.classList.remove("is-bouncing");
