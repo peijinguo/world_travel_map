@@ -142,6 +142,8 @@ const getItineraryMotif = (location, itineraryText = "") => {
   if (/gather|食聚/iu.test(headline)) return "pie";
   // 礁溪香腸伯 and 玉田炭烤香腸: sausage stalls, drawn with the yakitori skewer.
   if (/香腸伯|玉田[炭碳]?烤香腸|玉田香腸/u.test(headline)) return "sausage";
+  // Iceland's hot dog stands (Pylsuvagninn and the like).
+  if (/pylsuvagn|pylsa|pylsu|hot\s*dog|熱狗|热狗/iu.test(headline)) return "hotdog";
   if (/吉田商店|yoshida\s*shoten|湯咖哩|湯咖喱|汤咖喱|スープカレー|soup\s*curry/iu.test(headline)) return "curry";
   // Roadside stations (道の駅), before parking so 「道の駅 … 駐車場」 keeps this icon.
   if (/道の駅|道之驛|道之驿|公路休息站|michi[\s-]*no[\s-]*eki|road(?:side)?\s*station/iu.test(headline)) return "michiNoEki";
@@ -180,7 +182,8 @@ const getItineraryMotif = (location, itineraryText = "") => {
   if (noteMotif) return noteMotif;
   const nameMotif = classifyFood(`${placeName} ${placeCuisine}`);
   if (nameMotif) return nameMotif;
-  return "ramen";
+  // Food that fits none of the icons gets none (its 菜單 button still shows).
+  return null;
 };
 
 const FOOD_MOTIFS = new Set([
@@ -195,6 +198,7 @@ const FOOD_MOTIFS = new Set([
   "curry",
   "pie",
   "sausage",
+  "hotdog",
   "dango",
   "parfait",
   "ramen",
@@ -211,7 +215,8 @@ const getItineraryMotifLabel = (motif) =>
     michiNoEki: "道の駅",
     curry: "咖哩",
     pie: "甜派",
-    sausage: "烤肉串",
+    sausage: "烤香腸",
+    hotdog: "熱狗",
     familymart: "FamilyMart",
     seveneleven: "7-Eleven",
     lamb: "烤羊肉",
@@ -1538,12 +1543,26 @@ const MENU_ORIGINAL_LANG = {
   netherlands: "nl", france: "fr", switzerland: "de", newZealand: "en", canada: "en",
 };
 
-// Taiwan's planner shows prices in NT$; the others keep yen.
+// Each country's menu shows prices in its own currency.
+const MENU_CURRENCY = {
+  japan: { prefix: "¥", locale: "ja-JP" },
+  taiwan: { prefix: "NT$", locale: "zh-TW" },
+  iceland: { suffix: " kr", locale: "is-IS" },
+  norway: { suffix: " kr", locale: "nb-NO" },
+  finland: { prefix: "€", locale: "fi-FI" },
+  netherlands: { prefix: "€", locale: "nl-NL" },
+  france: { prefix: "€", locale: "fr-FR" },
+  switzerland: { prefix: "CHF ", locale: "de-CH" },
+  newZealand: { prefix: "NZ$", locale: "en-NZ" },
+  canada: { prefix: "C$", locale: "en-CA" },
+};
+const menuCurrency = (country) => MENU_CURRENCY[country] ?? MENU_CURRENCY.japan;
 const formatMenuPrice = (price, country = "japan") => {
   const digits = String(price ?? "").replace(/[^\d.]/g, "");
   const value = Math.round(Number(digits));
   if (!digits || !Number.isFinite(value)) return "";
-  return country === "taiwan" ? `NT$${value.toLocaleString("zh-TW")}` : `¥${value.toLocaleString("ja-JP")}`;
+  const { prefix = "", suffix = "", locale } = menuCurrency(country);
+  return `${prefix}${value.toLocaleString(locale)}${suffix}`;
 };
 
 // Menus read from photos of the shop's own menu board, shown for any stop at
@@ -1626,6 +1645,22 @@ const PRESET_MENUS = [
       ["糯米腸（古早味）", "", "30"],
       ["大腸包小腸（一組）", "", "80"],
       ["甜不辣（每日限量十串，週二至週五供應）", "", "30"],
+    ]),
+  },
+  {
+    // Pylsuvagninn (Selfoss hot dog stand), from its own board; prices in ISK.
+    pattern: /pylsuvagn/iu,
+    menu: makePresetMenu("pylsuvagninn", [
+      ["👍 熱狗", "Pylsa", "800"],
+      ["👍 煎熱狗", "Steikt pylsa", "800"],
+      ["👍 法式熱狗", "Frönsk pylsa", "920"],
+      ["培根熱狗", "Beikon pylsa", "960"],
+      ["單點香腸", "Stök pylsa", "360"],
+      ["熱狗麵包", "Pylsubrauð", "440"],
+      ["法國麵包", "Franskt brauð", "560"],
+      ["汽水", "Gos", "400"],
+      ["熱狗＋汽水套餐", "Pylsa og gos", "1200"],
+      ["法式熱狗＋汽水套餐", "Frönsk pylsa og gos", "1320"],
     ]),
   },
   {
@@ -2309,7 +2344,7 @@ function PlannerMenuDialog({
                     />
                   </div>
                   <label className="planner-menu-price-input">
-                    <span aria-hidden="true">{country === "taiwan" ? "NT$" : "¥"}</span>
+                    <span aria-hidden="true">{menuCurrency(country).prefix ?? menuCurrency(country).suffix.trim()}</span>
                     <input
                       value={entry.price}
                       inputMode="numeric"
