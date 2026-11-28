@@ -371,6 +371,7 @@ const REPLAY_REST_MS = 2000;
 // In the replay a leg of the day's average length takes this long to watch;
 // the others take longer or shorter by their length, all at one speed.
 const LEG_PLAY_MS = 2000;
+const MIN_LEG_PLAY_MS = 1800;
 // Speeds to guess how long a leg takes inside the times written.
 const TRAVEL_KMH = 40;
 const WALKING_KMH = 4.5;
@@ -774,8 +775,10 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
     container.addEventListener("click", handOver, true);
     const aim = (spot) => {
       if (!follow || Date.now() < userCameraRef.current || !schedule) return;
-      const { moving, leg } = spot;
-      const key = moving ? `leg${leg}` : leg === 0 || leg >= schedule.legs.length ? "all" : cameraKey;
+      // While they wait at a stop the map already frames the leg ahead, so
+      // it is zoomed in before they set off and the whole trip is seen.
+      const { leg } = spot;
+      const key = leg < schedule.legs.length ? `leg${leg}` : "all";
       if (key === cameraKey) return;
       cameraKey = key;
       if (key === "all") fitPoints(map, schedule.coordinates, 17, FOLLOW_MS);
@@ -817,7 +820,9 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
       const pace = (minutes) => (minutes / 60) * REPLAY_HOUR_MS;
       const lengths = schedule.legs.map(({ points }) => legLength(points));
       const averageKm = lengths.reduce((sum, km) => sum + km, 0) / Math.max(lengths.length, 1);
-      const legMs = (index) => (averageKm > 0 ? (lengths[index] / averageKm) * LEG_PLAY_MS : 0);
+      // Even the shortest hop plays long enough to watch them travel it.
+      const legMs = (index) =>
+        Math.max(averageKm > 0 ? (lengths[index] / averageKm) * LEG_PLAY_MS : 0, MIN_LEG_PLAY_MS);
       const pieces = [];
       let cursor = from;
       let playMs = 0;
@@ -828,7 +833,8 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
         cursor = until;
       };
       schedule.legs.forEach(({ leave, arrive }, index) => {
-        addPiece(leave, pace(leave - cursor));
+        // Time for the map to settle on the leg before they set off.
+        addPiece(leave, Math.max(pace(leave - cursor), FOLLOW_MS + 300));
         addPiece(arrive, legMs(index));
       });
       addPiece(to, pace(to - cursor));
