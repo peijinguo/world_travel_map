@@ -182,8 +182,8 @@ const getItineraryMotif = (location, itineraryText = "") => {
   if (noteMotif) return noteMotif;
   const nameMotif = classifyFood(`${placeName} ${placeCuisine}`);
   if (nameMotif) return nameMotif;
-  // Food that fits none of the icons gets none (its 菜單 button still shows).
-  return null;
+  // Food that fits none of the icons gets plain cutlery.
+  return "cutlery";
 };
 
 const FOOD_MOTIFS = new Set([
@@ -199,6 +199,7 @@ const FOOD_MOTIFS = new Set([
   "pie",
   "sausage",
   "hotdog",
+  "cutlery",
   "dango",
   "parfait",
   "ramen",
@@ -217,6 +218,7 @@ const getItineraryMotifLabel = (motif) =>
     pie: "甜派",
     sausage: "烤香腸",
     hotdog: "熱狗",
+    cutlery: "餐廳",
     familymart: "FamilyMart",
     seveneleven: "7-Eleven",
     lamb: "烤羊肉",
@@ -3754,7 +3756,7 @@ function Planner() {
                                   <b>
                                     {itemMotif && (
                                       <span
-                                        className={`planner-item-category-icon ${itemMotif === "chairlift" ? "is-wide" : ""} ${itemMotif === "pie" ? "is-pie" : ""} ${["skiTow", "rental", "park"].includes(itemMotif) ? "is-small" : ""} ${["parking", "michiNoEki"].includes(itemMotif) ? "is-compact" : ""}`}
+                                        className={`planner-item-category-icon ${itemMotif === "chairlift" ? "is-wide" : ""} ${["pie", "hotdog"].includes(itemMotif) ? "is-pie" : ""} ${["skiTow", "rental", "park"].includes(itemMotif) ? "is-small" : ""} ${["parking", "michiNoEki"].includes(itemMotif) ? "is-compact" : ""}`}
                                         title={getItineraryMotifLabel(itemMotif)}
                                       >
                                         <HandDrawnMotif type={itemMotif} />
