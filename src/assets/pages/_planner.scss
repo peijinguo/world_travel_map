@@ -1032,9 +1032,16 @@ span.planner-walking-icon { position: relative; display: block; width: 34px; hei
 .planner-confirm-actions .is-danger:hover { border-color: #bf3f39; background: #bf3f39; }
 
 .planner-route-marker { cursor: pointer; }
-.planner-route-marker:hover { z-index: 2; }
-.planner-route-pin.is-bouncing, .planner-route-marker:hover .planner-route-pin { animation: planner-pin-bounce .8s ease; }
-.planner-route-marker:hover .planner-route-pin { animation-iteration-count: infinite; }
+// A pointed-at pin bounces (on phones a tapped pin would stay "hovered" and
+// bounce for ever, so there only the tapped one bounces, while the
+// travellers are at it: .is-picked).
+@media (hover: hover) {
+  .planner-route-marker:hover { z-index: 2; }
+  .planner-route-marker:hover .planner-route-pin { animation: planner-pin-bounce .8s ease infinite; }
+}
+.planner-route-marker.is-picked { z-index: 2; }
+.planner-route-marker.is-picked .planner-route-pin { animation: planner-pin-bounce .8s ease infinite; }
+.planner-route-pin.is-bouncing { animation: planner-pin-bounce .8s ease; }
 .planner-route-pin.is-bouncing { animation-iteration-count: 3; }
 .planner-route-marker:has(.is-bouncing) { z-index: 3; }
 // The two travellers on the route map (RouteMap.jsx): they bob along while

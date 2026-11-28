@@ -397,10 +397,12 @@ function makeStopMarker(map, stop, index, coordinate, offset, allCoordinates = [
   };
   const closeThis = () => {
     pinned = false;
+    marker.classList.remove("is-picked");
     popup.remove();
   };
   popup.on("close", () => {
     pinned = false;
+    marker.classList.remove("is-picked");
     map.off("move", fit);
     if (openCards.get(map) === closeThis) openCards.delete(map);
   });
@@ -419,6 +421,7 @@ function makeStopMarker(map, stop, index, coordinate, offset, allCoordinates = [
       const closeOther = openCards.get(map);
       if (closeOther && closeOther !== closeThis) closeOther();
       openCards.set(map, closeThis);
+      marker.classList.add("is-picked");
       show();
       // Crowded pins: zoom into the area so the neighbours pull apart.
       if (!followed) zoomToSpreadPins(map, coordinate, allCoordinates);
