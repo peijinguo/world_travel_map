@@ -140,8 +140,8 @@ const getItineraryMotif = (location, itineraryText = "") => {
   if (/サク男ともち子|saku\s*o\s*to\s*mochiko/iu.test(headline)) return "crepe";
   // Gather食聚咖啡 (員山) is known for its sweet pies and mille crêpes.
   if (/gather|食聚/iu.test(headline)) return "pie";
-  // 礁溪香腸伯 and 玉田炭烤香腸: charcoal-grill sausage stalls.
-  if (/香腸伯|玉田[炭碳]?烤香腸|玉田香腸/u.test(headline)) return "sausageGrill";
+  // 礁溪香腸伯 and 玉田炭烤香腸: sausage stalls, drawn with the yakitori skewer.
+  if (/香腸伯|玉田[炭碳]?烤香腸|玉田香腸/u.test(headline)) return "sausage";
   if (/吉田商店|yoshida\s*shoten|湯咖哩|湯咖喱|汤咖喱|スープカレー|soup\s*curry/iu.test(headline)) return "curry";
   // Roadside stations (道の駅), before parking so 「道の駅 … 駐車場」 keeps this icon.
   if (/道の駅|道之驛|道之驿|公路休息站|michi[\s-]*no[\s-]*eki|road(?:side)?\s*station/iu.test(headline)) return "michiNoEki";
@@ -194,7 +194,7 @@ const FOOD_MOTIFS = new Set([
   "steak",
   "curry",
   "pie",
-  "sausageGrill",
+  "sausage",
   "dango",
   "parfait",
   "ramen",
@@ -211,7 +211,7 @@ const getItineraryMotifLabel = (motif) =>
     michiNoEki: "道の駅",
     curry: "咖哩",
     pie: "甜派",
-    sausageGrill: "烤香腸",
+    sausage: "烤肉串",
     familymart: "FamilyMart",
     seveneleven: "7-Eleven",
     lamb: "烤羊肉",
