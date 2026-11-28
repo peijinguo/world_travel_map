@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" stroke="#24232b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Steam -->
+  <path d="M20 2.5c-1.4 1.2 1.4 2.4 0 3.6s1.4 2.4 0 3.6M26.5 2.5c-1.4 1.2 1.4 2.4 0 3.6s1.4 2.4 0 3.6"/>
+  <!-- Sausage -->
+  <rect x="12.5" y="10.5" width="23" height="5.5" rx="2.75" fill="#ef4f63"/>
+  <path d="M15.5 13.3h2.4M20.4 13.3h2.4M25.3 13.3h2.4M30.2 13.3h2.2" stroke="#a8243a" stroke-width="1.1"/>
+  <!-- Lid -->
+  <path d="M7.5 19h33v3.6h-33z" fill="#f7cf3d"/>
+  <!-- Body -->
+  <path d="M10 22.6h28l-1.6 11.2c-.2 1.2-1.1 2-2.3 2H13.9c-1.2 0-2.1-.8-2.3-2z" fill="#6c2d63"/>
+  <path d="M15.5 24.6h17v5.6h-17z" fill="#ef4f63"/>
+  <path d="M15.5 27.4h17" stroke="#6c2d63" stroke-width="1.2"/>
+  <!-- Legs -->
+  <path d="M16 35.8 12.6 45M32 35.8 35.4 45M24 35.8V40"/>
+  <path d="M15 39.2h18" stroke="#f7cf3d" stroke-width="2"/>
+  <path d="M15 39.2h18" stroke-width=".6" opacity=".55"/>
+  <!-- Wheel -->
+  <circle cx="13" cy="43" r="3" fill="#f7cf3d"/>
+  <circle cx="13" cy="43" r=".9" fill="#24232b" stroke="none"/>
+</svg>

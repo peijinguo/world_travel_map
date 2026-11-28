@@ -140,6 +140,8 @@ const getItineraryMotif = (location, itineraryText = "") => {
   if (/サク男ともち子|saku\s*o\s*to\s*mochiko/iu.test(headline)) return "crepe";
   // Gather食聚咖啡 (員山) is known for its sweet pies and mille crêpes.
   if (/gather|食聚/iu.test(headline)) return "pie";
+  // 礁溪香腸伯: a charcoal-grill sausage stall.
+  if (/香腸伯/u.test(headline)) return "sausageGrill";
   if (/吉田商店|yoshida\s*shoten|湯咖哩|湯咖喱|汤咖喱|スープカレー|soup\s*curry/iu.test(headline)) return "curry";
   // Roadside stations (道の駅), before parking so 「道の駅 … 駐車場」 keeps this icon.
   if (/道の駅|道之驛|道之驿|公路休息站|michi[\s-]*no[\s-]*eki|road(?:side)?\s*station/iu.test(headline)) return "michiNoEki";
@@ -192,6 +194,7 @@ const FOOD_MOTIFS = new Set([
   "steak",
   "curry",
   "pie",
+  "sausageGrill",
   "dango",
   "parfait",
   "ramen",
@@ -208,6 +211,7 @@ const getItineraryMotifLabel = (motif) =>
     michiNoEki: "道の駅",
     curry: "咖哩",
     pie: "甜派",
+    sausageGrill: "烤香腸",
     familymart: "FamilyMart",
     seveneleven: "7-Eleven",
     lamb: "烤羊肉",
@@ -1527,6 +1531,13 @@ const downloadBackupFile = (backup) => {
 
 // Prices are shown in whole yen; a price typed to the sen, e.g. ¥619.92,
 // is rounded to the nearest yen.
+// The language a menu's original names are written in, per country
+// (Switzerland and Canada have several; their most common one is used).
+const MENU_ORIGINAL_LANG = {
+  japan: "ja", taiwan: "zh-Hant", iceland: "is", norway: "no", finland: "fi",
+  netherlands: "nl", france: "fr", switzerland: "de", newZealand: "en", canada: "en",
+};
+
 // Taiwan's planner shows prices in NT$; the others keep yen.
 const formatMenuPrice = (price, country = "japan") => {
   const digits = String(price ?? "").replace(/[^\d.]/g, "");
@@ -1591,6 +1602,16 @@ const PRESET_MENUS = [
       ["招牌司康 🌿", "", "45"],
       ["1oz 抹醬加購（乳酪醬／果醬）", "", "10"],
       ["冰淇淋加購（布朗尼必加）", "", "30"],
+    ]),
+  },
+  {
+    // 礁溪香腸伯 (五峰路跑馬古道口), from the stall's own board; prices in NT$.
+    pattern: /香腸伯/u,
+    menu: makePresetMenu("jiaoxi-sausage-uncle", [
+      ["👍 香腸（嚴選豬肉・炭火烘烤）", "", "45"],
+      ["糯米腸（古早味）", "", "30"],
+      ["大腸包小腸（一組）", "", "80"],
+      ["甜不辣（每日限量十串，週二至週五供應）", "", "30"],
     ]),
   },
   {
@@ -2129,7 +2150,7 @@ function MenuDishRow({ entry, liked = false, onToggleLike }) {
       )}
       <div>
         <strong>{name || entry.original}</strong>
-        {name && entry.original && <small lang="ja">{entry.original}</small>}
+        {name && entry.original && <small lang={MENU_ORIGINAL_LANG[country]}>{entry.original}</small>}
       </div>
       <b>{formatMenuPrice(entry.price, country) || "—"}</b>
     </>
@@ -2153,6 +2174,10 @@ function PlannerMenuDialog({
   onSave,
   onClose,
 }) {
+  // The original-name field asks for the country's own name: 日文原名 in
+  // Japan, 瑞士原名 in Switzerland, and so on.
+  const { country } = useAuth();
+  const originalLabel = country === "japan" ? "日文原名" : `${countryById(country)?.name ?? "當地"}原名`;
   const [entries, setEntries] = useState(() => {
     if (initialMenu?.length) return initialMenu;
     return [makeMenuEntry()];
@@ -2262,15 +2287,15 @@ function PlannerMenuDialog({
                     />
                     <input
                       value={entry.original ?? ""}
-                      placeholder="日文原名"
-                      aria-label="日文原名"
-                      lang="ja"
+                      placeholder={originalLabel}
+                      aria-label={originalLabel}
+                      lang={MENU_ORIGINAL_LANG[country]}
                       onChange={(event) => updateEntry(entry.id, { original: event.target.value })}
                       onKeyDown={submitOnEnter}
                     />
                   </div>
                   <label className="planner-menu-price-input">
-                    <span aria-hidden="true">¥</span>
+                    <span aria-hidden="true">{country === "taiwan" ? "NT$" : "¥"}</span>
                     <input
                       value={entry.price}
                       inputMode="numeric"
@@ -2631,9 +2656,10 @@ function Planner() {
   const [dayPendingDelete, setDayPendingDelete] = useState(null);
   const [menuItemId, setMenuItemId] = useState(null);
   const [cloudMenus, setCloudMenus] = useState({});
-  const getItemMenu = (item) => {
+  // `text` is the stop as currently typed, which may be ahead of item.text.
+  const getItemMenu = (item, text = item.text) => {
     const saved = cloudMenus[item.id] ?? item.menu;
-    return saved?.length ? saved : findPresetMenu(item.text) ?? saved;
+    return saved?.length ? saved : findPresetMenu(text) ?? saved;
   };
   const initialCloudDataRef = useRef({ days, activeDayId });
   const lastCloudKeyRef = useRef(null);
@@ -3856,7 +3882,7 @@ function Planner() {
             title={title}
             motif={getItineraryMotif(menuLocation, menuText)}
             mapsQuery={[menuLocation?.name ?? title, menuLocation?.displayName].filter(Boolean).join(" ")}
-            initialMenu={getItemMenu(menuItem)}
+            initialMenu={getItemMenu(menuItem, menuText)}
             presetMenu={findPresetMenu(menuText)}
             placeId={menuItem.googlePlaceId ?? findGooglePlaceId(menuText)}
             likedIds={menuItem.menuLikes ?? []}

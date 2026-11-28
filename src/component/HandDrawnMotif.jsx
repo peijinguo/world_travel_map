@@ -5,6 +5,7 @@ import resortSignIcon from "../assets/resort-sign-icon.png?inline";
 import gondolaSkiIcon from "../assets/gondola-ski-icon.png?inline";
 import curryPlateIcon from "../assets/curry-plate-icon.png?inline";
 import sweetPieIcon from "../assets/sweet-pie-icon.png?inline";
+import sausageGrillIcon from "../assets/sausage-grill-icon.svg?inline";
 import airportPlaneIcon from "../assets/airport-plane-icon.png?inline";
 import parkingSignIcon from "../assets/parking-sign-icon.png?inline";
 import skiTowIcon from "../assets/ski-tow-icon.png?inline";
@@ -17,7 +18,7 @@ const motifColors = {
   watermelon: "#71a85d", bear: "#c99867", penguin: "#76abc8", camera: "#a97852", ropeway: "#dc6b45", kamikawaRopeway: "#55aaa6", glass: "#76c5d7",
   lavender: "#8f78ba", tree: "#72a269", birch: "#85ae77", rice: "#d2a548", koshihikari: "#d9aa43", onigiri: "#f4efe1", horse: "#b7835e", hakuba: "#78aeca",
   onsen: "#f06449", monkey: "#c38a60", castle: "#d76d4d", snowpeak: "#7daac4", coal: "#46535b", star: "#f2bf4e", onumaDango: "#efbd69", ikaMeshi: "#b87654",
-  cow: "#f2d5a6", juhyo: "#a9d9e9", skier: "#e9704f", strawberry: "#e95459", sakura: "#ef8fa7", yakeishi: "#7cacc5", soba: "#d4a867", food: "#e87543", sushi: "#ef8067", tempura: "#e8a44e", curry: "#d99a47", pie: "#f3a93b", dango: "#8dbb7a", numanoyaDango: "#6f4741", parfait: "#ef8fa7", crepe: "#f3bf5b", ramen: "#1f4f7a", lamb: "#d87852", steak: "#d9684f", yakitoriBento: "#8a4a26", beer: "#f6b93b", chairlift: "#e96b3d", hotel: "#f7c95e", rental: "#f26d4f", airport: "#4f86c6", familymart: "#008b7c", seveneleven: "#e95532",
+  cow: "#f2d5a6", juhyo: "#a9d9e9", skier: "#e9704f", strawberry: "#e95459", sakura: "#ef8fa7", yakeishi: "#7cacc5", soba: "#d4a867", food: "#e87543", sushi: "#ef8067", tempura: "#e8a44e", curry: "#d99a47", pie: "#f3a93b", sausageGrill: "#6c2d63", dango: "#8dbb7a", numanoyaDango: "#6f4741", parfait: "#ef8fa7", crepe: "#f3bf5b", ramen: "#1f4f7a", lamb: "#d87852", steak: "#d9684f", yakitoriBento: "#8a4a26", beer: "#f6b93b", chairlift: "#e96b3d", hotel: "#f7c95e", rental: "#f26d4f", airport: "#4f86c6", familymart: "#008b7c", seveneleven: "#e95532",
 };
 
 const motifs = {
@@ -78,7 +79,7 @@ const motifs = {
   hakuba: <><path className="hakuba-mountain" d="M2 38 11 22l6 6L26 7l8 18 5-8 7 21z"/><path className="hakuba-snow" d="m7 30 4-8 6 6 9-21 8 18 5-8 3 9-8 6-8-12-7 13-6-6z"/><path className="hakuba-ground" d="M3 39c12-2 28 2 42-1"/></>,
 };
 
-const imageMotifs = { tempura: tempuraShrimpIcon, resort: resortSignIcon, chairlift: gondolaSkiIcon, curry: curryPlateIcon, pie: sweetPieIcon, airport: airportPlaneIcon, parking: parkingSignIcon, skiTow: skiTowIcon, rental: rentalCarKeyIcon, michiNoEki: michiNoEkiIcon, park: parkBenchIcon };
+const imageMotifs = { tempura: tempuraShrimpIcon, resort: resortSignIcon, chairlift: gondolaSkiIcon, curry: curryPlateIcon, pie: sweetPieIcon, sausageGrill: sausageGrillIcon, airport: airportPlaneIcon, parking: parkingSignIcon, skiTow: skiTowIcon, rental: rentalCarKeyIcon, michiNoEki: michiNoEkiIcon, park: parkBenchIcon };
 
 function HandDrawnMotif({ type, className = "" }) {
   if (imageMotifs[type]) {
