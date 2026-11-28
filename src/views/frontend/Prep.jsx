@@ -17,10 +17,17 @@ const makeId = () => `prep-${Date.now().toString(36)}-${Math.random().toString(3
 const starterList = (country) =>
   prepStarterFor(country).map((text, index) => ({ id: `starter-${index + 1}`, text, done: false }));
 
+// Items reworded in a starter list after trips were made from it: saved lists
+// get the new wording too.
+const RENAMED = { "護照（效期 6 個月以上）": "護照" };
+const withRenames = (list) =>
+  Array.isArray(list) ? list.map((item) => (RENAMED[item?.text] ? { ...item, text: RENAMED[item.text] } : item)) : list;
+const hasRenames = (list) => Array.isArray(list) && list.some((item) => RENAMED[item?.text]);
+
 // Each country keeps its own copy on this device (Japan the original one).
 const loadLocal = (country) => {
   try {
-    const saved = JSON.parse(localStorage.getItem(storageKeyFor(LOCAL_KEY, country)));
+    const saved = withRenames(JSON.parse(localStorage.getItem(storageKeyFor(LOCAL_KEY, country))));
     return Array.isArray(saved) && !isUntouchedJapanList(saved, country) ? saved : starterList(country);
   } catch {
     return starterList(country);
@@ -64,7 +71,11 @@ function Prep() {
     if (!cloudKey) return undefined;
     return subscribePrepCloud(
       cloudKey,
-      (cloudItems) => {
+      (savedItems) => {
+        const cloudItems = withRenames(savedItems);
+        if (hasRenames(savedItems)) {
+          savePrepCloud(cloudKey, cloudItems).catch((error) => console.error("無法同步行前準備清單", error));
+        }
         if (Array.isArray(cloudItems) && !isUntouchedJapanList(cloudItems, country)) {
           setItems(cloudItems);
         } else if (!cloudReadyRef.current) {

@@ -19,7 +19,7 @@ const europe = [
 
 export const prepStarters = {
   japan: [
-    "護照（效期 6 個月以上）",
+    "護照",
     "Visit Japan Web 入境登錄",
     "電子機票、訂位紀錄",
     "住宿訂房確認",
