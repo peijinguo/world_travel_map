@@ -222,7 +222,7 @@ function LodgingPrice({ priceKey, nights }) {
     <div className="lodging-price">
       {rate?.rate > 0 && (
         <p className="lodging-rate" title={rate.at ? `更新於 ${formatRateTime(rate.at)}` : undefined}>
-          匯率 {rate.rate.toFixed(4)}
+          匯率 {rate.rate.toFixed(2)}
         </p>
       )}
       <label>

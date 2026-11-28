@@ -2316,7 +2316,7 @@ function PlannerMenuDialog({
                 className="planner-menu-rate"
                 title={`1 ${currencyCode} ≈ NT$${rate.rate.toFixed(4)}${rate.at ? `，更新於 ${new Date(rate.at).toLocaleString("zh-TW", { hour12: false })}` : ""}`}
               >
-                匯率 {rate.rate.toFixed(rate.rate >= 10 ? 2 : 4)}
+                匯率 {rate.rate.toFixed(2)}
               </span>
             )}
             <button type="button" className="planner-menu-close" aria-label="關閉菜單" onClick={onClose}>
