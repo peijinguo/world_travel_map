@@ -198,7 +198,21 @@ function LodgingPrice({ priceKey, nights }) {
   const symbol = currency.prefix?.trim() ?? currency.suffix.trim();
   const [total, saveTotal] = useLodgingValue(priceKey);
   const [cancelBy, saveCancelBy] = useLodgingValue(`${priceKey}|cancel`);
-  const update = (value) => saveTotal(value.replace(/[^\d]/g, ""));
+  // While the field is being typed in it shows the plain digits as typed (no
+  // thousands commas) and waits for a Chinese input method to finish composing,
+  // so a key press is never entered twice. Full-width digits count as digits.
+  const [draft, setDraft] = useState(null);
+  const digitsOf = (value) =>
+    value.replace(/[０-９]/g, (digit) => String.fromCharCode(digit.charCodeAt(0) - 0xfee0)).replace(/[^\d]/g, "");
+  const update = (value, composing) => {
+    if (composing) {
+      setDraft(value);
+      return;
+    }
+    const digits = digitsOf(value);
+    setDraft(digits);
+    if (digits !== total) saveTotal(digits);
+  };
 
   const amount = Number(total);
   const twdRate = isTwd ? 1 : rate?.rate;
@@ -218,8 +232,11 @@ function LodgingPrice({ priceKey, nights }) {
           <input
             inputMode="numeric"
             placeholder="總價"
-            value={total ? Number(total).toLocaleString("en-US") : ""}
-            onChange={(event) => update(event.target.value)}
+            value={draft ?? (total ? Number(total).toLocaleString("en-US") : "")}
+            onFocus={() => setDraft(total ?? "")}
+            onBlur={() => setDraft(null)}
+            onChange={(event) => update(event.target.value, event.nativeEvent.isComposing)}
+            onCompositionEnd={(event) => update(event.currentTarget.value, false)}
             aria-label={`住宿總價（${currency.name}）`}
           />
         </span>
