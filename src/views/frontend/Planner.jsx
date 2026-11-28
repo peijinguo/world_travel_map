@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { snowTowns } from "./Home";
 import HandDrawnMotif from "../../component/HandDrawnMotif";
 import RouteMap from "../../component/RouteMap";
+import { useTwdRate } from "../../component/LodgingPrice";
 import walkingStepsIcon from "../../assets/walking-steps-icon.png?inline";
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -1547,16 +1548,16 @@ const MENU_ORIGINAL_LANG = {
 
 // Each country's menu shows prices in its own currency.
 const MENU_CURRENCY = {
-  japan: { prefix: "¥", locale: "ja-JP" },
-  taiwan: { prefix: "NT$", locale: "zh-TW" },
-  iceland: { suffix: " kr", locale: "is-IS" },
-  norway: { suffix: " kr", locale: "nb-NO" },
-  finland: { prefix: "€", locale: "fi-FI" },
-  netherlands: { prefix: "€", locale: "nl-NL" },
-  france: { prefix: "€", locale: "fr-FR" },
-  switzerland: { prefix: "CHF ", locale: "de-CH" },
-  newZealand: { prefix: "NZ$", locale: "en-NZ" },
-  canada: { prefix: "C$", locale: "en-CA" },
+  japan: { code: "JPY", prefix: "¥", locale: "ja-JP" },
+  taiwan: { code: "TWD", prefix: "NT$", locale: "zh-TW" },
+  iceland: { code: "ISK", suffix: " kr", locale: "is-IS" },
+  norway: { code: "NOK", suffix: " kr", locale: "nb-NO" },
+  finland: { code: "EUR", prefix: "€", locale: "fi-FI" },
+  netherlands: { code: "EUR", prefix: "€", locale: "nl-NL" },
+  france: { code: "EUR", prefix: "€", locale: "fr-FR" },
+  switzerland: { code: "CHF", prefix: "CHF ", locale: "de-CH" },
+  newZealand: { code: "NZD", prefix: "NZ$", locale: "en-NZ" },
+  canada: { code: "CAD", prefix: "C$", locale: "en-CA" },
 };
 const menuCurrency = (country) => MENU_CURRENCY[country] ?? MENU_CURRENCY.japan;
 const formatMenuPrice = (price, country = "japan") => {
@@ -2229,6 +2230,9 @@ function PlannerMenuDialog({
   // Japan, 瑞士原名 in Switzerland, and so on.
   const { country } = useAuth();
   const originalLabel = country === "japan" ? "日文原名" : `${countryById(country)?.name ?? "當地"}原名`;
+  // Live rate of the country's currency to NT$, shown in the corner (not in Taiwan).
+  const currencyCode = menuCurrency(country).code;
+  const rate = useTwdRate(currencyCode);
   const [entries, setEntries] = useState(() => {
     if (initialMenu?.length) return initialMenu;
     return [makeMenuEntry()];
@@ -2318,9 +2322,19 @@ function PlannerMenuDialog({
             )}
             <h2 id="planner-menu-title">{title}</h2>
           </div>
-          <button type="button" className="planner-menu-close" aria-label="關閉菜單" onClick={onClose}>
-            ×
-          </button>
+          <div className="planner-menu-head-side">
+            {rate?.rate > 0 && (
+              <span
+                className="planner-menu-rate"
+                title={`1 ${currencyCode} ≈ NT$${rate.rate.toFixed(4)}${rate.at ? `，更新於 ${new Date(rate.at).toLocaleString("zh-TW", { hour12: false })}` : ""}`}
+              >
+                匯率 {rate.rate.toFixed(rate.rate >= 10 ? 2 : 4)}
+              </span>
+            )}
+            <button type="button" className="planner-menu-close" aria-label="關閉菜單" onClick={onClose}>
+              ×
+            </button>
+          </div>
         </div>
         {isEditing ? (
           <ul className="planner-menu-list is-editing" ref={listRef}>
@@ -3756,7 +3770,7 @@ function Planner() {
                                   <b>
                                     {itemMotif && (
                                       <span
-                                        className={`planner-item-category-icon ${itemMotif === "chairlift" ? "is-wide" : ""} ${["pie", "hotdog"].includes(itemMotif) ? "is-pie" : ""} ${["skiTow", "rental", "park"].includes(itemMotif) ? "is-small" : ""} ${["parking", "michiNoEki"].includes(itemMotif) ? "is-compact" : ""}`}
+                                        className={`planner-item-category-icon ${itemMotif === "chairlift" ? "is-wide" : ""} ${["pie", "hotdog"].includes(itemMotif) ? "is-pie" : ""} ${["skiTow", "rental", "park"].includes(itemMotif) ? "is-small" : ""} ${["parking", "michiNoEki", "cutlery"].includes(itemMotif) ? "is-compact" : ""}`}
                                         title={getItineraryMotifLabel(itemMotif)}
                                       >
                                         <HandDrawnMotif type={itemMotif} />

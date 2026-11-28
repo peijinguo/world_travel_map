@@ -26,57 +26,68 @@ const writeJson = (key, value) => {
   }
 };
 
-// Yen → NT$ at the live market rate, shared by every card and refreshed every
-// few minutes while the page is open. fxratesapi gives a live quote; the daily
-// open.er-api rate is the fallback, and the last rate seen is kept for offline.
-const LIVE_RATE_URL = "https://api.fxratesapi.com/latest?base=JPY&currencies=TWD";
+// Foreign currency → NT$ at the live market rate, shared by every card and menu
+// and refreshed every few minutes while the page is open. fxratesapi gives a
+// live quote; the daily open.er-api rate is the fallback, and the last rate seen
+// is kept for offline. Yen keeps its original storage key.
 const RATE_MAX_AGE = 5 * 60 * 1000;
-let ratePromise = null;
-const fetchRate = async () => {
+const rateStorageKey = (code) => (code === "JPY" ? RATE_STORAGE_KEY : `yuki-tabi-${code.toLowerCase()}-twd-rate-v1`);
+const ratePromises = {};
+const fetchRate = async (code) => {
   try {
-    const data = await fetch(LIVE_RATE_URL).then((response) => response.json());
+    const data = await fetch(`https://api.fxratesapi.com/latest?base=${code}&currencies=TWD`).then((response) => response.json());
     const rate = Number(data?.rates?.TWD);
     if (rate > 0) return rate;
   } catch {
     // fall through to the daily rate
   }
-  const data = await fetch(RATE_URL).then((response) => response.json());
+  const data = await fetch(RATE_URL.replace(/JPY$/, code)).then((response) => response.json());
   const rate = data?.rates?.TWD;
   if (!(rate > 0)) throw new Error("no rate");
   return rate;
 };
-function loadRate() {
-  const cached = readJson(RATE_STORAGE_KEY, null);
+function loadRate(code) {
+  const key = rateStorageKey(code);
+  const cached = readJson(key, null);
   if (cached?.at && Date.now() - cached.at < RATE_MAX_AGE && cached.rate > 0)
     return Promise.resolve(cached);
-  ratePromise ??= fetchRate()
+  ratePromises[code] ??= fetchRate(code)
     .then((rate) => {
       const fresh = { rate, at: Date.now() };
-      writeJson(RATE_STORAGE_KEY, fresh);
+      writeJson(key, fresh);
       return fresh;
     })
     // Offline: an older rate is better than none.
     .catch(() => (cached?.rate > 0 ? cached : null))
     .finally(() => {
-      ratePromise = null;
+      delete ratePromises[code];
     });
-  return ratePromise;
+  return ratePromises[code];
 }
 
-function useJpyRate() {
-  const [rate, setRate] = useState(() => readJson(RATE_STORAGE_KEY, null));
+// `code` is an ISO currency code; TWD or nothing gives no rate.
+export function useTwdRate(code) {
+  const active = Boolean(code) && code !== "TWD";
+  const [rate, setRate] = useState(() => (active ? readJson(rateStorageKey(code), null) : null));
   useEffect(() => {
+    if (!active) {
+      setRate(null);
+      return undefined;
+    }
     let alive = true;
-    const refresh = () => loadRate().then((result) => alive && result && setRate(result));
+    setRate(readJson(rateStorageKey(code), null));
+    const refresh = () => loadRate(code).then((result) => alive && result && setRate(result));
     refresh();
     const timer = setInterval(refresh, RATE_MAX_AGE);
     return () => {
       alive = false;
       clearInterval(timer);
     };
-  }, []);
+  }, [code, active]);
   return rate;
 }
+
+const useJpyRate = () => useTwdRate("JPY");
 
 const formatRateTime = (at) =>
   new Date(at).toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", hour12: false });

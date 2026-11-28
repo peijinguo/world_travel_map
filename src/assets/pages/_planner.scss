@@ -1085,6 +1085,8 @@ span.planner-walking-icon { position: relative; display: block; width: 34px; hei
 .planner-menu-dialog { width: min(100%, 420px); max-height: min(86vh, 640px); display: flex; flex-direction: column; border-color: #e3e6e8; background: #f3f4f5; }
 .planner-menu-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
 .planner-menu-dialog .planner-menu-head h2 { margin: 0; font-size: 19px; line-height: 1.4; }
+.planner-menu-head-side { flex: 0 0 auto; display: flex; align-items: center; gap: 10px; }
+.planner-menu-rate { color: #8ba0ac; font-size: 13px; font-weight: 700; white-space: nowrap; }
 .planner-menu-close { flex: 0 0 auto; border: 0; background: transparent; color: #7891a2; font-size: 27px; line-height: 1; cursor: pointer; }
 .planner-menu-list { min-height: 0; margin: 0 -6px 0 0; padding: 0 6px 0 0; overflow-y: auto; list-style: none; }
 .planner-menu-edit-row input { box-sizing: border-box; width: 100%; min-width: 0; padding: 8px 10px; border: 1.5px solid #9eb5c3; border-radius: 7px 9px 6px 8px; background: #fff; color: #123653; font: inherit; font-size: 15px; font-weight: 700; }
