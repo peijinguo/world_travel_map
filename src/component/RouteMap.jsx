@@ -314,7 +314,8 @@ function zoomToSpreadPins(map, coordinate, allCoordinates, minZoom = 0, duration
   });
 }
 
-function makeStopMarker(map, stop, index, coordinate, offset, allCoordinates = []) {
+// `onPick(index)` hears a click on the pin (the travellers go there).
+function makeStopMarker(map, stop, index, coordinate, offset, allCoordinates = [], onPick) {
   const marker = document.createElement("div");
   marker.className = "planner-route-marker";
   const pin = document.createElement("div");
@@ -355,8 +356,21 @@ function makeStopMarker(map, stop, index, coordinate, offset, allCoordinates = [
     let dy = above ? -rise : 10;
     if (!above) dy -= Math.max(point.y + dy + cardHeight - (height - CARD_MARGIN), 0);
     const left = point.x - cardWidth / 2;
-    const dx =
+    let dx =
       Math.max(CARD_MARGIN - left, 0) - Math.max(left + cardWidth - (width - CARD_MARGIN), 0);
+    // Nor under the zoom / full-screen / play buttons in the top-right
+    // corner: a card reaching up beside them slides left of them.
+    const controls = map.getContainer().querySelector(".maplibregl-ctrl-top-right");
+    if (controls) {
+      const box = controls.getBoundingClientRect();
+      const frame = map.getContainer().getBoundingClientRect();
+      const controlsLeft = box.left - frame.left - CARD_MARGIN;
+      const controlsBottom = box.bottom - frame.top + CARD_MARGIN;
+      const cardTop = point.y + dy - (above ? cardHeight : 0);
+      if (cardTop < controlsBottom && left + dx + cardWidth > controlsLeft) {
+        dx = Math.max(controlsLeft - cardWidth - left, CARD_MARGIN - left);
+      }
+    }
     popup.options.anchor = above ? "bottom" : "top";
     // The little tip points at the stop only while the card is not slid aside.
     element.classList.toggle("is-slid", Math.abs(dx) > 1);
@@ -390,6 +404,7 @@ function makeStopMarker(map, stop, index, coordinate, offset, allCoordinates = [
     event.stopPropagation();
     pinned = !pinned;
     if (pinned) {
+      onPick?.(index);
       show();
       // Crowded pins: zoom into the area so the neighbours pull apart.
       zoomToSpreadPins(map, coordinate, allCoordinates);
@@ -633,6 +648,8 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
   // With reduced motion it waits for the button.
   const playingRef = useRef(!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
   const playButtonRef = useRef(null);
+  // Sends the replay's travellers to a stop (set while a replay runs).
+  const seekRef = useRef(null);
   const drawPlayButton = () => {
     const button = playButtonRef.current;
     if (!button) return;
@@ -816,7 +833,9 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
 
     markersRef.current.forEach((marker) => marker.remove());
     markersRef.current = currentStops.map((stop, index) =>
-      makeStopMarker(map, stop, index, coordinates[index], markerOffsets[index], coordinates).addTo(map),
+      makeStopMarker(map, stop, index, coordinates[index], markerOffsets[index], coordinates, (picked) =>
+        seekRef.current?.(picked),
+      ).addTo(map),
     );
 
     if (!coordinates.length) {
@@ -958,10 +977,13 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
         playMs += ms;
         cursor = until;
       };
+      // When in the replay they reach each stop (the first: from the start).
+      const arrivalMs = [0];
       schedule.legs.forEach(({ leave, arrive }, index) => {
         // Time for the map to settle on the leg before they set off.
         addPiece(leave, Math.max(pace(leave - cursor), STOP_PAUSE_MS), true);
         addPiece(arrive, legMs(index));
+        arrivalMs.push(playMs);
       });
       addPiece(to, pace(to - cursor));
       const minuteAt = (ms) => {
@@ -983,11 +1005,18 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
       };
       frame = requestAnimationFrame(step);
       if (playButtonRef.current) playButtonRef.current.hidden = false;
+      // A clicked pin: both travellers are there (the second one a moment
+      // behind has arrived too), and the replay carries on from there.
+      seekRef.current = (index) => {
+        if (arrivalMs[index] === undefined) return;
+        played = arrivalMs[index] + pace(Math.max(...AVATARS.map(({ lag }) => lag))) + 50;
+      };
     }
     return () => {
       cancelAnimationFrame(frame);
       window.clearInterval(timer);
       if (playButtonRef.current) playButtonRef.current.hidden = true;
+      seekRef.current = null;
       map.off("movestart", handOver);
       container.removeEventListener("click", handOver, true);
       onTravelRef.current?.(null);
