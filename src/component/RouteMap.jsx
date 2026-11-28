@@ -568,8 +568,12 @@ function makeAvatarMarker({ src, name, size, offset, front }) {
 // the open planner (Japan unless told otherwise).
 const JAPAN_HOME = { center: JAPAN_CENTER, zoom: JAPAN_ZOOM };
 
-function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = null, home = JAPAN_HOME, date = "" }) {
+// `onTravel(itemId)` hears which stop the travellers are at, or heading to
+// while on the road (null when they are gone), so the itinerary can follow.
+function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = null, home = JAPAN_HOME, date = "", onTravel }) {
   const canvasRef = useRef(null);
+  const onTravelRef = useRef(onTravel);
+  onTravelRef.current = onTravel;
   const homeRef = useRef(home);
   const mapRef = useRef(null);
   const markersRef = useRef([]);
@@ -778,6 +782,7 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
     const container = map.getContainer();
     map.on("movestart", handOver);
     container.addEventListener("click", handOver, true);
+    let travelId = null;
     // `soon` says whether they set off from where they wait shortly.
     const aim = (spot, soon) => {
       if (!follow || Date.now() < userCameraRef.current || !schedule) return;
@@ -802,7 +807,14 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
         const spot = placeAt(schedule, minuteOf(live ? 0 : lag));
         marker.setLngLat(spot.at);
         marker.getElement().classList.toggle("is-walking", spot.moving);
-        if (!lag || live) aim(spot, minuteOf(0) >= schedule.legs[0]?.leave - (live ? 30 : LEAD_MINUTES));
+        if (!lag || live) {
+          aim(spot, minuteOf(0) >= schedule.legs[0]?.leave - (live ? 30 : LEAD_MINUTES));
+          const stop = currentStops[Math.min(spot.moving ? spot.leg + 1 : spot.leg, currentStops.length - 1)];
+          if (stop && stop.item.id !== travelId) {
+            travelId = stop.item.id;
+            onTravelRef.current?.(travelId);
+          }
+        }
       });
       clockMarker.setLngLat(avatars[0].marker.getLngLat());
       const minute = minuteOf(0);
@@ -867,6 +879,7 @@ function RouteMap({ stops, paths = [], label = "行程路線地圖", focus = nul
       window.clearInterval(timer);
       map.off("movestart", handOver);
       container.removeEventListener("click", handOver, true);
+      onTravelRef.current?.(null);
       avatars.forEach(({ marker }) => marker.remove());
       clockMarker.remove();
     };

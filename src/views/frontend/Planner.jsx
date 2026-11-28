@@ -3128,6 +3128,29 @@ function Planner() {
   };
 
   const [mapFocus, setMapFocus] = useState(null);
+  // The stop the travellers on the map are at (or heading to). On a desktop,
+  // where the map stays beside the itinerary, the itinerary scrolls along to
+  // it, but never while the traveller is scrolling or typing themselves.
+  const [travelItemId, setTravelItemId] = useState(null);
+  const userScrollUntilRef = useRef(0);
+  useEffect(() => {
+    const hold = () => {
+      userScrollUntilRef.current = Date.now() + 8000;
+    };
+    const events = ["wheel", "touchmove", "keydown", "pointerdown"];
+    events.forEach((name) => window.addEventListener(name, hold, { passive: true }));
+    return () => events.forEach((name) => window.removeEventListener(name, hold));
+  }, []);
+  useEffect(() => {
+    if (!travelItemId || Date.now() < userScrollUntilRef.current) return;
+    if (!window.matchMedia?.("(min-width: 1051px)").matches) return;
+    const row = document.querySelector(`.planner-list > li[data-item-id="${CSS.escape(travelItemId)}"]`);
+    if (!row || row.contains(document.activeElement)) return;
+    const { top, bottom } = row.getBoundingClientRect();
+    if (top >= 120 && bottom <= window.innerHeight - 40) return;
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    row.scrollIntoView({ block: "center", behavior: reduce ? "auto" : "smooth" });
+  }, [travelItemId]);
   const plannedStops = useMemo(
     () =>
       items
@@ -3542,7 +3565,7 @@ function Planner() {
             </div>
           </div>
           <div className="planner-map-stage has-route-map">
-            <RouteMap stops={plannedStops} paths={routePaths} label={routeMapTitle} focus={mapFocus} home={mapHome} date={activeDay?.date} />
+            <RouteMap stops={plannedStops} paths={routePaths} label={routeMapTitle} focus={mapFocus} home={mapHome} date={activeDay?.date} onTravel={setTravelItemId} />
           </div>
           <p className="planner-map-hint">
           </p>
@@ -3724,7 +3747,8 @@ function Planner() {
                           return (
                             <Fragment key={item.id}>
                             <li
-                              className={dragOverId === item.id ? "is-drag-over" : ""}
+                              data-item-id={item.id}
+                              className={[dragOverId === item.id && "is-drag-over", travelItemId === item.id && "is-travel-here"].filter(Boolean).join(" ")}
                               onDragEnd={() => {
                                 setDraggedId(null);
                                 setDragOverId(null);

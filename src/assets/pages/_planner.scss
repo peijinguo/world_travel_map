@@ -512,6 +512,10 @@
 .planner-list > li:not(.planner-travel-segment):hover { border-color: #123653; background: #fff; box-shadow: 0 8px 18px rgba(18,54,83,.14); }
 .planner-list > li:not(.planner-travel-segment):nth-child(odd):hover { transform: translateY(-3px) rotate(-.12deg); }
 .planner-list > li:not(.planner-travel-segment):nth-child(even):hover { transform: translateY(-3px) rotate(.12deg); }
+// The stop the travellers on the map are at (or heading to): an ink outline
+// and a warm tint, with the stop tag in the darker brown.
+.planner-list > li.is-travel-here:not(.planner-travel-segment) { border-color: #4a5459; background: #fffaf3; box-shadow: 0 0 0 2px rgba(74,84,89,.18), 0 6px 14px rgba(18,54,83,.1); }
+.planner-list > li.is-travel-here > .planner-drag-handle.planner-stop-tag { background: #8f6767; border-color: #7d5858; }
 .planner-list > li.is-drag-over { border-color: #126bd6; transform: translateY(3px) rotate(-.2deg); box-shadow: 0 4px 0 rgba(18,107,214,.11); }
 .planner-list > li.planner-travel-segment {
   grid-template-columns: minmax(0, 1fr);
