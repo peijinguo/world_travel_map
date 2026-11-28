@@ -5,7 +5,7 @@ import resortSignIcon from "../assets/resort-sign-icon.png?inline";
 import gondolaSkiIcon from "../assets/gondola-ski-icon.png?inline";
 import curryPlateIcon from "../assets/curry-plate-icon.png?inline";
 import sweetPieIcon from "../assets/sweet-pie-icon.png?inline";
-import hotDogIcon from "../assets/hot-dog-icon.svg?inline";
+import hotDogIcon from "../assets/hot-dog-icon.png?inline";
 import airportPlaneIcon from "../assets/airport-plane-icon.png?inline";
 import parkingSignIcon from "../assets/parking-sign-icon.png?inline";
 import skiTowIcon from "../assets/ski-tow-icon.png?inline";
