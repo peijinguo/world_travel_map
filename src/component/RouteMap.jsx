@@ -288,18 +288,11 @@ const PIN_SPREAD_PX = 56;
 const MAX_FOCUS_ZOOM = 18;
 // A clicked STOP tag lands at street level, close enough to read the blocks around it.
 const STOP_FOCUS_ZOOM = 16;
-// A card opened by the travellers' arrival clears their heads and clock.
-// Near the top of the map it opens below the pin instead, just under it.
-const ARRIVAL_CARD_OFFSET = {
-  top: [0, 10],
-  "top-left": [0, 10],
-  "top-right": [0, 10],
-  bottom: [0, -128],
-  "bottom-left": [0, -128],
-  "bottom-right": [0, -128],
-  left: [60, -60],
-  right: [-60, -60],
-};
+// A card opened by the travellers' arrival sits this far above the stop,
+// clear of their heads and clock (or just under the stop near the map's top).
+const ARRIVAL_CARD_RISE = 128;
+// Cards keep at least this far inside the map's edges.
+const CARD_MARGIN = 8;
 
 function zoomToSpreadPins(map, coordinate, allCoordinates, minZoom = 0, duration = 700) {
   const here = map.project(coordinate);
@@ -341,16 +334,53 @@ function makeStopMarker(map, stop, index, coordinate, offset, allCoordinates = [
   content.append(stopNumber, stopName);
 
   // Hovering shows the stop's card; a click keeps it open until it is closed.
-  const popup = new maplibregl.Popup({ offset: 35, focusAfterOpen: false }).setLngLat(coordinate).setDOMContent(content);
+  const popup = new maplibregl.Popup({ offset: 35, anchor: "bottom", focusAfterOpen: false })
+    .setLngLat(coordinate)
+    .setDOMContent(content);
   let pinned = false;
-  // Opened by the travellers' arrival it sits above them and their clock.
+  // Opened by the travellers' arrival it sits above them and their clock
+  // (`rise` px over the point instead of just over the pin).
+  let rise = 35;
+  // The card always stays inside the map: above the point when there is room,
+  // otherwise below it, and slid sideways or up off the edges. Kept so while
+  // the map moves under it.
+  const fit = () => {
+    const element = popup.getElement();
+    if (!element) return;
+    const { clientWidth: width, clientHeight: height } = map.getContainer();
+    const point = map.project(coordinate);
+    const cardWidth = element.offsetWidth;
+    const cardHeight = element.offsetHeight;
+    const above = point.y - rise - cardHeight >= CARD_MARGIN;
+    let dy = above ? -rise : 10;
+    if (!above) dy -= Math.max(point.y + dy + cardHeight - (height - CARD_MARGIN), 0);
+    const left = point.x - cardWidth / 2;
+    const dx =
+      Math.max(CARD_MARGIN - left, 0) - Math.max(left + cardWidth - (width - CARD_MARGIN), 0);
+    popup.options.anchor = above ? "bottom" : "top";
+    // The little tip points at the stop only while the card is not slid aside.
+    element.classList.toggle("is-slid", Math.abs(dx) > 1);
+    // A stop off the map shows no card.
+    element.style.visibility =
+      point.x < 0 || point.x > width || point.y < 0 || point.y > height ? "hidden" : "";
+    const [oldX, oldY] = Array.isArray(popup.options.offset) ? popup.options.offset : [0, 0];
+    if (Math.abs(oldX - dx) > 0.5 || Math.abs(oldY - dy) > 0.5 || element.dataset.anchor !== popup.options.anchor) {
+      element.dataset.anchor = popup.options.anchor;
+      popup.setOffset([dx, dy]);
+    }
+  };
   const show = (above = false) => {
     if (popup.isOpen()) return;
-    popup.setOffset(above ? ARRIVAL_CARD_OFFSET : 35);
+    rise = above ? ARRIVAL_CARD_RISE : 35;
+    popup.setMaxWidth(`${Math.max(map.getContainer().clientWidth - CARD_MARGIN * 2, 140)}px`);
+    popup.setOffset([0, -rise]);
     popup.addTo(map);
+    fit();
+    map.on("move", fit);
   };
   popup.on("close", () => {
     pinned = false;
+    map.off("move", fit);
   });
   marker.addEventListener("mouseenter", () => show());
   marker.addEventListener("mouseleave", () => {
